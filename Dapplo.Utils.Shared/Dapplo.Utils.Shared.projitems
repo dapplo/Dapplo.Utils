@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>67647242-efc1-4a31-9bf3-cfaaabb61dc5</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Dapplo.Utils.Shared</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AbcComparer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AsyncLock.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DictionaryExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ExpressionExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PropertyInfoExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StringExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TypeExtensions.cs" />
+  </ItemGroup>
+</Project>

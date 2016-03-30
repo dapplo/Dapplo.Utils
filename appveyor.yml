@@ -1,0 +1,47 @@
+version: 0.1.{build}
+skip_tags: true
+configuration: Release
+platform: AnyCPU
+clone_depth: 2
+branches:
+  only:
+  - master
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
+install:
+  - choco install gitlink -y
+before_build:
+  - nuget restore
+before_package:
+  - GitLink .\
+  - nuget pack -Verbosity detailed "%APPVEYOR_PROJECT_NAME%.nuspec" -MSBuildVersion 14.0 -Properties id=%APPVEYOR_PROJECT_NAME%;version=%APPVEYOR_BUILD_VERSION%;author=Dapplo
+build:
+  project: Dapplo.Utils.sln
+  publish_nuget: true
+  publish_nuget_symbols: false
+  verbosity: minimal
+artifacts:
+- path: '*.nupkg'
+  name: NuGet package
+notifications:
+- provider: Email
+  to:
+  - robin@dapplo.net
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: false
+deploy:
+- provider: GitHub
+  release: Dapplo.Utils-v$(appveyor_build_version)
+  auth_token:
+    secure: eBQPtXg53XgcvdcVY3wQAw6kkwNh+QhcsTDwzyQLLh6IOPyiePEaEhJR0D2YBjAj
+  artifact: /.*\.nupkg/
+  draft: false
+- provider: NuGet
+  skip_symbols: true
+  api_key:
+    secure: xkDQ385+smLqdzhESsXBJvnUjK4FZ4Djjrqi9tFR29dwESIvPYOrQAqgri5Nf/fA

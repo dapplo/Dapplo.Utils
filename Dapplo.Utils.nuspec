@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>$id$</id>
+        <version>$version$</version>
+        <authors>$author$</authors>
+        <licenseUrl>http://www.gnu.org/licenses/lgpl-3.0.en.html</licenseUrl>
+        <projectUrl>http://www.dapplo.net/blocks/Dapplo.Utils</projectUrl>
+        <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Dapplo.Utils contains a lot of utilities which are used throughout Dapplo code.</description>
+		<summary>Adds some missing code.</summary>
+        <language>en-us</language>
+		<copyright>$author$</copyright>
+		<tags>utils</tags>
+		<dependencies>
+			<group targetFramework="net452"/>
+			<group targetFramework="dnxcore50">
+<!--				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />-->
+			</group>
+			<group targetFramework="uap10.0">
+<!--				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />-->
+			</group>
+			<group targetFramework="dotnet">
+<!--				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />-->
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="Dapplo.Utils\bin\release\$id$.pdb" target="lib\net452" />
+		<file src="Dapplo.Utils\bin\release\$id$.dll" target="lib\net452" />
+<!--
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\dnxcore50" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\dnxcore50" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\dotnet" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\dotnet" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\uap10.0" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\uap10.0" />
+-->
+	</files>
+</package>
