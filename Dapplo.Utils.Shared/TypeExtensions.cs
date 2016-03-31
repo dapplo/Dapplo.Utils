@@ -237,6 +237,8 @@ namespace Dapplo.Utils
 					var genericArguments = typeForInstance.GetGenericArguments();
 					// Create the List<T> or similar
 					typeForInstance = TypeMap[genericType].MakeGenericType(genericArguments);
+					// Update the TypeInfo
+					typeInfoForInstance = typeForInstance.GetTypeInfo();
 				}
 			}
 

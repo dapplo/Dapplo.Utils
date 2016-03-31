@@ -63,6 +63,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TypeExtensionsTests.cs" />
     <Compile Include="DictionaryExtensionsTests.cs" />
     <Compile Include="AsyncLockTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
