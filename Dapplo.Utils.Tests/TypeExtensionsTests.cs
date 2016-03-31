@@ -23,6 +23,8 @@
 
 using System.Collections.Generic;
 using Dapplo.LogFacade;
+using Dapplo.Utils.Extensions;
+using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -32,8 +34,6 @@ namespace Dapplo.Utils.Tests
 {
 	public class TypeExtensionsTests
 	{
-		private static readonly LogSource Log = new LogSource();
-
 		public TypeExtensionsTests(ITestOutputHelper testOutputHelper)
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
@@ -44,12 +44,12 @@ namespace Dapplo.Utils.Tests
 		{
 			var listOfStringType = typeof(List<string>);
 
-			var listOfStringsObject = listOfStringType.ConvertOrCastValueToType("1,2,3", null);
+			var listOfStringsObject = listOfStringType.ConvertOrCastValueToType("1,2,3");
 			Assert.NotNull(listOfStringsObject);
 			var listOfStrings = listOfStringsObject as IList<string>;
 			Assert.NotNull(listOfStrings);
 
-			Assert.NotNull(listOfStrings.Count == 3);
+			Assert.NotNull(listOfStrings?.Count == 3);
 		}
 
 		[Fact]
@@ -57,12 +57,12 @@ namespace Dapplo.Utils.Tests
 		{
 			var listOfStringType = typeof(List<int>);
 
-			var listOfIntssObject = listOfStringType.ConvertOrCastValueToType("1,2,3", null);
+			var listOfIntssObject = listOfStringType.ConvertOrCastValueToType("1,2,3");
 			Assert.NotNull(listOfIntssObject);
 			var listOfInts = listOfIntssObject as IList<int>;
 			Assert.NotNull(listOfInts);
 
-			Assert.NotNull(listOfInts.Count == 3);
+			Assert.NotNull(listOfInts?.Count == 3);
 		}
 
 		[Fact]
@@ -70,12 +70,12 @@ namespace Dapplo.Utils.Tests
 		{
 			var listOfStringType = typeof(IList<int>);
 
-			var listOfIntssObject = listOfStringType.ConvertOrCastValueToType("1,2,3", null);
+			var listOfIntssObject = listOfStringType.ConvertOrCastValueToType("1,2,3");
 			Assert.NotNull(listOfIntssObject);
 			var listOfInts = listOfIntssObject as IList<int>;
 			Assert.NotNull(listOfInts);
 
-			Assert.NotNull(listOfInts.Count == 3);
+			Assert.NotNull(listOfInts?.Count == 3);
 		}
 	}
 }
