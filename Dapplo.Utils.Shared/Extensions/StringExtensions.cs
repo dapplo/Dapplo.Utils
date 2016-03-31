@@ -22,21 +22,25 @@
 #region using
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 #if !_PCL_
 using Microsoft.VisualBasic.FileIO;
+
 #endif
 
 #endregion
 
-namespace Dapplo.Utils
+namespace Dapplo.Utils.Extensions
 {
 	public static class StringExtensions
 	{
 		private static readonly Regex CleanupRegex = new Regex(@"[^a-z0-9]+", RegexOptions.Compiled);
+		private static readonly Regex PropertyRegex = new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		///     Helper method for converting a string to a non strict value.
@@ -47,6 +51,125 @@ namespace Dapplo.Utils
 		public static string Cleanup(this string value)
 		{
 			return CleanupRegex.Replace(value.ToLowerInvariant(), "");
+		}
+
+		/// <summary>
+		///     Format the string "format" with the source
+		/// </summary>
+		/// <param name="format">String with formatting, like {name}</param>
+		/// <param name="sources">
+		///     object [] with properties, if a property has the type IDictionary string,string it can used these
+		///     parameters too
+		/// </param>
+		/// <returns>Formatted string</returns>
+		public static string FormatWith(this string format, params object[] sources)
+		{
+			return FormatWith(format, null, sources);
+		}
+
+		/// <summary>
+		///     Format the string "format" with the source
+		/// </summary>
+		/// <param name="format">String with formatting, like {name}</param>
+		/// <param name="provider">IFormatProvider</param>
+		/// <param name="sources">
+		///     object with properties, if a property has the type IDictionary string,string it can used these
+		///     parameters too
+		/// </param>
+		/// <returns>Formatted string</returns>
+		public static string FormatWith(this string format, IFormatProvider provider, params object[] sources)
+		{
+			if (format == null)
+			{
+				throw new ArgumentNullException(nameof(format));
+			}
+			if (sources == null)
+			{
+				return format;
+			}
+			var properties = new Dictionary<string, object>();
+
+			for (var index = 0; index < sources.Length; index++)
+			{
+				var source = sources[index];
+				MapToProperties(properties, index, source);
+			}
+
+			var values = new List<object>();
+			var rewrittenFormat = PropertyRegex.Replace(format, delegate(Match m)
+			{
+				var startGroup = m.Groups["start"];
+				var propertyGroup = m.Groups["property"];
+				var formatGroup = m.Groups["format"];
+				var endGroup = m.Groups["end"];
+
+				object value;
+				if (properties.TryGetValue(propertyGroup.Value, out value))
+				{
+					values.Add(value);
+				}
+				else
+				{
+					values.Add(propertyGroup.Value);
+				}
+				return new string('{', startGroup.Captures.Count) + (values.Count - 1) + formatGroup.Value + new string('}', endGroup.Captures.Count);
+			});
+
+			return string.Format(provider, rewrittenFormat, values.ToArray());
+		}
+
+
+		/// <summary>
+		///     Helper method to fill the properties with the values from the source
+		/// </summary>
+		/// <param name="properties">IDictionary with the possible properties</param>
+		/// <param name="index">int with index in the current sources</param>
+		/// <param name="source">object</param>
+		private static void MapToProperties(IDictionary<string, object> properties, int index, object source)
+		{
+			if (source == null)
+			{
+				return;
+			}
+			var sourceType = source.GetType();
+			if (sourceType.GetTypeInfo().IsPrimitive || sourceType == typeof (string))
+			{
+				properties.AddWhenNew(index.ToString(), source);
+				return;
+			}
+
+			if (properties.DictionaryToGenericDictionary(source as IDictionary))
+			{
+				return;
+			}
+
+			foreach (var propertyInfo in source.GetType().GetRuntimeProperties())
+			{
+				if (!propertyInfo.CanRead)
+				{
+					continue;
+				}
+
+				var value = propertyInfo.GetValue(source, null);
+				if (value == null)
+				{
+					properties.AddWhenNew(propertyInfo.Name, "");
+					continue;
+				}
+
+				if (properties.DictionaryToGenericDictionary(value as IDictionary))
+				{
+					continue;
+				}
+
+				if (propertyInfo.PropertyType.GetTypeInfo().IsEnum)
+				{
+					var enumValue = value as Enum;
+					properties.AddWhenNew(propertyInfo.Name, enumValue.EnumValueOf());
+					continue;
+				}
+				properties.AddWhenNew(propertyInfo.Name, value);
+			}
 		}
 
 		/// <summary>
@@ -113,6 +236,7 @@ namespace Dapplo.Utils
 			return input.Split(delimiter).Select(x => x.Trim());
 #endif
 		}
+
 		/// <summary>
 		///     Parse input for comma separated name=value pairs
 		/// </summary>

@@ -32,7 +32,7 @@ using Dapplo.LogFacade;
 
 #endregion
 
-namespace Dapplo.Utils
+namespace Dapplo.Utils.Extensions
 {
 	/// <summary>
 	///     Extension for types
@@ -61,7 +61,7 @@ namespace Dapplo.Utils
 		/// <param name="typeConverter"></param>
 		public static void AddDefaultConverter(Type type, Type typeConverter)
 		{
-			Converters.SafelyAddOrOverwrite(type, typeConverter);
+			Converters.AddOrOverwrite(type, typeConverter);
 		}
 
 		/// <summary>

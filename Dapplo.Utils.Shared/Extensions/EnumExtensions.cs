@@ -21,34 +21,30 @@
 
 #region using
 
-using System.Collections.Generic;
-using Dapplo.LogFacade;
-using Dapplo.Utils.Extensions;
-using Dapplo.Utils.Tests.Logger;
-using Xunit;
-using Xunit.Abstractions;
+using System;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 #endregion
 
-namespace Dapplo.Utils.Tests
+namespace Dapplo.Utils.Extensions
 {
-	public class DictionaryExtensionsTests
+	public static class EnumExtensions
 	{
-		private static readonly LogSource Log = new LogSource();
-
-		public DictionaryExtensionsTests(ITestOutputHelper testOutputHelper)
+		/// <summary>
+		///     The returns the Value from the EnumMemberAttribute, or a ToString on the element.
+		///     This can be used to create a lookup from string to enum element
+		/// </summary>
+		/// <param name="enumerationItem">Enum</param>
+		/// <returns>string</returns>
+		public static string EnumValueOf(this Enum enumerationItem)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
-		}
-
-		[Fact]
-		public void TestAddOrOverwrite()
-		{
-			var dictionary = new Dictionary<string, string>();
-
-			dictionary.AddOrOverwrite("Name", "Dapplo");
-			dictionary.AddOrOverwrite("Name", "Dapplo");
-			Assert.True(dictionary.Count == 1);
+			if (enumerationItem == null)
+			{
+				return null;
+			}
+			var attributes = (EnumMemberAttribute[]) enumerationItem.GetType().GetRuntimeField(enumerationItem.ToString()).GetCustomAttributes(typeof (EnumMemberAttribute), false);
+			return attributes.Length > 0 ? attributes[0].Value : enumerationItem.ToString();
 		}
 	}
 }

@@ -28,7 +28,7 @@ using Xunit.Abstractions;
 
 #endregion
 
-namespace Dapplo.Utils.Tests
+namespace Dapplo.Utils.Tests.Logger
 {
 	/// <summary>
 	///     xUnit will have tests run parallel, and due to this it won't capture trace output correctly.

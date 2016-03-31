@@ -28,7 +28,7 @@ using System.Runtime.Serialization;
 
 #endregion
 
-namespace Dapplo.Utils
+namespace Dapplo.Utils.Extensions
 {
 	public static class PropertyInfoExtension
 	{

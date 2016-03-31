@@ -22,6 +22,7 @@
 #region using
 
 using System;
+using Dapplo.Utils.Extensions;
 
 #endregion
 

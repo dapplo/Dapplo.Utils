@@ -11,10 +11,11 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AbcComparer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AsyncLock.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)DictionaryExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ExpressionExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PropertyInfoExtension.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)StringExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)TypeExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\DictionaryExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\EnumExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\ExpressionExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\PropertyInfoExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
   </ItemGroup>
 </Project>

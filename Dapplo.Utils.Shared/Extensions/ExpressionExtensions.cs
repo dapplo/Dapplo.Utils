@@ -26,7 +26,7 @@ using System.Linq.Expressions;
 
 #endregion
 
-namespace Dapplo.Utils
+namespace Dapplo.Utils.Extensions
 {
 	/// <summary>
 	///     Lambda expressions Utils

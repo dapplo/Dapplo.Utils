@@ -22,31 +22,38 @@
 #region using
 
 using System.Collections.Generic;
+using Dapplo.Utils.Extensions;
+using Xunit;
 
 #endregion
 
-namespace Dapplo.Utils
+namespace Dapplo.Utils.Tests
 {
-	public static class DictionaryExtensions
+	/// <summary>
+	/// Tests for StringExtensions
+	/// </summary>
+	public class StringExtensionsTests
 	{
-		/// <summary>
-		///     Safely add or overwrite a value in the dictionary, supply the key & value
-		/// </summary>
-		/// <param name="dictionary"></param>
-		/// <param name="key">string key</param>
-		/// <param name="newValue">object</param>
-		/// <returns>dictionary for fluent API calls</returns>
-		public static IDictionary<T1, T2> SafelyAddOrOverwrite<T1, T2>(this IDictionary<T1, T2> dictionary, T1 key, T2 newValue)
+		private const string Expected = "Jan is 10 years old";
+
+		[Fact]
+		public void TestFormatWith_Basics()
 		{
-			if (dictionary.ContainsKey(key))
-			{
-				dictionary[key] = newValue;
-			}
-			else
-			{
-				dictionary.Add(key, newValue);
-			}
-			return dictionary;
+			var result = "{Name} is {Age} years old".FormatWith(new {Name = "Jan", Age = 10});
+			Assert.Equal(Expected, result);
+
+			result = "{0} is {1} years old".FormatWith("Jan", 10);
+			Assert.Equal(Expected, result);
+
+			result = "{Name} is {4} years old".FormatWith(new {Name = "Jan", Age = 10}, 1, 2, 3, 10);
+			Assert.Equal(Expected, result);
+		}
+
+		[Fact]
+		public void TestFormatWith_Dictionary()
+		{
+			var result = "{Name} is {Age} years old".FormatWith(new Dictionary<string, object> {{"Name", "Jan"}, {"Age", 10}});
+			Assert.Equal(Expected, result);
 		}
 	}
 }
