@@ -14,28 +14,46 @@
 		<copyright>$author$</copyright>
 		<tags>utils</tags>
 		<dependencies>
-			<group targetFramework="net452"/>
+			<group targetFramework="net452">
+				<dependency id="Dapplo.LogFacade" version="0.2.22" />
+			</group>
 			<group targetFramework="dnxcore50">
-<!--				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />-->
+				<dependency id="Dapplo.LogFacade" version="0.2.22" />
+				<dependency id="System.ComponentModel" version="4.0.0" />
+				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
+				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
+				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
+				<dependency id="System.ObjectModel" version="4.0.10" />
+				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
 			<group targetFramework="uap10.0">
-<!--				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />-->
+				<dependency id="Dapplo.LogFacade" version="0.2.22" />
+				<dependency id="System.ComponentModel" version="4.0.0" />
+				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
+				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
+				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
+				<dependency id="System.ObjectModel" version="4.0.10" />
+				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
 			<group targetFramework="dotnet">
-<!--				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />-->
+				<dependency id="Dapplo.LogFacade" version="0.2.22" />
+				<dependency id="System.ComponentModel" version="4.0.0" />
+				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
+				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
+				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
+				<dependency id="System.ObjectModel" version="4.0.10" />
+				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
 		</dependencies>
 	</metadata>
 	<files>
 		<file src="Dapplo.Utils\bin\release\$id$.pdb" target="lib\net452" />
 		<file src="Dapplo.Utils\bin\release\$id$.dll" target="lib\net452" />
-<!--
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\dnxcore50" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\dnxcore50" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\dotnet" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\dotnet" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\uap10.0" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\uap10.0" />
--->
 	</files>
 </package>
