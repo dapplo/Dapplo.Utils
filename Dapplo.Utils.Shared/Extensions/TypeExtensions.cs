@@ -42,6 +42,7 @@ namespace Dapplo.Utils.Extensions
 		private static readonly LogSource Log = new LogSource();
 		private static readonly IDictionary<Type, Type> Converters = new Dictionary<Type, Type>();
 
+		#region statics
 		// A map for converting interfaces to types
 		private static readonly IDictionary<Type, Type> TypeMap = new Dictionary<Type, Type>
 		{
@@ -53,6 +54,29 @@ namespace Dapplo.Utils.Extensions
 			{typeof (IReadOnlyDictionary<,>), typeof (Dictionary<,>)}
 		};
 
+		/// <summary>
+		/// Used for the generation of friendly names
+		/// </summary>
+		private static readonly Dictionary<Type, string> _typeToFriendlyName = new Dictionary<Type, string>
+		{
+			{typeof(string), "string"},
+			{typeof(object), "object"},
+			{typeof(bool), "bool"},
+			{typeof(byte), "byte"},
+			{typeof(char), "char"},
+			{typeof(decimal), "decimal"},
+			{typeof(double), "double"},
+			{typeof(short), "short"},
+			{typeof(int), "int"},
+			{typeof(long), "long"},
+			{typeof(sbyte), "sbyte"},
+			{typeof(float), "float"},
+			{typeof(ushort), "ushort"},
+			{typeof(uint), "uint"},
+			{typeof(ulong), "ulong"},
+			{typeof(void), "void"}
+		};
+		#endregion
 
 		/// <summary>
 		///     Add the default converter for the specified type
@@ -366,6 +390,45 @@ namespace Dapplo.Utils.Extensions
 				}
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Get the name of a type which is readable, even if generics are used.
+		/// </summary>
+		/// <param name="type">Type</param>
+		/// <returns>string</returns>
+		public static string FriendlyName(this Type type)
+		{
+			string friendlyName;
+			if (_typeToFriendlyName.TryGetValue(type, out friendlyName))
+			{
+				return friendlyName;
+			}
+
+			friendlyName = type.Name;
+			if (type.GetTypeInfo().IsGenericType)
+			{
+				int backtick = friendlyName.IndexOf('`');
+				if (backtick > 0)
+				{
+					friendlyName = friendlyName.Remove(backtick);
+				}
+				friendlyName += "<";
+				Type[] typeParameters = type.GetGenericArguments();
+				for (int i = 0; i < typeParameters.Length; i++)
+				{
+					string typeParamName = typeParameters[i].FriendlyName();
+					friendlyName += (i == 0 ? typeParamName : ", " + typeParamName);
+				}
+				friendlyName += ">";
+			}
+
+			if (type.IsArray)
+			{
+				return type.GetElementType().FriendlyName() + "[]";
+			}
+
+			return friendlyName;
 		}
 	}
 }

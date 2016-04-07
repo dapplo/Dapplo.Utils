@@ -27,6 +27,7 @@ using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
+using System;
 
 #endregion
 
@@ -76,6 +77,19 @@ namespace Dapplo.Utils.Tests
 			Assert.NotNull(listOfInts);
 
 			Assert.NotNull(listOfInts?.Count == 3);
+		}
+
+		[Fact]
+		public void TestFriendlyName()
+		{
+			Assert.Equal("string", typeof(string).FriendlyName());
+			Assert.Equal("int[]", typeof(int[]).FriendlyName());
+			Assert.Equal("int[][]", typeof(int[][]).FriendlyName());
+			Assert.Equal("KeyValuePair<int, string>", typeof(KeyValuePair<int, string>).FriendlyName());
+			Assert.Equal("Tuple<int, string>", typeof(Tuple<int, string>).FriendlyName());
+			Assert.Equal("Tuple<KeyValuePair<object, long>, string>", typeof(Tuple<KeyValuePair<object, long>, string>).FriendlyName());
+			Assert.Equal("List<Tuple<int, string>>", typeof(List<Tuple<int, string>>).FriendlyName());
+			Assert.Equal("Tuple<short[], string>", typeof(Tuple<short[], string>).FriendlyName());
 		}
 	}
 }
