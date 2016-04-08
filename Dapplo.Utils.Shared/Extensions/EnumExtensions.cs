@@ -29,6 +29,9 @@ using System.Runtime.Serialization;
 
 namespace Dapplo.Utils.Extensions
 {
+	/// <summary>
+	/// Extensions for enums
+	/// </summary>
 	public static class EnumExtensions
 	{
 		/// <summary>

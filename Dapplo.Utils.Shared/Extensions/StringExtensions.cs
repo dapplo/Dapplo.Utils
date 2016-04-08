@@ -37,6 +37,9 @@ using Microsoft.VisualBasic.FileIO;
 
 namespace Dapplo.Utils.Extensions
 {
+	/// <summary>
+	/// This class contains extensions for strings
+	/// </summary>
 	public static class StringExtensions
 	{
 		private static readonly Regex CleanupRegex = new Regex(@"[^a-z0-9]+", RegexOptions.Compiled);
@@ -44,11 +47,11 @@ namespace Dapplo.Utils.Extensions
 
 		/// <summary>
 		///     Helper method for converting a string to a non strict value.
-		///     This means, ToLowerInvariant and replace all non alpha/digits to ""
+		///     This means, ToLowerInvariant and remove all non alpha/digits 
 		/// </summary>
-		/// <param name="value"></param>
-		/// <returns>clean string</returns>
-		public static string Cleanup(this string value)
+		/// <param name="value">string</param>
+		/// <returns>string which is tolower an only has alpha and digits</returns>
+		public static string RemoveNonAlphaDigitsToLower(this string value)
 		{
 			return CleanupRegex.Replace(value.ToLowerInvariant(), "");
 		}
@@ -173,14 +176,14 @@ namespace Dapplo.Utils.Extensions
 		}
 
 		/// <summary>
-		///     Check if 2 strings are equal if both are made ToLower and all non alpha & digits are removed.
+		///     Check if 2 strings are equal if both are made ToLower and all non alpha and digits are removed.
 		/// </summary>
 		/// <param name="value1"></param>
 		/// <param name="value2"></param>
 		/// <returns>true if they are 'equal'</returns>
 		public static bool NonStrictEquals(this string value1, string value2)
 		{
-			return value1.Cleanup().Equals(value2.Cleanup());
+			return value1.RemoveNonAlphaDigitsToLower().Equals(value2.RemoveNonAlphaDigitsToLower());
 		}
 
 		/// <summary>

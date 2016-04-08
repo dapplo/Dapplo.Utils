@@ -33,8 +33,16 @@ namespace Dapplo.Utils
 	/// </summary>
 	public class AbcComparer : StringComparer
 	{
-		public static readonly AbcComparer Instance = new AbcComparer();
-
+		/// <summary>
+		/// Implement the StringComparer.Compare
+		/// </summary>
+		/// <param name="x">string</param>
+		/// <param name="y">string</param>
+		/// <returns>
+		/// A signed integer that indicates the relative values of x and y, as shown in the following table.
+		/// Less than zero: x precedes y in the sort order -or-x is null and y is not null.
+		/// Zero: x is equal to y -or-x and y are both null.
+		/// Greater than zero: x follows y in the sort order -or- y is null and x is not null.</returns>
 		public override int Compare(string x, string y)
 		{
 			if (x == null && y != null)
@@ -47,9 +55,15 @@ namespace Dapplo.Utils
 				return 1;
 			}
 
-			return string.Compare(x.Cleanup(), y.Cleanup(), StringComparison.Ordinal);
+			return string.Compare(x.RemoveNonAlphaDigitsToLower(), y.RemoveNonAlphaDigitsToLower(), StringComparison.Ordinal);
 		}
 
+		/// <summary>
+		/// Check if values are equal
+		/// </summary>
+		/// <param name="x">string</param>
+		/// <param name="y">string</param>
+		/// <returns>true if x and y are the same</returns>
 		public override bool Equals(string x, string y)
 		{
 			if (x == null && y != null)
@@ -62,12 +76,17 @@ namespace Dapplo.Utils
 				return false;
 			}
 
-			return x.Cleanup().Equals(y.Cleanup());
+			return x.RemoveNonAlphaDigitsToLower().Equals(y.RemoveNonAlphaDigitsToLower());
 		}
 
+		/// <summary>
+		/// Returns the hashcode of the passed string after it was modified by removing all non digits or alphas, and running tolower.
+		/// </summary>
+		/// <param name="obj">string</param>
+		/// <returns>int with hashcode</returns>
 		public override int GetHashCode(string obj)
 		{
-			return obj.Cleanup().GetHashCode();
+			return obj.RemoveNonAlphaDigitsToLower().GetHashCode();
 		}
 	}
 }

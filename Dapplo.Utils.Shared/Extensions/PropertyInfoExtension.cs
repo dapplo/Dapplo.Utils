@@ -30,6 +30,9 @@ using System.Runtime.Serialization;
 
 namespace Dapplo.Utils.Extensions
 {
+	/// <summary>
+	/// Extensions for PropertyInfo
+	/// </summary>
 	public static class PropertyInfoExtension
 	{
 #if !_PCL_

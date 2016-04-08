@@ -23,6 +23,7 @@
 				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
 				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
 				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
+				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />
 				<dependency id="System.ObjectModel" version="4.0.10" />
 				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
@@ -32,6 +33,7 @@
 				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
 				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
 				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
+				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />
 				<dependency id="System.ObjectModel" version="4.0.10" />
 				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
@@ -41,6 +43,7 @@
 				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
 				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
 				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
+				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />
 				<dependency id="System.ObjectModel" version="4.0.10" />
 				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
@@ -48,12 +51,19 @@
 	</metadata>
 	<files>
 		<file src="Dapplo.Utils\bin\release\$id$.pdb" target="lib\net45" />
+		<file src="Dapplo.Utils\bin\release\$id$.xml" target="lib\net45" />
 		<file src="Dapplo.Utils\bin\release\$id$.dll" target="lib\net45" />
+
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\dnxcore50" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.xml" target="lib\dnxcore50" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\dnxcore50" />
+		
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\dotnet" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.xml" target="lib\dotnet" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\dotnet" />
+		
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.pdb" target="lib\uap10.0" />
+		<file src="Dapplo.Utils.PCL\bin\release\$id$.xml" target="lib\uap10.0" />
 		<file src="Dapplo.Utils.PCL\bin\release\$id$.dll" target="lib\uap10.0" />
 	</files>
 </package>

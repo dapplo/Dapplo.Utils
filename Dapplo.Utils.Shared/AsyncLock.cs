@@ -68,6 +68,10 @@ namespace Dapplo.Utils
 		// To detect redundant calls
 		private bool _disposedValue;
 
+		/// <summary>
+		/// Dispose the current async lock, and it's underlying SemaphoreSlim
+		/// </summary>
+		/// <param name="disposing"></param>
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!_disposedValue)
@@ -81,13 +85,18 @@ namespace Dapplo.Utils
 			}
 		}
 
+		/// <summary>
+		/// Finalizer, as it would be bad to leave a SemaphoreSlim
+		/// </summary>
 		~AsyncLock()
 		{
 			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(false);
 		}
 
-		// This code added to correctly implement the disposable pattern.
+		/// <summary>
+		/// Implementation of the IDisposable
+		/// </summary>
 		public void Dispose()
 		{
 			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
