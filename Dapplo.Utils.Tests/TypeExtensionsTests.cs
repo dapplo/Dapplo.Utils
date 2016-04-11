@@ -80,6 +80,19 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
+		public void TestDefault()
+		{
+			var defaultBool = typeof(bool).Default();
+			Assert.Equal(false, defaultBool);
+			var defaultInt = typeof(int).Default();
+			Assert.Equal(0, defaultInt);
+			var defaultString = typeof(string).Default();
+			Assert.Equal(null, defaultString);
+			var defaultListOfString = typeof(List<string>).Default();
+			Assert.Equal(null, defaultListOfString);
+		}
+
+		[Fact]
 		public void TestFriendlyName()
 		{
 			Assert.Equal("string", typeof(string).FriendlyName());

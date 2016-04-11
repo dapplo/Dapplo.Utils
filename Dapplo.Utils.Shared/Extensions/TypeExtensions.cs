@@ -21,6 +21,7 @@
 
 #region using
 
+using Dapplo.LogFacade;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,7 +29,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using Dapplo.LogFacade;
 
 #endregion
 
@@ -429,6 +429,23 @@ namespace Dapplo.Utils.Extensions
 			}
 
 			return friendlyName;
+		}
+
+		/// <summary>
+		/// Create a default value for a type, this usually is "null" for reference type, but for other, e.g. bool it's false or for int it's 0
+		/// This extension method takes care of this.
+		/// 
+		/// Note: this differs a LOT from CreateInstance, as there we get an instance (e.g. for IList of string an empty List of string).
+		/// </summary>
+		/// <param name="type">Type to create a default for</param>
+		/// <returns>Default for type</returns>
+		public static object Default(this Type type)
+		{
+			if (type.GetTypeInfo().IsValueType)
+			{
+				return Activator.CreateInstance(type);
+			}
+			return null;
 		}
 	}
 }
