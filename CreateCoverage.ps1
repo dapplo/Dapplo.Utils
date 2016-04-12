@@ -25,7 +25,7 @@ Start-Process -wait $opencoverPath\tools\OpenCover.Console.exe -PassThru -NoNewW
 if (Test-Path Env:COVERALLS_REPO_TOKEN) {
 	$coverallsPath = ((gci packages\\coveralls.io* | sort-object name)[-1]).Fullname
 	$coverallsArguments = @("--opencover $output")
-	Start-Process -wait $coverallsPath\tools\coveralls.net.exe -PassThru -NoNew
+	Start-Process -wait $coverallsPath\tools\coveralls.net.exe -PassThru -NoNewWindow -ArgumentList $coverallsArguments
 }
 else {
 	$reportgeneratorPath = ((gci packages\ReportGenerator* | sort-object name)[-1]).Fullname
