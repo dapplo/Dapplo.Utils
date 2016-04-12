@@ -43,11 +43,12 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task TestLock()
 		{
-			var asyncLock = new AsyncLock();
-
-			using (await asyncLock.LockAsync())
+			using (var asyncLock = new AsyncLock())
 			{
-				Log.Debug().WriteLine("Got lock!");
+				using (await asyncLock.LockAsync())
+				{
+					Log.Debug().WriteLine("Got lock!");
+				}
 			}
 		}
 	}

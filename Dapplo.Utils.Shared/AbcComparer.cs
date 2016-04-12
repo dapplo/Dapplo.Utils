@@ -55,6 +55,11 @@ namespace Dapplo.Utils
 				return 1;
 			}
 
+			if (x == null && y == null)
+			{
+				return 0;
+			}
+
 			return string.Compare(x.RemoveNonAlphaDigitsToLower(), y.RemoveNonAlphaDigitsToLower(), StringComparison.Ordinal);
 		}
 
@@ -75,6 +80,12 @@ namespace Dapplo.Utils
 			{
 				return false;
 			}
+
+			if (x == null && y == null)
+			{
+				return true;
+			}
+
 
 			return x.RemoveNonAlphaDigitsToLower().Equals(y.RemoveNonAlphaDigitsToLower());
 		}
