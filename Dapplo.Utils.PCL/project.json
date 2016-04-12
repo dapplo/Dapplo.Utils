@@ -14,7 +14,7 @@
     "System.ComponentModel.TypeConverter": "4.0.0",
     "System.ObjectModel": "4.0.10",
     "System.Reflection": "4.0.10",
-    "System.Runtime.Serialization.Primitives": "4.1.0"
+    "System.Runtime.Serialization.Primitives": "4.0.10"
   },
   "frameworks": {
     "dotnet": {

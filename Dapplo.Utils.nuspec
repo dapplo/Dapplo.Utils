@@ -23,7 +23,7 @@
 				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
 				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
 				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
-				<dependency id="System.Runtime.Serialization.Primitives" version="4.1.0" />
+				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />
 				<dependency id="System.ObjectModel" version="4.0.10" />
 				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
@@ -33,7 +33,7 @@
 				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
 				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
 				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
-				<dependency id="System.Runtime.Serialization.Primitives" version="4.1.0" />
+				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />
 				<dependency id="System.ObjectModel" version="4.0.10" />
 				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
@@ -43,7 +43,7 @@
 				<dependency id="System.ComponentModel.Annotations" version="4.0.10" />
 				<dependency id="System.ComponentModel.Primitives" version="4.0.0" />
 				<dependency id="System.ComponentModel.TypeConverter" version="4.0.0" />
-				<dependency id="System.Runtime.Serialization.Primitives" version="4.1.0" />
+				<dependency id="System.Runtime.Serialization.Primitives" version="4.0.10" />
 				<dependency id="System.ObjectModel" version="4.0.10" />
 				<dependency id="System.Reflection" version="4.0.10" />
 			</group>
