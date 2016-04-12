@@ -24,6 +24,8 @@
 using System.Collections.Generic;
 using Dapplo.Utils.Extensions;
 using Xunit;
+using System;
+using Dapplo.Utils.Tests.TestEntities;
 
 #endregion
 
@@ -54,6 +56,46 @@ namespace Dapplo.Utils.Tests
 		{
 			var result = "{Name} is {Age} years old".FormatWith(new Dictionary<string, object> {{"Name", "Jan"}, {"Age", 10}});
 			Assert.Equal(Expected, result);
+
+			result = "{EnumValue}".FormatWith(new Dictionary<string, object> { { "EnumValue",  TestEnum.Value1 } });
+			Assert.Equal("1", result);
+			result = "{EnumValue}".FormatWith(new Dictionary<string, object> { { "EnumValue", TestEnum.Value2 } });
+			Assert.Equal("Value2", result);
+		}
+
+		[Fact]
+		public void TestFormatWith_Null()
+		{
+			string nullString = null;
+			Assert.Throws<ArgumentNullException>(() => nullString.FormatWith("nothing"));
+			var result = "{NullValue}".FormatWith(new Dictionary<string, object> { { "NullValue", null } });
+			Assert.Equal("", result);
+		}
+
+		[Fact]
+		public void TestNonStrictEquals()
+		{
+			string nullString = null;
+			Assert.True("abc123".NonStrictEquals("__AbC_123!"));
+			Assert.False("abc123".NonStrictEquals("a__AbC_123!"));
+			Assert.True(nullString.NonStrictEquals(null));
+		}
+
+		[Fact]
+		public void TestRemoveStartEndQuotes()
+		{
+			const string blub = "blub";
+			Assert.Equal(blub, $"\"{blub}\"".RemoveStartEndQuotes());
+		}
+
+
+		[Fact]
+		public void TestRemoveStartEndQuotesd()
+		{
+			const string csList = "value1=1,value2=2";
+			var dictionary = csList.SplitDictionary();
+			Assert.True(dictionary.ContainsKey("value1"));
+			Assert.Equal("1",dictionary["value1"]);
 		}
 	}
 }

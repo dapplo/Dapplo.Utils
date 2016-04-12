@@ -48,18 +48,27 @@ namespace Dapplo.Utils
 			return new Releaser(_semaphoreSlim);
 		}
 
+		/// <summary>
+		/// Internal structure used to make it possible to dispose
+		/// </summary>
 		internal struct Releaser : IDisposable
 		{
 			private readonly SemaphoreSlim _semaphoreSlim;
+			private bool _isReleased;
 
 			public Releaser(SemaphoreSlim semaphoreSlim)
 			{
+				_isReleased = false;
 				_semaphoreSlim = semaphoreSlim;
 			}
 
 			public void Dispose()
 			{
-				_semaphoreSlim.Release();
+				if (!_isReleased)
+				{
+					_semaphoreSlim.Release();
+					_isReleased = true;
+				}
 			}
 		}
 
@@ -71,15 +80,12 @@ namespace Dapplo.Utils
 		/// <summary>
 		/// Dispose the current async lock, and it's underlying SemaphoreSlim
 		/// </summary>
-		/// <param name="disposing"></param>
+		/// <param name="disposing">bool which is currently ignored as we have no managed objects</param>
 		protected virtual void Dispose(bool disposing)
 		{
 			if (!_disposedValue)
 			{
-				if (disposing)
-				{
-					_semaphoreSlim.Dispose();
-				}
+				_semaphoreSlim.Dispose();
 
 				_disposedValue = true;
 			}
@@ -90,7 +96,6 @@ namespace Dapplo.Utils
 		/// </summary>
 		~AsyncLock()
 		{
-			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(false);
 		}
 
@@ -99,8 +104,8 @@ namespace Dapplo.Utils
 		/// </summary>
 		public void Dispose()
 		{
-			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
 			Dispose(true);
+			// Make sure the finalizer for this instance is not called
 			GC.SuppressFinalize(this);
 		}
 

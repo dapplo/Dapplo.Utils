@@ -39,6 +39,17 @@ namespace Dapplo.Utils.Tests
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
 		}
+		[Fact]
+		public void TestConvertOrCastValueToType_NullAndEmpty()
+		{
+			var result = typeof(string).ConvertOrCastValueToType(null);
+			Assert.Null(result);
+
+			result = typeof(string).ConvertOrCastValueToType("");
+			Assert.NotNull(result);
+			Assert.True(result is string);
+			Assert.True((result as string).Length == 0);
+		}
 
 		[Fact]
 		public void TestConvertOrCastValueToType_StringToListOfString()

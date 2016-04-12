@@ -109,7 +109,15 @@ namespace Dapplo.Utils.Extensions
 				object value;
 				if (properties.TryGetValue(propertyGroup.Value, out value))
 				{
-					values.Add(value);
+					var enumValue = value as Enum;
+					if (enumValue != null)
+					{
+						values.Add(enumValue.EnumValueOf());
+					}
+					else
+					{
+						values.Add(value);
+					}
 				}
 				else
 				{
@@ -183,7 +191,8 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>true if they are 'equal'</returns>
 		public static bool NonStrictEquals(this string value1, string value2)
 		{
-			return value1.RemoveNonAlphaDigitsToLower().Equals(value2.RemoveNonAlphaDigitsToLower());
+			var abcComparer = new AbcComparer();
+			return abcComparer.Equals(value1, value2);
 		}
 
 		/// <summary>

@@ -21,52 +21,18 @@
 
 #region using
 
-using System.Threading.Tasks;
-using Dapplo.LogFacade;
-using Dapplo.Utils.Tests.Logger;
-using Xunit;
-using Xunit.Abstractions;
+using System;
+using System.Runtime.Serialization;
 
 #endregion
 
-namespace Dapplo.Utils.Tests
+namespace Dapplo.Utils.Tests.TestEntities
 {
-	public class AsyncLockTests
+	public enum TestEnum
 	{
-		private static readonly LogSource Log = new LogSource();
-
-		public AsyncLockTests(ITestOutputHelper testOutputHelper)
-		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
-		}
-
-		[Fact]
-		public async Task TestAsyncLock()
-		{
-			using (var asyncLock = new AsyncLock())
-			{
-				using (await asyncLock.LockAsync())
-				{
-					Log.Debug().WriteLine("Got lock!");
-				}
-			}
-		}
-
-		[Fact]
-		public void TestAsyncLockDoubleDispose()
-		{
-			using (var asyncLock = new AsyncLock())
-			{
-				// Call dispose inside the using, so it's called twice
-				asyncLock.Dispose();
-			}
-		}
-
-		[Fact]
-		public void TestAsyncLockFinalizer()
-		{
-			// force the finalizer usage
-			var asyncLock = new AsyncLock();
-		}
+		ValueDefault,
+		[EnumMember(Value = "1")]
+		Value1,
+		Value2
 	}
 }
