@@ -21,17 +21,24 @@
 
 #region using
 
+using System.ComponentModel;
 using System.Runtime.Serialization;
 
 #endregion
 
 namespace Dapplo.Utils.Tests.TestEntities
 {
-	public enum TestEnum
+	/// <summary>
+	/// Class used for testing the PropertyInfoExtensions
+	/// </summary>
+	public class PropertiesClass
 	{
-		ValueDefault,
-		[EnumMember(Value = "1")]
-		Value1,
-		Value2
+		[Category("Dapplo")]
+		[DataMember(Name = "name", EmitDefaultValue = true)]
+		[DefaultValue("Robin")]
+		[Description("This is a description")]
+		[ReadOnly(true)]
+		[TypeConverter(typeof(StringConverter))]
+		public string Name { get; set; }
 	}
 }

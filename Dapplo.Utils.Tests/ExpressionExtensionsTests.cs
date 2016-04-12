@@ -21,17 +21,31 @@
 
 #region using
 
-using System.Runtime.Serialization;
+using System;
+using System.Linq.Expressions;
+using Dapplo.LogFacade;
+using Dapplo.Utils.Extensions;
+using Dapplo.Utils.Tests.Logger;
+using Xunit;
+using Xunit.Abstractions;
 
 #endregion
 
-namespace Dapplo.Utils.Tests.TestEntities
+namespace Dapplo.Utils.Tests
 {
-	public enum TestEnum
+	public class ExpressionExtensionsTests
 	{
-		ValueDefault,
-		[EnumMember(Value = "1")]
-		Value1,
-		Value2
+		public ExpressionExtensionsTests(ITestOutputHelper testOutputHelper)
+		{
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+		}
+
+		[Fact]
+		public void TestExpression_GetMemberName()
+		{
+			Expression<Func<string, bool>> expression = t => t.EndsWith("");
+			var memberName = expression.GetMemberName();
+			Assert.Equal("EndsWith", memberName);
+		}
 	}
 }

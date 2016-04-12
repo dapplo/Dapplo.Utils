@@ -28,6 +28,7 @@ using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
 using System;
+using System.ComponentModel;
 
 #endregion
 
@@ -39,11 +40,27 @@ namespace Dapplo.Utils.Tests
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
 		}
+
+		[Fact]
+		public void TestAdd()
+		{
+			// Added to get better coverage
+			TypeExtensions.AddDefaultConverter(typeof(TypeExtensionsTests), null);
+		}
+
 		[Fact]
 		public void TestConvertOrCastValueToType_NullAndEmpty()
 		{
 			var result = typeof(string).ConvertOrCastValueToType(null);
 			Assert.Null(result);
+			// Added to get better coverage
+			result = TypeExtensions.ConvertOrCastValueToType<string>(null, null, null);
+			Assert.Null(result);
+
+			result = typeof(string).ConvertOrCastValueToType("", new StringConverter());
+			Assert.NotNull(result);
+			Assert.True(result is string);
+			Assert.True((result as string).Length == 0);
 
 			result = typeof(string).ConvertOrCastValueToType("");
 			Assert.NotNull(result);

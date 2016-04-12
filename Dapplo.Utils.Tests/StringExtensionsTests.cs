@@ -67,6 +67,7 @@ namespace Dapplo.Utils.Tests
 		public void TestFormatWith_Null()
 		{
 			string nullString = null;
+			// ReSharper disable once ExpressionIsAlwaysNull
 			Assert.Throws<ArgumentNullException>(() => nullString.FormatWith("nothing"));
 			var result = "{NullValue}".FormatWith(new Dictionary<string, object> { { "NullValue", null } });
 			Assert.Equal("", result);
@@ -78,6 +79,7 @@ namespace Dapplo.Utils.Tests
 			string nullString = null;
 			Assert.True("abc123".NonStrictEquals("__AbC_123!"));
 			Assert.False("abc123".NonStrictEquals("a__AbC_123!"));
+			// ReSharper disable once ExpressionIsAlwaysNull
 			Assert.True(nullString.NonStrictEquals(null));
 		}
 
@@ -90,12 +92,28 @@ namespace Dapplo.Utils.Tests
 
 
 		[Fact]
-		public void TestRemoveStartEndQuotesd()
+		public void TestSplitDictionary()
 		{
 			const string csList = "value1=1,value2=2";
 			var dictionary = csList.SplitDictionary();
 			Assert.True(dictionary.ContainsKey("value1"));
 			Assert.Equal("1",dictionary["value1"]);
+
+		}
+
+		[Fact]
+		public void TestRemoveStartEndQuotesd()
+		{
+			const string quotedString = "\"blub\"";
+			var unquotedString = quotedString.RemoveStartEndQuotes();
+			Assert.Equal("blub", unquotedString);
+
+			unquotedString = unquotedString.RemoveStartEndQuotes();
+			Assert.Equal("blub", unquotedString);
+
+			string nullString = null;
+			// ReSharper disable once ExpressionIsAlwaysNull
+			Assert.Null(nullString.RemoveStartEndQuotes());
 		}
 	}
 }

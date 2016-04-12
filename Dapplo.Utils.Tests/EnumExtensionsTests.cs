@@ -21,17 +21,33 @@
 
 #region using
 
-using System.Runtime.Serialization;
+using Dapplo.LogFacade;
+using Dapplo.Utils.Extensions;
+using Dapplo.Utils.Tests.Logger;
+using Xunit;
+using Xunit.Abstractions;
+using System;
+using Dapplo.Utils.Tests.TestEntities;
 
 #endregion
 
-namespace Dapplo.Utils.Tests.TestEntities
+namespace Dapplo.Utils.Tests
 {
-	public enum TestEnum
+	public class EnumExtensionsTests
 	{
-		ValueDefault,
-		[EnumMember(Value = "1")]
-		Value1,
-		Value2
+		public EnumExtensionsTests(ITestOutputHelper testOutputHelper)
+		{
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+		}
+
+		[Fact]
+		public void TestEnumValueOf()
+		{
+			Assert.Equal("1", TestEnum.Value1.EnumValueOf());
+			Assert.Equal("Value2", TestEnum.Value2.EnumValueOf());
+			Enum enumValue = null;
+			// ReSharper disable once ExpressionIsAlwaysNull
+			Assert.Equal(null, enumValue.EnumValueOf());
+		}
 	}
 }

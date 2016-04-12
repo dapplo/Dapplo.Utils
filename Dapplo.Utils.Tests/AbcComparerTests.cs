@@ -21,7 +21,6 @@
 
 #region using
 
-using System.Threading.Tasks;
 using Dapplo.LogFacade;
 using Dapplo.Utils.Tests.Logger;
 using Xunit;
