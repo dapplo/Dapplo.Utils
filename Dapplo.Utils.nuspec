@@ -9,7 +9,7 @@
         <iconUrl>http://www.dapplo.net/favicon.ico</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Dapplo.Utils contains a lot of utilities which are used throughout Dapplo code.</description>
-		<summary>Adds some missing code.</summary>
+		<summary>LockAsync, string and type extensions and more</summary>
         <language>en-us</language>
 		<copyright>$author$</copyright>
 		<tags>utils</tags>
