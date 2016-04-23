@@ -28,6 +28,7 @@ using Xunit.Abstractions;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 #endregion
 
@@ -80,6 +81,8 @@ namespace Dapplo.Utils.Tests
 				Assert.NotEqual(taskSchedulerId, taskSchedulerIdInside);
 				window.Close();
 			});
+
+			Dispatcher.CurrentDispatcher.InvokeShutdown();
 		}
 	}
 }

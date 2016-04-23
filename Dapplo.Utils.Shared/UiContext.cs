@@ -24,6 +24,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dapplo.LogFacade;
 
 #endregion
 
@@ -33,6 +34,8 @@ namespace Dapplo.Utils
 	/// </summary>
 	public static class UiContext
 	{
+		private static readonly LogSource Log = new LogSource();
+
 		/// <summary>
 		/// The TaskScheduler for the UI
 		/// </summary>
@@ -54,6 +57,7 @@ namespace Dapplo.Utils
 
 			if (SynchronizationContext.Current == null)
 			{
+				Log.Warn().WriteLine("No current SynchronizationContent, creating one.");
 				SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 			}
 
