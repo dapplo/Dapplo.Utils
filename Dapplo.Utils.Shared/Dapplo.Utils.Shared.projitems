@@ -6,7 +6,7 @@
     <SharedGUID>67647242-efc1-4a31-9bf3-cfaaabb61dc5</SharedGUID>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
-    <Import_RootNamespace>Dapplo.Utils.Shared</Import_RootNamespace>
+    <Import_RootNamespace>Dapplo.Utils</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AbcComparer.cs" />
@@ -17,5 +17,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\PropertyInfoExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UiContext.cs" />
   </ItemGroup>
 </Project>
