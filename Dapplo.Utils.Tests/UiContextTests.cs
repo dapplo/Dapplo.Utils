@@ -37,13 +37,18 @@ namespace Dapplo.Utils.Tests
 	/// <summary>
 	/// Test the UiContext
 	/// </summary>
-	public class UiContextTests
+	public class UiContextTests : IDisposable
 	{
 		private static readonly LogSource Log = new LogSource();
 
 		public UiContextTests(ITestOutputHelper testOutputHelper)
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+		}
+
+		public void Dispose()
+		{
+			Dispatcher.CurrentDispatcher.InvokeShutdown();
 		}
 
 		/// <summary>
@@ -82,7 +87,6 @@ namespace Dapplo.Utils.Tests
 				window.Close();
 			});
 
-			Dispatcher.CurrentDispatcher.InvokeShutdown();
 		}
 	}
 }
