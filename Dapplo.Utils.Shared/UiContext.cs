@@ -68,6 +68,38 @@ namespace Dapplo.Utils
 		///     Run your action on the UI, if needed.
 		///     Initialize() should be called once, otherwise the taskpool is used.
 		/// </summary>
+		/// <param name="function">Action to run</param>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>Task of TResult</returns>
+		public static Task<TResult> RunOn<TResult>(Func<TResult> function, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (UiTaskScheduler != null && TaskScheduler.Current != UiTaskScheduler)
+			{
+				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
+			}
+			return Task.Run(function, cancellationToken);
+		}
+
+		/// <summary>
+		///     Run your action on the UI, if needed.
+		///     Initialize() should be called once, otherwise the taskpool is used.
+		/// </summary>
+		/// <param name="function">Function to run</param>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>Task of TResult</returns>
+		public static Task<TResult> RunOn<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (UiTaskScheduler != null && TaskScheduler.Current != UiTaskScheduler)
+			{
+				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler).Unwrap();
+			}
+			return Task.Run(function, cancellationToken);
+		}
+
+		/// <summary>
+		///     Run your action on the UI, if needed.
+		///     Initialize() should be called once, otherwise the taskpool is used.
+		/// </summary>
 		/// <param name="action">Action to run</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task</returns>
