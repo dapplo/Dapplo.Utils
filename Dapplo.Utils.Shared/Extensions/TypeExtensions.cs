@@ -57,7 +57,7 @@ namespace Dapplo.Utils.Extensions
 		/// <summary>
 		/// Used for the generation of friendly names
 		/// </summary>
-		private static readonly Dictionary<Type, string> _typeToFriendlyName = new Dictionary<Type, string>
+		private static readonly Dictionary<Type, string> TypeToFriendlyName = new Dictionary<Type, string>
 		{
 			{typeof(string), "string"},
 			{typeof(object), "object"},
@@ -400,7 +400,7 @@ namespace Dapplo.Utils.Extensions
 		public static string FriendlyName(this Type type)
 		{
 			string friendlyName;
-			if (_typeToFriendlyName.TryGetValue(type, out friendlyName))
+			if (TypeToFriendlyName.TryGetValue(type, out friendlyName))
 			{
 				return friendlyName;
 			}

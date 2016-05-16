@@ -35,8 +35,6 @@ namespace Dapplo.Utils.Tests
 	/// </summary>
 	public class AbcComparerTests
 	{
-		private static readonly LogSource Log = new LogSource();
-
 		public AbcComparerTests(ITestOutputHelper testOutputHelper)
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);

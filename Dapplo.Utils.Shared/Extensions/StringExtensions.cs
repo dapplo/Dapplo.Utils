@@ -24,11 +24,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 #if !_PCL_
+using System.IO;
 using Microsoft.VisualBasic.FileIO;
 
 #endif
@@ -110,14 +110,7 @@ namespace Dapplo.Utils.Extensions
 				if (properties.TryGetValue(propertyGroup.Value, out value))
 				{
 					var enumValue = value as Enum;
-					if (enumValue != null)
-					{
-						values.Add(enumValue.EnumValueOf());
-					}
-					else
-					{
-						values.Add(value);
-					}
+					values.Add(enumValue != null ? enumValue.EnumValueOf() : value);
 				}
 				else
 				{

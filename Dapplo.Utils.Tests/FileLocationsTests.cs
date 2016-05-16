@@ -21,14 +21,10 @@
 
 #region using
 
-using System.Collections.Generic;
 using Dapplo.LogFacade;
-using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
-using System;
-using System.ComponentModel;
 
 #endregion
 

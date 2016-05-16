@@ -66,6 +66,7 @@ namespace Dapplo.Utils.Tests
 		public void TestAsyncLockFinalizer()
 		{
 			// force the finalizer usage
+			// ReSharper disable once UnusedVariable
 			var asyncLock = new AsyncLock();
 		}
 	}

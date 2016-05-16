@@ -34,8 +34,6 @@ namespace Dapplo.Utils.Tests
 {
 	public class DictionaryExtensionsTests
 	{
-		private static readonly LogSource Log = new LogSource();
-
 		public DictionaryExtensionsTests(ITestOutputHelper testOutputHelper)
 		{
 			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);

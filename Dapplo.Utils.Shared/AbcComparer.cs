@@ -55,7 +55,7 @@ namespace Dapplo.Utils
 				return 1;
 			}
 
-			if (x == null && y == null)
+			if (x == null)
 			{
 				return 0;
 			}
@@ -81,7 +81,7 @@ namespace Dapplo.Utils
 				return false;
 			}
 
-			if (x == null && y == null)
+			if (x == null)
 			{
 				return true;
 			}
