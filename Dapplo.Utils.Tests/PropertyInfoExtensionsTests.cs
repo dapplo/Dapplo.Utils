@@ -36,7 +36,8 @@ namespace Dapplo.Utils.Tests
 {
 	public class PropertyInfoExtensionsTests
 	{
-		private readonly PropertyInfo _propertyInfo = typeof(PropertiesClass).GetProperty("Name");
+		private readonly PropertyInfo _propertyInfoName = typeof(PropertiesClass).GetProperty("Name");
+		private readonly PropertyInfo _propertyInfoName2 = typeof(PropertiesClass).GetProperty("Name2");
 
 		public PropertyInfoExtensionsTests(ITestOutputHelper testOutputHelper)
 		{
@@ -46,49 +47,52 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void TestCategory()
 		{
-			var category = _propertyInfo.GetCategory();
+			var category = _propertyInfoName.GetCategory();
 			Assert.Equal("Dapplo", category);
 		}
 
 		[Fact]
 		public void TestDataMemberName()
 		{
-			var dataMemberName = _propertyInfo.GetDataMemberName();
+			var dataMemberName = _propertyInfoName.GetDataMemberName();
 			Assert.Equal("name", dataMemberName);
 		}
 
 		[Fact]
 		public void TestDefaultValue()
 		{
-			var defaultValue = _propertyInfo.GetDefaultValue();
+			var defaultValue = _propertyInfoName.GetDefaultValue();
 			Assert.Equal("Robin", defaultValue);
 		}
 
 		[Fact]
 		public void TestDescription()
 		{
-			var description = _propertyInfo.GetDescription();
+			var description = _propertyInfoName.GetDescription();
 			Assert.Equal("This is a description", description);
+			// Test display attribute
+			var description2 = _propertyInfoName2.GetDescription();
+			Assert.Equal("This is also a description", description2);
 		}
 
 		[Fact]
 		public void TestEmitDefaultValue()
 		{
-			var emitDefaultValue = _propertyInfo.GetEmitDefaultValue();
+			var emitDefaultValue = _propertyInfoName.GetEmitDefaultValue();
 			Assert.True(emitDefaultValue);
 		}
 
 		[Fact]
 		public void TestReadOnly()
 		{
-			var readOnly = _propertyInfo.GetReadOnly();
+			var readOnly = _propertyInfoName.GetReadOnly();
 			Assert.True(readOnly);
 		}
 
 		[Fact]
 		public void TestTypeConverter()
 		{
-			var typeConverter = _propertyInfo.GetTypeConverter();
+			var typeConverter = _propertyInfoName.GetTypeConverter();
 			Assert.Equal(typeof(StringConverter), typeConverter.GetType());
 		}
 	}

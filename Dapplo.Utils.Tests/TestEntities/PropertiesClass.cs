@@ -23,6 +23,7 @@
 
 using System.ComponentModel;
 using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 #endregion
 
@@ -40,5 +41,8 @@ namespace Dapplo.Utils.Tests.TestEntities
 		[ReadOnly(true)]
 		[TypeConverter(typeof(StringConverter))]
 		public string Name { get; set; }
+
+		[Display(Description = "This is also a description")]
+		public string Name2 { get; set; }
 	}
 }

@@ -25,6 +25,7 @@ using System;
 using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 #endregion
 
@@ -95,7 +96,6 @@ namespace Dapplo.Utils.Extensions
 			return null;
 		}
 
-#if !_PCL_
 		/// <summary>
 		///     Retrieve the Description from the DescriptionAttribute for the supplied PropertyInfo
 		/// </summary>
@@ -103,10 +103,16 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Description</returns>
 		public static string GetDescription(this PropertyInfo propertyInfo)
 		{
+#if !_PCL_
 			var descriptionAttribute = propertyInfo.GetCustomAttribute<DescriptionAttribute>(true);
-			return descriptionAttribute?.Description;
-		}
+			if (descriptionAttribute != null)
+			{
+				return descriptionAttribute.Description;
+			}
 #endif
+			var displayAttribute = propertyInfo.GetCustomAttribute<DisplayAttribute>(true);
+			return displayAttribute?.Description;
+		}
 
 		/// <summary>
 		///     Retrieve the EmitDefaultValue from the DataMemberAttribute for the supplied PropertyInfo
