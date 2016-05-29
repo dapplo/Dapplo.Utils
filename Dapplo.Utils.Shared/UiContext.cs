@@ -42,7 +42,7 @@ namespace Dapplo.Utils
 		public static TaskScheduler UiTaskScheduler
 		{
 			get;
-			private set;
+			internal set;
 		}
 
 		/// <summary>

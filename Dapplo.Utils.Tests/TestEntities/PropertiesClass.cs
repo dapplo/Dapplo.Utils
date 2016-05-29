@@ -44,5 +44,7 @@ namespace Dapplo.Utils.Tests.TestEntities
 
 		[Display(Description = "This is also a description")]
 		public string Name2 { get; set; }
+
+		public int Age { get; set; }
 	}
 }

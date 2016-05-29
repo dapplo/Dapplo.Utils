@@ -22,6 +22,7 @@
 #region using
 
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Dapplo.LogFacade;
 using Dapplo.Utils.Extensions;
@@ -41,11 +42,27 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public void TestExpression_GetMemberName()
+		public void TestExpression_GetMemberName_Call()
 		{
 			Expression<Func<string, bool>> expression = t => t.EndsWith("");
 			var memberName = expression.GetMemberName();
 			Assert.Equal("EndsWith", memberName);
+		}
+
+		[Fact]
+		public void TestExpression_GetMemberName_MemberAccess()
+		{
+			Expression<Func<string, int>> expression = t => t.Length;
+			var memberName = expression.GetMemberName();
+			Assert.Equal("Length", memberName);
+		}
+
+		[Fact]
+		public void TestExpression_GetMemberName_ArrayLength()
+		{
+			Expression<Func<string[],int>> expression = t => t.Length;
+			var memberName = expression.GetMemberName();
+			Assert.Equal("Length", memberName);
 		}
 	}
 }

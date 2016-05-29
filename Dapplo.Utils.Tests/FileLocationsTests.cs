@@ -21,6 +21,7 @@
 
 #region using
 
+using System.Text.RegularExpressions;
 using Dapplo.LogFacade;
 using Dapplo.Utils.Tests.Logger;
 using Xunit;
@@ -38,11 +39,26 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public void TestAdd()
+		public void TestScan()
 		{
 			var startupDirectory = FileLocations.StartupDirectory;
 			var files = FileLocations.Scan(new []{ startupDirectory }, "*.xml");
 			Assert.Contains(files, (file) => file.EndsWith("Dapplo.Utils.xml"));
+		}
+
+		[Fact]
+		public void TestScanRegex()
+		{
+			var startupDirectory = FileLocations.StartupDirectory;
+			var files = FileLocations.Scan(new[] { startupDirectory }, new Regex(@".*\.xml"));
+			Assert.Contains(files, (file) => file.Item1.EndsWith("Dapplo.Utils.xml"));
+		}
+
+		[Fact]
+		public void TestRoamingAppData()
+		{
+			var roamingAppDataDirectory = FileLocations.RoamingAppDataDirectory("Dapplo");
+			Assert.EndsWith(@"AppData\Roaming\Dapplo", roamingAppDataDirectory);
 		}
 	}
 }

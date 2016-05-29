@@ -59,10 +59,32 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
+		public void TestDataMemberName_Null()
+		{
+			// Request the DataMemberName for a not annotated property
+			var dataMemberName = _propertyInfoName2.GetDataMemberName();
+			Assert.Null(dataMemberName);
+		}
+
+		[Fact]
 		public void TestDefaultValue()
 		{
 			var defaultValue = _propertyInfoName.GetDefaultValue();
 			Assert.Equal("Robin", defaultValue);
+		}
+
+		[Fact]
+		public void TestDefaultValue_ValueTypeWithoutAnnotation()
+		{
+			var defaultValue = typeof(PropertiesClass).GetProperty("Age").GetDefaultValue();
+			Assert.Null(defaultValue);
+		}
+
+		[Fact]
+		public void TestDefaultValue_ReferenceTypeStringWithoutAnnotation()
+		{
+			var defaultValue = _propertyInfoName2.GetDefaultValue();
+			Assert.Null(defaultValue);
 		}
 
 		[Fact]
@@ -83,6 +105,13 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
+		public void TestEmitDefaultValue_NoAnnotation()
+		{
+			var emitDefaultValue = _propertyInfoName2.GetEmitDefaultValue();
+			Assert.False(emitDefaultValue);
+		}
+
+		[Fact]
 		public void TestReadOnly()
 		{
 			var readOnly = _propertyInfoName.GetReadOnly();
@@ -94,6 +123,20 @@ namespace Dapplo.Utils.Tests
 		{
 			var typeConverter = _propertyInfoName.GetTypeConverter();
 			Assert.Equal(typeof(StringConverter), typeConverter.GetType());
+		}
+
+		[Fact]
+		public void TestTypeConverter_NotSpecified_Create()
+		{
+			var typeConverter = _propertyInfoName2.GetTypeConverter(true);
+			Assert.Equal(typeof(StringConverter), typeConverter.GetType());
+		}
+
+		[Fact]
+		public void TestTypeConverter_NotSpecified()
+		{
+			var typeConverter = _propertyInfoName2.GetTypeConverter();
+			Assert.Null(typeConverter);
 		}
 	}
 }

@@ -34,29 +34,6 @@ namespace Dapplo.Utils.Extensions
 	public static class ExpressionExtensions
 	{
 		/// <summary>
-		///     Non extension helper method to get a refactorable name of a member.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="expression"></param>
-		/// <returns>Name of member</returns>
-		public static string GetMemberName<T>(Expression<Action<T>> expression)
-		{
-			return expression.GetMemberName();
-		}
-
-		/// <summary>
-		///     Non extension helper method to get a refactorable name of a member.
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <typeparam name="TProp"></typeparam>
-		/// <param name="expression"></param>
-		/// <returns>Name of member</returns>
-		public static string GetMemberName<T, TProp>(Expression<Func<T, TProp>> expression)
-		{
-			return expression.GetMemberName();
-		}
-
-		/// <summary>
 		///     Get the name of the member in a Lambda expression
 		/// </summary>
 		/// <param name="memberSelector">LambdaExpression</param>
