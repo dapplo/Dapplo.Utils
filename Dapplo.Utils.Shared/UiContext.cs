@@ -31,6 +31,7 @@ using Dapplo.LogFacade;
 namespace Dapplo.Utils
 {
 	/// <summary>
+	/// This helps to make sure Tasks can have access to the UI 
 	/// </summary>
 	public static class UiContext
 	{
@@ -65,6 +66,11 @@ namespace Dapplo.Utils
 		}
 
 		/// <summary>
+		/// Checks if there is UI access possible
+		/// </summary>
+		public static bool HasUiAccess => UiTaskScheduler != null && TaskScheduler.Current == UiTaskScheduler;
+
+		/// <summary>
 		///     Run your action on the UI, if needed.
 		///     Initialize() should be called once, otherwise the taskpool is used.
 		/// </summary>
@@ -73,7 +79,7 @@ namespace Dapplo.Utils
 		/// <returns>Task of TResult</returns>
 		public static Task<TResult> RunOn<TResult>(Func<TResult> function, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (UiTaskScheduler != null && TaskScheduler.Current != UiTaskScheduler)
+			if (!HasUiAccess)
 			{
 				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
 			}
@@ -89,7 +95,7 @@ namespace Dapplo.Utils
 		/// <returns>Task of TResult</returns>
 		public static Task<TResult> RunOn<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (UiTaskScheduler != null && TaskScheduler.Current != UiTaskScheduler)
+			if (!HasUiAccess)
 			{
 				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler).Unwrap();
 			}
@@ -105,7 +111,7 @@ namespace Dapplo.Utils
 		/// <returns>Task</returns>
 		public static Task RunOn(Action action, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (UiTaskScheduler != null && TaskScheduler.Current != UiTaskScheduler)
+			if (!HasUiAccess)
 			{
 				return Task.Factory.StartNew(action, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
 			}
