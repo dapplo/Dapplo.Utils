@@ -43,7 +43,7 @@ namespace Dapplo.Utils
 		public static TaskScheduler UiTaskScheduler
 		{
 			get;
-			set;
+			internal set;
 		}
 
 		/// <summary>
@@ -55,26 +55,15 @@ namespace Dapplo.Utils
 			{
 				return;
 			}
-			Reset();
-		}
-
-		/// <summary>
-		/// Reset is called from Initialize, only once, if Initialize is called multiple times it's ignored.
-		/// There are some cases where the UiContext needs to be reset, than this needs to be called.
-		/// </summary>
-		public static void Reset()
-		{
 
 			if (SynchronizationContext.Current == null)
 			{
-				Log.Warn().WriteLine("No current SynchronizationContent, creating one but this might cause issues!");
+				Log.Warn().WriteLine("No current SynchronizationContent, creating one.");
 				SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 			}
 
 			UiTaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 		}
-
-
 
 		/// <summary>
 		/// Checks if there is UI access possible
