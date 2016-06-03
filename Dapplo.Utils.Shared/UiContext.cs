@@ -43,7 +43,7 @@ namespace Dapplo.Utils
 		public static TaskScheduler UiTaskScheduler
 		{
 			get;
-			internal set;
+			set;
 		}
 
 		/// <summary>
@@ -58,7 +58,7 @@ namespace Dapplo.Utils
 
 			if (SynchronizationContext.Current == null)
 			{
-				Log.Warn().WriteLine("No current SynchronizationContent, creating one.");
+				Log.Warn().WriteLine("No current SynchronizationContent, creating one but this might cause issues!");
 				SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 			}
 
