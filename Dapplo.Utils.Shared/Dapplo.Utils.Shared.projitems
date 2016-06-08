@@ -17,7 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\PropertyInfoExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IClonable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ICloneable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UiContext.cs" />
   </ItemGroup>
 </Project>
