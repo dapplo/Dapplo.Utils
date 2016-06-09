@@ -19,31 +19,33 @@
 //  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
+#region using
 
-namespace Dapplo.Utils
+using System;
+using System.Runtime.Serialization;
+
+#endregion
+
+namespace Dapplo.Utils.Tests.TestEntities
 {
-	/// <summary>
-	/// The interface for the ShallowClone method.
-	/// </summary>
-	public interface IShallowCloneable
+	public class HasEvents : IHasEvents
 	{
-		/// <summary>
-		/// Make a memberwise clone of the object, this is "shallow".
-		/// </summary>
-		/// <returns>"Shallow" Cloned instance</returns>
-		object ShallowClone();
-	}
+		public event EventHandler Blub;
+		private event EventHandler _blub;
 
-	/// <summary>
-	/// The interface for the generic ShallowClone method.
-	/// </summary>
-	/// <typeparam name="T">Type of the copy which is returned</typeparam>
-	public interface IShallowCloneable<T> : IShallowCloneable where T : class
-    {
-		/// <summary>
-		/// Make a memberwise clone of the object, this is "shallow".
-		/// </summary>
-		/// <returns>"Shallow" Cloned instance of type T</returns>
-		new T ShallowClone();
-    }
+		public HasEvents()
+		{
+			_blub += (s, e) => {
+				throw new Exception();
+			};
+			Blub += (s, e) => {
+				throw new Exception();
+			};
+		}
+		public void Invoke()
+		{
+			_blub?.Invoke(null, null);
+			Blub?.Invoke(null, null);
+		}
+	}
 }

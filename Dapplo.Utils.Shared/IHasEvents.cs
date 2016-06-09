@@ -23,27 +23,9 @@
 namespace Dapplo.Utils
 {
 	/// <summary>
-	/// The interface for the ShallowClone method.
+	/// Marker interface for objects which contain events, this enables event extension methods.
 	/// </summary>
-	public interface IShallowCloneable
+	public interface IHasEvents
 	{
-		/// <summary>
-		/// Make a memberwise clone of the object, this is "shallow".
-		/// </summary>
-		/// <returns>"Shallow" Cloned instance</returns>
-		object ShallowClone();
 	}
-
-	/// <summary>
-	/// The interface for the generic ShallowClone method.
-	/// </summary>
-	/// <typeparam name="T">Type of the copy which is returned</typeparam>
-	public interface IShallowCloneable<T> : IShallowCloneable where T : class
-    {
-		/// <summary>
-		/// Make a memberwise clone of the object, this is "shallow".
-		/// </summary>
-		/// <returns>"Shallow" Cloned instance of type T</returns>
-		new T ShallowClone();
-    }
 }

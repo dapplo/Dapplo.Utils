@@ -76,6 +76,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbcComparerTests.cs" />
+    <Compile Include="EventExtensionsTests.cs" />
+    <Compile Include="TestEntities\HasEvents.cs" />
     <Compile Include="UiContextTests.cs" />
     <Compile Include="TestEntities\PropertiesClass.cs" />
     <Compile Include="TestEntities\TestEnum.cs" />

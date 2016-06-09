@@ -19,31 +19,39 @@
 //  You should have a copy of the GNU Lesser General Public License
 //  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
+#region using
 
-namespace Dapplo.Utils
+using Dapplo.LogFacade;
+using Dapplo.Utils.Extensions;
+using Dapplo.Utils.Tests.Logger;
+using Xunit;
+using Xunit.Abstractions;
+using System;
+using Dapplo.Utils.Tests.TestEntities;
+
+#endregion
+
+namespace Dapplo.Utils.Tests
 {
-	/// <summary>
-	/// The interface for the ShallowClone method.
-	/// </summary>
-	public interface IShallowCloneable
+	public class EventExtensionsTests
 	{
-		/// <summary>
-		/// Make a memberwise clone of the object, this is "shallow".
-		/// </summary>
-		/// <returns>"Shallow" Cloned instance</returns>
-		object ShallowClone();
-	}
+		public EventExtensionsTests(ITestOutputHelper testOutputHelper)
+		{
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+		}
 
-	/// <summary>
-	/// The interface for the generic ShallowClone method.
-	/// </summary>
-	/// <typeparam name="T">Type of the copy which is returned</typeparam>
-	public interface IShallowCloneable<T> : IShallowCloneable where T : class
-    {
-		/// <summary>
-		/// Make a memberwise clone of the object, this is "shallow".
-		/// </summary>
-		/// <returns>"Shallow" Cloned instance of type T</returns>
-		new T ShallowClone();
-    }
+		[Fact]
+		public void TestRemoveAllEventHandlers()
+		{
+			var hasEvents = new HasEvents();
+			// Should throw exception
+			Assert.Throws<Exception>(() => hasEvents.Invoke());
+
+			// Remove the event handlers
+			hasEvents.RemoveEventHandlers();
+
+			// Should not throw exception
+			hasEvents.Invoke();
+		}
+	}
 }
