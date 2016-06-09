@@ -68,7 +68,12 @@ namespace Dapplo.Utils
 		/// <summary>
 		/// Checks if there is UI access possible
 		/// </summary>
-		public static bool HasUiAccess => UiTaskScheduler != null && TaskScheduler.Current == UiTaskScheduler;
+		public static bool HasUiAccess => HasScheduler && TaskScheduler.Current == UiTaskScheduler;
+
+		/// <summary>
+		/// Checks if there is UI scheduler
+		/// </summary>
+		public static bool HasScheduler => UiTaskScheduler != null;
 
 		/// <summary>
 		///     Run your action on the UI, if needed.
@@ -79,7 +84,7 @@ namespace Dapplo.Utils
 		/// <returns>Task of TResult</returns>
 		public static Task<TResult> RunOn<TResult>(Func<TResult> function, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (!HasUiAccess)
+			if (HasScheduler && !HasUiAccess)
 			{
 				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
 			}
@@ -95,7 +100,7 @@ namespace Dapplo.Utils
 		/// <returns>Task of TResult</returns>
 		public static Task<TResult> RunOn<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (!HasUiAccess)
+			if (HasScheduler && !HasUiAccess)
 			{
 				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler).Unwrap();
 			}
@@ -111,7 +116,7 @@ namespace Dapplo.Utils
 		/// <returns>Task</returns>
 		public static Task RunOn(Action action, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (!HasUiAccess)
+			if (HasScheduler && !HasUiAccess)
 			{
 				return Task.Factory.StartNew(action, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
 			}
