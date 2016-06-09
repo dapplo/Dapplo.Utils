@@ -26,12 +26,12 @@ namespace Dapplo.Utils
 	/// The interface for the ShallowClone method.
 	/// </summary>
 	/// <typeparam name="T">Type of the copy which is returned</typeparam>
-	public interface ICloneable<T> where T : class
+	public interface IShallowCloneable<T> where T : class
     {
 		/// <summary>
 		/// Make a memberwise clone of the object, this is "shallow".
 		/// </summary>
-		/// <returns>Cloned instance of type T</returns>
+		/// <returns>"Shallow" Cloned instance of type T</returns>
 		T ShallowClone();
     }
 }
