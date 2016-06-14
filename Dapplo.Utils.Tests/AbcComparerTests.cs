@@ -21,8 +21,8 @@
 
 #region using
 
+using Dapplo.Log.XUnit;
 using Dapplo.LogFacade;
-using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -37,7 +37,7 @@ namespace Dapplo.Utils.Tests
 	{
 		public AbcComparerTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
 		}
 
 		[Fact]

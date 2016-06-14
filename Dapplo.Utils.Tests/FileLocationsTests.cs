@@ -23,9 +23,9 @@
 
 using System.Text.RegularExpressions;
 using Dapplo.LogFacade;
-using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
+using Dapplo.Log.XUnit;
 
 #endregion
 
@@ -35,7 +35,7 @@ namespace Dapplo.Utils.Tests
 	{
 		public FileLocationsTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
 		}
 
 		[Fact]

@@ -24,11 +24,11 @@
 using System.Collections.Generic;
 using Dapplo.LogFacade;
 using Dapplo.Utils.Extensions;
-using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
 using System;
 using System.ComponentModel;
+using Dapplo.Log.XUnit;
 
 #endregion
 
@@ -38,7 +38,7 @@ namespace Dapplo.Utils.Tests
 	{
 		public TypeExtensionsTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
 		}
 
 		[Fact]

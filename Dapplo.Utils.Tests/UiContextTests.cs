@@ -22,13 +22,13 @@
 #region using
 
 using Dapplo.LogFacade;
-using Dapplo.Utils.Tests.Logger;
 using Xunit;
 using Xunit.Abstractions;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using Dapplo.Log.XUnit;
 
 #endregion
 
@@ -43,7 +43,7 @@ namespace Dapplo.Utils.Tests
 
 		public UiContextTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevel.Verbose);
+			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
 		}
 
 		public void Dispose()
