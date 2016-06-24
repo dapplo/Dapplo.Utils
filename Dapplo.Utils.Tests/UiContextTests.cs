@@ -21,7 +21,7 @@
 
 #region using
 
-using Dapplo.LogFacade;
+using Dapplo.Log.Facade;
 using Xunit;
 using Xunit.Abstractions;
 using System;
@@ -43,7 +43,7 @@ namespace Dapplo.Utils.Tests
 
 		public UiContextTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
+			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
 		public void Dispose()

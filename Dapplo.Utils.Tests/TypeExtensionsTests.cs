@@ -22,7 +22,7 @@
 #region using
 
 using System.Collections.Generic;
-using Dapplo.LogFacade;
+using Dapplo.Log.Facade;
 using Dapplo.Utils.Extensions;
 using Xunit;
 using Xunit.Abstractions;
@@ -38,7 +38,7 @@ namespace Dapplo.Utils.Tests
 	{
 		public TypeExtensionsTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
+			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
 		[Fact]
@@ -54,18 +54,16 @@ namespace Dapplo.Utils.Tests
 			var result = typeof(string).ConvertOrCastValueToType(null);
 			Assert.Null(result);
 			// Added to get better coverage
-			result = TypeExtensions.ConvertOrCastValueToType<string>(null, null, null);
+			result = TypeExtensions.ConvertOrCastValueToType<string>(null);
 			Assert.Null(result);
 
-			result = typeof(string).ConvertOrCastValueToType("", new StringConverter());
-			Assert.NotNull(result);
-			Assert.True(result is string);
-			Assert.True((result as string).Length == 0);
+			var stringResult = typeof(string).ConvertOrCastValueToType("", new StringConverter()) as string;
+			Assert.NotNull(stringResult);
+			Assert.True(stringResult.Length == 0);
 
-			result = typeof(string).ConvertOrCastValueToType("");
-			Assert.NotNull(result);
-			Assert.True(result is string);
-			Assert.True((result as string).Length == 0);
+			stringResult = typeof(string).ConvertOrCastValueToType("") as string;
+			Assert.NotNull(stringResult);
+			Assert.True(stringResult.Length == 0);
 		}
 
 		[Fact]
@@ -78,7 +76,7 @@ namespace Dapplo.Utils.Tests
 			var listOfStrings = listOfStringsObject as IList<string>;
 			Assert.NotNull(listOfStrings);
 
-			Assert.NotNull(listOfStrings?.Count == 3);
+			Assert.NotNull(listOfStrings.Count == 3);
 		}
 
 		[Fact]
@@ -91,7 +89,7 @@ namespace Dapplo.Utils.Tests
 			var listOfInts = listOfIntssObject as IList<int>;
 			Assert.NotNull(listOfInts);
 
-			Assert.NotNull(listOfInts?.Count == 3);
+			Assert.NotNull(listOfInts.Count == 3);
 		}
 
 		[Fact]
@@ -104,7 +102,7 @@ namespace Dapplo.Utils.Tests
 			var listOfInts = listOfIntssObject as IList<int>;
 			Assert.NotNull(listOfInts);
 
-			Assert.NotNull(listOfInts?.Count == 3);
+			Assert.NotNull(listOfInts.Count == 3);
 		}
 
 		[Fact]

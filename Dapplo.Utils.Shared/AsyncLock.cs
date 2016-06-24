@@ -51,7 +51,7 @@ namespace Dapplo.Utils
 		/// <summary>
 		/// Internal structure used to make it possible to dispose
 		/// </summary>
-		internal struct Releaser : IDisposable
+		private struct Releaser : IDisposable
 		{
 			private readonly SemaphoreSlim _semaphoreSlim;
 			private bool _isReleased;
@@ -81,7 +81,7 @@ namespace Dapplo.Utils
 		/// Dispose the current async lock, and it's underlying SemaphoreSlim
 		/// </summary>
 		/// <param name="disposing">bool which is currently ignored as we have no managed objects</param>
-		protected virtual void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 		{
 			if (!_disposedValue)
 			{

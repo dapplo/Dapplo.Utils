@@ -70,9 +70,13 @@ namespace Dapplo.Utils.Extensions
 					continue;
 				}
 				var fieldInfo = typeWithEvents.GetField(eventInfo.Name, EventBindingFlags);
+				if (fieldInfo == null)
+				{
+					continue;
+				}
 				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
 				var removeMethod = eventInfo.GetRemoveMethod(true);
-				removeMethod?.Invoke(instance, new[] { eventDelegate });
+				removeMethod?.Invoke(instance, new object[] { eventDelegate });
 			}
 		}
 	}

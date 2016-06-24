@@ -22,7 +22,7 @@
 #region using
 
 using System.Text.RegularExpressions;
-using Dapplo.LogFacade;
+using Dapplo.Log.Facade;
 using Xunit;
 using Xunit.Abstractions;
 using Dapplo.Log.XUnit;
@@ -35,7 +35,7 @@ namespace Dapplo.Utils.Tests
 	{
 		public FileLocationsTests(ITestOutputHelper testOutputHelper)
 		{
-			XUnitLogger.RegisterLogger(testOutputHelper, LogLevels.Verbose);
+			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
 		[Fact]
