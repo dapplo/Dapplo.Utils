@@ -45,7 +45,7 @@
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsyncMemoryCached.cs" />
+    <Compile Include="AsyncMemoryCache.cs" />
     <Compile Include="FileLocations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
