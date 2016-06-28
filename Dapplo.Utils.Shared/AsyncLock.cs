@@ -41,10 +41,11 @@ namespace Dapplo.Utils
 		///     using(var lock = await asyncLock.LockAsync()) {
 		///     }
 		/// </summary>
+		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>disposable</returns>
-		public async Task<IDisposable> LockAsync()
+		public async Task<IDisposable> LockAsync(CancellationToken cancellationToken = default(CancellationToken))
 		{
-			await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
 			return new Releaser(_semaphoreSlim);
 		}
 
