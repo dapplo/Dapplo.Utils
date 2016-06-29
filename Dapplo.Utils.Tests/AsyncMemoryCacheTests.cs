@@ -8,6 +8,7 @@ using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Xunit;
 using Xunit.Abstractions;
+using Dapplo.Utils.Tests.Cache;
 
 namespace Dapplo.Utils.Tests
 {
@@ -23,8 +24,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task TestMemoryCache()
 		{
-			Func<Uri, CancellationToken, Task<BitmapSource>> testFunc = async (key, token) => await key.GetAsAsync<BitmapSource>(token);
-			var cache = AsyncMemoryCache.Create("Bitmap", testFunc);
+			var cache = new AsyncHttpCache();
 			var bitmapUri = new Uri("http://httpbin.org/image/png");
 			var tasks = new List<Task<BitmapSource>>();
 			for (int i = 0; i < 10; i++)
@@ -44,12 +44,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task TestMemoryCacheException()
 		{
-			Func<Uri, CancellationToken, Task<BitmapSource>> testFunc = async (key, token) =>
-			{
-				await Task.Delay(100);
-				throw new ArgumentNullException(nameof(key), key.AbsoluteUri);
-			};
-			var cache = AsyncMemoryCache.Create("Bitmap", testFunc);
+			var cache = new AsyncAwaitExceptionCache();
 			var bitmapUri = new Uri("http://httpbin.org/image/png");
 			var tasks = new List<Task<BitmapSource>>();
 			for (int i = 0; i < 10; i++)
@@ -62,14 +57,16 @@ namespace Dapplo.Utils.Tests
 				Assert.Contains(bitmapUri.AbsoluteUri, ex.Message);
 			}
 		}
+
 		[Fact]
 		public async Task TestMemoryCacheDelete()
 		{
-			Func<Uri, CancellationToken, Task<BitmapSource>> testFunc = async (key, token) => await key.GetAsAsync<BitmapSource>(token);
-			var cache = AsyncMemoryCache.Create("Bitmap", testFunc);
+			var cache = new AsyncHttpCache();
 			var bitmapUri = new Uri("http://httpbin.org/image/png");
 			var bitmapSource = await cache.GetOrCreateAsync(bitmapUri);
+
 			Assert.NotNull(bitmapSource);
+			Assert.NotNull(await cache.GetAsync(bitmapUri));
 			Assert.True(bitmapSource.Width > 0);
 			Assert.True(bitmapSource.Height > 0);
 
@@ -80,7 +77,6 @@ namespace Dapplo.Utils.Tests
 			Assert.NotNull(bitmapSource);
 			Assert.True(bitmapSource.Width > 0);
 			Assert.True(bitmapSource.Height > 0);
-
 		}
 	}
 }

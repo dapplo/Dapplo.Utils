@@ -80,6 +80,8 @@
   <ItemGroup>
     <Compile Include="AbcComparerTests.cs" />
     <Compile Include="AsyncMemoryCacheTests.cs" />
+    <Compile Include="Cache\AsyncAwaitExceptionCache.cs" />
+    <Compile Include="Cache\AsyncHttpCache.cs" />
     <Compile Include="EventExtensionsTests.cs" />
     <Compile Include="TestEntities\HasEvents.cs" />
     <Compile Include="UiContextTests.cs" />

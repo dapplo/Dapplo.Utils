@@ -41,13 +41,40 @@ namespace Dapplo.Utils
 		///     using(var lock = await asyncLock.LockAsync()) {
 		///     }
 		/// </summary>
+		/// <returns>disposable</returns>
+		public async Task<IDisposable> LockAsync()
+		{
+			await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
+			return new Releaser(_semaphoreSlim);
+		}
+
+		/// <summary>
+		///     usage
+		///     using(var lock = await asyncLock.LockAsync()) {
+		///     }
+		/// </summary>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>disposable</returns>
-		public async Task<IDisposable> LockAsync(CancellationToken cancellationToken = default(CancellationToken))
+		public async Task<IDisposable> LockAsync(CancellationToken cancellationToken)
 		{
 			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
 			return new Releaser(_semaphoreSlim);
 		}
+
+		/// <summary>
+		///     usage
+		///     using(var lock = await asyncLock.LockAsync(TimeSpan.FromMilliSeconds(100))) {
+		///     }
+		/// </summary>
+		/// <param name="timeout">TimeSpan</param>
+		/// <returns>disposable</returns>
+		public async Task<IDisposable> LockAsync(TimeSpan timeout)
+		{
+			var cancellationTokenSource = new CancellationTokenSource(timeout);
+			await _semaphoreSlim.WaitAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+			return new Releaser(_semaphoreSlim, cancellationTokenSource);
+		}
+
 
 		/// <summary>
 		/// Internal structure used to make it possible to dispose
@@ -55,12 +82,14 @@ namespace Dapplo.Utils
 		private struct Releaser : IDisposable
 		{
 			private readonly SemaphoreSlim _semaphoreSlim;
+			private readonly IDisposable _otherDisposable;
 			private bool _isReleased;
 
-			public Releaser(SemaphoreSlim semaphoreSlim)
+			public Releaser(SemaphoreSlim semaphoreSlim, IDisposable otherDisposable = null)
 			{
 				_isReleased = false;
 				_semaphoreSlim = semaphoreSlim;
+				_otherDisposable = otherDisposable;
 			}
 
 			public void Dispose()
@@ -68,6 +97,7 @@ namespace Dapplo.Utils
 				if (!_isReleased)
 				{
 					_semaphoreSlim.Release();
+					_otherDisposable?.Dispose();
 					_isReleased = true;
 				}
 			}
