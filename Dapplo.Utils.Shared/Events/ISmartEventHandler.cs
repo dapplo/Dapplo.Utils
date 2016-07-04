@@ -29,6 +29,11 @@ namespace Dapplo.Utils.Events
 	public interface ISmartEventHandler<TEventArgs>
 	{
 		/// <summary>
+		/// Should only the first match be handled?
+		/// </summary>
+		bool First { get;}
+
+		/// <summary>
 		/// Set the action which is executed on an event, if a when predicate is set this will be checked first
 		/// </summary>
 		/// <param name="doAction">action which is passed the sender and event arguments</param>
@@ -45,7 +50,8 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		/// Start the ISmartEventHandler by registering the underlying event
 		/// </summary>
-		void Start();
+		/// <returns>ISmartEvent (parent)</returns>
+		ISmartEvent<TEventArgs> Start();
 
 		/// <summary>
 		/// Test if the DoAtion can be called

@@ -20,8 +20,11 @@
 //  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using Xunit;
 using Dapplo.Utils.Events;
+using Dapplo.Utils.Tests.TestEntities;
 
 namespace Dapplo.Utils.Tests
 {
@@ -36,9 +39,14 @@ namespace Dapplo.Utils.Tests
 	/// <summary>
 	/// Test SmartEvent
 	/// </summary>
-	public class SmartEventTests
+	public class SmartEventTests : IDisposable
 	{
 		private event EventHandler<SimpleTestEvent> TestStringEvent;
+		private readonly IList<ISmartEvent> _smartEvents = new List<ISmartEvent>();
+		public void Dispose()
+		{
+			SmartEvent.DisposeAll(_smartEvents);
+		}
 
 		/// <summary>
 		/// Test the basic functionality for setting up an event handler via a reference
@@ -47,12 +55,18 @@ namespace Dapplo.Utils.Tests
 		public void SmartEvent_EventHandlerTest()
 		{
 			string testValue = null;
-			using (var smartEvent = SmartEvent.FromEvent(ref TestStringEvent))
-			{
-				smartEvent.On((sender, e) => testValue = e.TestValue).Start();
-				smartEvent.Trigger(this, new SimpleTestEvent { TestValue = "Dapplo" });
-			}
+			string testValue2 = null;
+			TestStringEvent += (sender, eventArgs) => testValue2 = eventArgs.TestValue;
+
+			var smartEvent = SmartEvent.FromEventHandler(ref TestStringEvent, _smartEvents).Every.Do((sender, e) => testValue = e.TestValue).Start();
+			smartEvent.Trigger(this, new SimpleTestEvent { TestValue = "Dapplo" });
+			// Dispose makes sure no events are handled via the smart event
+			smartEvent.Dispose();
+			// The following event should only be handled by the normal event handler
+			TestStringEvent(this, new SimpleTestEvent {TestValue = "Robin"});
+			// Make sure both values are what they are supposed to!
 			Assert.Equal("Dapplo", testValue);
+			Assert.Equal("Robin", testValue2);
 		}
 
 		/// <summary>
@@ -62,12 +76,40 @@ namespace Dapplo.Utils.Tests
 		public void SmartEvent_ReflectionTest()
 		{
 			string testValue = null;
+			var smartEvent = SmartEvent.FromReflection<SimpleTestEvent>(this, nameof(TestStringEvent), _smartEvents).Every.Do((sender, e) => testValue = e.TestValue).Start();
+			smartEvent.Trigger(this, new SimpleTestEvent { TestValue = "Dapplo" });
+			Assert.Equal("Dapplo", testValue);
+		}
+
+		/// <summary>
+		/// Test the basic functionality for setting up an event handler via reflection
+		/// </summary>
+		[Fact]
+		public void SmartEvent_First_Test()
+		{
+			string testValue = null;
 			using (var smartEvent = SmartEvent.FromReflection<SimpleTestEvent>(this, nameof(TestStringEvent)))
 			{
-				smartEvent.On((sender, e) => testValue = e.TestValue).Start();
+				smartEvent.First.Do((sender, e) => testValue = e.TestValue).Start();
 				smartEvent.Trigger(this, new SimpleTestEvent { TestValue = "Dapplo" });
 			}
 			Assert.Equal("Dapplo", testValue);
+		}
+
+		[Fact]
+		public void SmartEvent_NotifyPropertyChanged_Test()
+		{
+			string testValue = null;
+			var npc = new NotifyPropertyChangedClass();
+			using (var smartEvent = SmartEvent.FromReflection<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			{
+				smartEvent.First.Do((o, args) => testValue = args.PropertyName).Start();
+				npc.Name = "Dapplo";
+				Assert.Equal(nameof(npc.Name), testValue);
+				testValue = null;
+				npc.Name = "Dapplo2";
+				Assert.Null(testValue);
+			}
 		}
 	}
 }

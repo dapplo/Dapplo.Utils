@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Utils", "Dapplo.Utils\Dapplo.Utils.csproj", "{34C1972E-4B09-43F8-8A8A-1AACF09218C9}"
 EndProject
@@ -13,9 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Utils.PCL", "Dapplo.
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Dapplo.Utils.Shared\Dapplo.Utils.Shared.projitems*{34c1972e-4b09-43f8-8a8a-1aacf09218c9}*SharedItemsImports = 4
 		Dapplo.Utils.Shared\Dapplo.Utils.Shared.projitems*{51c825ce-e5fd-417a-824b-331590f6e397}*SharedItemsImports = 4
 		Dapplo.Utils.Shared\Dapplo.Utils.Shared.projitems*{67647242-efc1-4a31-9bf3-cfaaabb61dc5}*SharedItemsImports = 13
-		Dapplo.Utils.Shared\Dapplo.Utils.Shared.projitems*{34c1972e-4b09-43f8-8a8a-1aacf09218c9}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU

@@ -34,8 +34,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dapplo.HttpExtensions, Version=0.5.20.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dapplo.HttpExtensions.0.5.20\lib\net46\Dapplo.HttpExtensions.dll</HintPath>
+    <Reference Include="Dapplo.HttpExtensions, Version=0.5.23.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapplo.HttpExtensions.0.5.23\lib\net46\Dapplo.HttpExtensions.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Dapplo.Log.Facade, Version=0.5.3.0, Culture=neutral, processorArchitecture=MSIL">
@@ -85,6 +85,7 @@
     <Compile Include="EventExtensionsTests.cs" />
     <Compile Include="SmartEventTests.cs" />
     <Compile Include="TestEntities\HasEvents.cs" />
+    <Compile Include="TestEntities\NotifyPropertyChangedClass.cs" />
     <Compile Include="UiContextTests.cs" />
     <Compile Include="TestEntities\PropertiesClass.cs" />
     <Compile Include="TestEntities\TestEnum.cs" />
@@ -106,7 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dapplo.Utils\Dapplo.Utils.csproj">
-      <Project>{34C1972E-4B09-43F8-8A8A-1AACF09218C9}</Project>
+      <Project>{34c1972e-4b09-43f8-8a8a-1aacf09218c9}</Project>
       <Name>Dapplo.Utils</Name>
     </ProjectReference>
   </ItemGroup>

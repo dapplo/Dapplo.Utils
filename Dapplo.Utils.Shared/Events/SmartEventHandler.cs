@@ -28,7 +28,7 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	public class SmartEventHandler<TEventArgs> : ISmartEventHandler<TEventArgs>
 	{
-		private readonly ISmartEvent<TEventArgs> _parent;
+		private readonly SmartEvent<TEventArgs> _parent;
 
 		/// <summary>
 		/// The registered "when" Predicate
@@ -40,22 +40,39 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		public Action<object, TEventArgs> Action { get; private set; }
 
-		internal SmartEventHandler(ISmartEvent<TEventArgs> parent)
+		internal SmartEventHandler(SmartEvent<TEventArgs> parent)
 		{
 			_parent = parent;
 		}
 
 		/// <summary>
-		/// Register so
+		/// Start the event handling by registering this ISmartEventHandler to the parent SmartEvent.
+		/// If the SmartEvent didn't register the event yet, it will do so now.
 		/// </summary>
-		public void Start()
+		public ISmartEvent<TEventArgs> Start()
 		{
 			if (Action == null)
 			{
 				throw new ArgumentNullException(nameof(Action), "No action defined, nothing to do.");
 			}
 			_parent.Register(this);
+			return _parent;
 		}
+
+		/// <summary>
+		/// Pauses the event handling by unregistering this ISmartEventHandler to the parent
+		/// This might cause the event registration to be removed all together, but this should not matter.
+		/// </summary>
+		public ISmartEvent<TEventArgs> Pause()
+		{
+			_parent.Unregister(this);
+			return _parent;
+		}
+
+		/// <summary>
+		/// React to first event only, unregister when a match was found
+		/// </summary>
+		public bool First { get; set; }
 
 		/// <summary>
 		/// 

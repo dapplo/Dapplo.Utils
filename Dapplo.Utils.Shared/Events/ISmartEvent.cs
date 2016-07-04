@@ -24,38 +24,37 @@ using System;
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
+	/// Base marker interface for the SmartEvent
+	/// </summary>
+	public interface ISmartEvent : IDisposable
+	{
+		
+	}
+
+	/// <summary>
 	/// This is the interface to a smart event.
 	/// 
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
-    public interface ISmartEvent<TEventArgs> : IDisposable
+    public interface ISmartEvent<TEventArgs> : ISmartEvent
 	{
+		/// <summary>
+		/// Create a ISmartEventHandler which responds to every "matching" event
+		/// </summary>
+		/// <returns>ISmartEventHandler</returns>
+		ISmartEventHandler<TEventArgs> Every { get; }
+
+		/// <summary>
+		/// Create a ISmartEventHandler which responds to the first event
+		/// </summary>
+		/// <returns>ISmartEventHandler</returns>
+		ISmartEventHandler<TEventArgs> First { get; }
+
 		/// <summary>
 		/// Triggers the event, thus calling all registered delegates (also those which are no SmartEventHandlers)
 		/// </summary>
 		/// <param name="sender">object</param>
 		/// <param name="eventArgs">TEventArgs</param>
 		void Trigger(object sender, TEventArgs eventArgs);
-
-		/// <summary>
-		/// Create a ISmartEventHandler which is running the action if the underlying event triggers
-		/// </summary>
-		/// <param name="action"></param>
-		/// <returns>ISmartEventHandler</returns>
-		ISmartEventHandler<TEventArgs> On(Action<object, TEventArgs> action);
-
-		/// <summary>
-		/// Register a smartEventHandler to the ISmartEvent
-		/// </summary>
-		/// <param name="smartEventHandler">ISmartEventHandler</param>
-		/// <returns>this</returns>
-		ISmartEvent<TEventArgs> Register(ISmartEventHandler<TEventArgs> smartEventHandler);
-
-		/// <summary>
-		/// Unregister a smartEventHandler from the ISmartEvent
-		/// </summary>
-		/// <param name="smartEventHandler">ISmartEventHandler</param>
-		/// <returns>this</returns>
-		ISmartEvent<TEventArgs> Unregister(ISmartEventHandler<TEventArgs> smartEventHandler);
 	}
 }
