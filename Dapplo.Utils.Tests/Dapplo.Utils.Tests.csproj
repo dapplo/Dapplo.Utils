@@ -83,6 +83,7 @@
     <Compile Include="Cache\AsyncAwaitExceptionCache.cs" />
     <Compile Include="Cache\AsyncHttpCache.cs" />
     <Compile Include="EventExtensionsTests.cs" />
+    <Compile Include="SmartEventTests.cs" />
     <Compile Include="TestEntities\HasEvents.cs" />
     <Compile Include="UiContextTests.cs" />
     <Compile Include="TestEntities\PropertiesClass.cs" />
