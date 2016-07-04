@@ -22,9 +22,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Dapplo.Log.Facade;
+using Dapplo.Log.XUnit;
 using Xunit;
 using Dapplo.Utils.Events;
 using Dapplo.Utils.Tests.TestEntities;
+using Xunit.Abstractions;
 
 namespace Dapplo.Utils.Tests
 {
@@ -47,6 +50,12 @@ namespace Dapplo.Utils.Tests
 		{
 			SmartEvent.DisposeAll(_smartEvents);
 		}
+
+		public SmartEventTests(ITestOutputHelper testOutputHelper)
+		{
+			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+		}
+
 
 		/// <summary>
 		/// Test the basic functionality for setting up an event handler via a reference

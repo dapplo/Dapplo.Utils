@@ -32,6 +32,7 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	public static class SmartEvent
 	{
+		private static readonly LogSource Log = new LogSource();
 		private static readonly BindingFlags DefaultBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public |BindingFlags.NonPublic;
 
 		/// <summary>
@@ -52,7 +53,7 @@ namespace Dapplo.Utils.Events
 		/// <typeparam name="TEventArgs">Type for the event</typeparam>
 		/// <param name="eventHandler">EventHandler</param>
 		/// <param name="registeredSmartEvents">If you want to keep track of the ISmartEvent registrations, you can pass a list here</param>
-		public static ISmartEvent<TEventArgs> FromEventHandler<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, IList<ISmartEvent> registeredSmartEvents = null)
+		public static ISmartEvent<TEventArgs> FromEventHandler<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
 		{
 			var smartEvent = new SmartEvent<TEventArgs>(ref eventHandler);
 			registeredSmartEvents?.Add(smartEvent);
@@ -67,7 +68,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="eventName">nameof(object.event)</param>
 		/// <param name="registeredSmartEvents">If you want to keep track of the ISmartEvent registrations, you can pass a list here</param>
 		/// <returns>ISmartEvent</returns>
-		public static ISmartEvent<TEventArgs> FromReflection<TEventArgs>(object objectContainingEvent, string eventName, IList<ISmartEvent> registeredSmartEvents = null)
+		public static ISmartEvent<TEventArgs> FromReflection<TEventArgs>(object objectContainingEvent, string eventName, IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
 		{
 			// Use reflection to get the EventInfo object for the Event
 			var objectType = objectContainingEvent.GetType();
@@ -85,6 +86,10 @@ namespace Dapplo.Utils.Events
 				{
 					var currentDelegates = eventField.GetValue(objectContainingEvent) as Delegate;
 					var newDelegateList = Delegate.Combine(currentDelegates, action);
+					if (newDelegateList != null && !eventField.FieldType.IsInstanceOfType(newDelegateList))
+					{
+						Log.Warn().WriteLine("Can't assign {0} to {1}", newDelegateList.GetType(), eventField.FieldType);
+					}
 					eventField.SetValue(objectContainingEvent, newDelegateList);
 				},
 				//action => removeMethod.Invoke(objectContainingEvent, new object[] { (Delegate)action }),
@@ -92,6 +97,10 @@ namespace Dapplo.Utils.Events
 				{
 					var currentDelegates = eventField.GetValue(objectContainingEvent) as Delegate;
 					var newDelegateList = Delegate.Remove(currentDelegates, action);
+					if (newDelegateList != null && !eventField.FieldType.IsInstanceOfType(newDelegateList))
+					{
+						Log.Warn().WriteLine("Can't assign {0} to {1}", newDelegateList.GetType(), eventField.FieldType);
+					}
 					eventField.SetValue(objectContainingEvent, newDelegateList);
 				},
 				(o, eventArgs) =>
