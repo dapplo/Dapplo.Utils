@@ -48,5 +48,20 @@ namespace Dapplo.Utils.Tests.TestEntities
 			}
 		}
 
+		private string _name2;
+
+		public string Name2
+		{
+			get { return _name2; }
+			set
+			{
+				if (_name2 != value)
+				{
+					_name2 = value;
+					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name2)));
+				}
+			}
+		}
+
 	}
 }

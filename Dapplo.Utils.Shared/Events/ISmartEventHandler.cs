@@ -36,6 +36,16 @@ namespace Dapplo.Utils.Events
 		bool First { get;}
 
 		/// <summary>
+		/// Make sure the Do Action is run on the UI thread
+		/// </summary>
+		ISmartEventHandler<TEventArgs> OnUi { get; }
+
+		/// <summary>
+		/// Does the Do Action need to run on the UI thread
+		/// </summary>
+		bool NeedsUi { get; }
+
+		/// <summary>
 		/// Set the action which is executed on an event, if a when predicate is set this will be checked first
 		/// </summary>
 		/// <param name="doAction">action which is passed the sender and event arguments</param>

@@ -50,11 +50,13 @@ namespace Dapplo.Utils.Tests
 		private readonly IList<ISmartEvent> _smartEvents = new List<ISmartEvent>();
 		public void Dispose()
 		{
+			// Dispose all SmartEvents that were created by passing the _smartEvents list
 			SmartEvent.DisposeAll(_smartEvents);
 		}
 
 		public SmartEventTests(ITestOutputHelper testOutputHelper)
 		{
+			// Make sure logging is enabled.
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
@@ -63,13 +65,13 @@ namespace Dapplo.Utils.Tests
 		/// Test the basic functionality for setting up an event handler via a reference
 		/// </summary>
 		[Fact]
-		public void SmartEvent_EventHandlerTest()
+		public void SmartEvent_EventHandler_SimpleTest()
 		{
 			string testValue = null;
 			string testValue2 = null;
 			TestStringEvent += (sender, eventArgs) => testValue2 = eventArgs.TestValue;
 
-			var smartEvent = SmartEvent.FromEventHandler(ref TestStringEvent, _smartEvents).Every.Do((sender, e) => testValue = e.TestValue).Start();
+			var smartEvent = SmartEvent.FromEventHandler(ref TestStringEvent, nameof(TestStringEvent), _smartEvents).Every.Do((sender, e) => testValue = e.TestValue).Start();
 			smartEvent.Trigger(this, new SimpleTestEvent { TestValue = "Dapplo" });
 			// Dispose makes sure no events are handled via the smart event
 			smartEvent.Dispose();
@@ -84,7 +86,7 @@ namespace Dapplo.Utils.Tests
 		/// Test the basic functionality for setting up an event handler via reflection
 		/// </summary>
 		[Fact]
-		public void SmartEvent_ReflectionTest()
+		public void SmartEvent_Reflection_SimpleTest()
 		{
 			string testValue = null;
 			var smartEvent = SmartEvent.FromReflection<SimpleTestEvent>(this, nameof(TestStringEvent), _smartEvents).Every.Do((sender, e) => testValue = e.TestValue).Start();
@@ -96,7 +98,7 @@ namespace Dapplo.Utils.Tests
 		/// Test the basic functionality for setting up an event handler via reflection
 		/// </summary>
 		[Fact]
-		public void SmartEvent_First_Test()
+		public void SmartEvent_Reflection_First_Test()
 		{
 			string testValue = null;
 			using (var smartEvent = SmartEvent.FromReflection<SimpleTestEvent>(this, nameof(TestStringEvent)))
@@ -108,7 +110,7 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public void SmartEvent_NotifyPropertyChanged_Test()
+		public void SmartEvent_Reflection_NotifyPropertyChanged_Test()
 		{
 			string testValue = null;
 			var npc = new NotifyPropertyChangedClass();
@@ -124,14 +126,103 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public async Task SmartEvent_Timer_Test()
+		public void SmartEvent_Reflection_NotifyPropertyChanged_AwaitTest()
+		{
+			var npc = new NotifyPropertyChangedClass();
+			using (var smartEvent = SmartEvent.FromReflection<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			{
+				var task = smartEvent.First.When((o, args) => args.PropertyName.Contains("2")).WaitForAsync();
+				npc.Name = "Dapplo";
+				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
+				npc.Name2 = "Dapplo";
+				Assert.True(task.IsCompleted);
+			}
+		}
+
+		[Fact]
+		public void SmartEvent_Reflection_NotifyPropertyChanged_AwaitExceptionTest()
+		{
+			var npc = new NotifyPropertyChangedClass();
+			using (var smartEvent = SmartEvent.FromReflection<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			{
+				// Register a do which throws an exception
+				var task = smartEvent.First.When((o, args) => args.PropertyName.Contains("2")).Do(
+					(o, args) =>
+					{
+						throw new Exception("blub");
+					}).WaitForAsync();
+				npc.Name = "Dapplo";
+				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
+				npc.Name2 = "Dapplo";
+				Assert.True(task.IsFaulted);
+			}
+		}
+
+		[Fact]
+		public async Task SmartEvent_Reflection_NotifyPropertyChanged_AwaitValueTest()
+		{
+			var npc = new NotifyPropertyChangedClass();
+			using (var smartEvent = SmartEvent.FromReflection<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			{
+				// Register a do which throws an exception
+				var task = smartEvent.First.When((o, args) => args.PropertyName.Contains("2")).WaitForAsync((o, args) => "Robin");
+				npc.Name = "Dapplo";
+				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
+				npc.Name2 = "Dapplo";
+				Assert.True(task.IsCompleted);
+				Assert.Equal("Robin", await task);
+			}
+		}
+
+		/// <summary>
+		/// Create a timer, register a smartevent to it.
+		/// Start the timer and wait for the event, this should not block
+		/// </summary>
+		[Fact]
+		public async Task SmartEven_Reflectiont_Timer_Test()
 		{
 			var timer = new Timer(1000);
 
-			using (var smartEvent = SmartEvent.FromReflection<PropertyChangedEventArgs>(timer, nameof(timer.Elapsed)))
+			using (var smartEvent = SmartEvent.FromReflection<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 				await smartEvent.First.WaitForAsync();
+			}
+		}
+
+		/// <summary>
+		/// Create a timer, register a smartevent to it.
+		/// Start the timer and wait for the event, while having a timeout bigger than the tick.
+		/// This should not generate an exception
+		/// </summary>
+		[Fact]
+		public async Task SmartEvent_Reflection_TimerOk_Test()
+		{
+			var timer = new Timer(1000);
+
+			using (var smartEvent = SmartEvent.FromReflection<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				timer.Start();
+				// Await with a timeout bigger than the timer tick
+				await smartEvent.First.WaitForAsync(TimeSpan.FromSeconds(2));
+			}
+		}
+
+		/// <summary>
+		/// Create a timer, register a smartevent to it.
+		/// Start the timer and wait for the event, while having a timeout smaller than the tick.
+		/// This should create a timeout exception
+		/// </summary>
+		[Fact]
+		public async Task SmartEvent_Reflection_TimerTimeout_Test()
+		{
+			var timer = new Timer(2000);
+
+			using (var smartEvent = SmartEvent.FromReflection<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				timer.Start();
+				// Await with a timeout smaller than the timer tick
+				await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.First.WaitForAsync(TimeSpan.FromSeconds(1)));
 			}
 		}
 	}

@@ -32,9 +32,6 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	public static class SmartEvent
 	{
-		private static readonly LogSource Log = new LogSource();
-		private static readonly BindingFlags DefaultBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public |BindingFlags.NonPublic;
-
 		/// <summary>
 		/// Dispose all ISmartEvents in the list
 		/// </summary>
@@ -52,63 +49,27 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TEventArgs">Type for the event</typeparam>
 		/// <param name="eventHandler">EventHandler</param>
+		/// <param name="eventName">The name of the event, e.g. via nameof(object.event), used for logging and finding the ISmartEvent</param>
 		/// <param name="registeredSmartEvents">If you want to keep track of the ISmartEvent registrations, you can pass a list here</param>
-		public static ISmartEvent<TEventArgs> FromEventHandler<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
+		public static ISmartEvent<TEventArgs> FromEventHandler<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, string eventName = null, IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
 		{
-			var smartEvent = new SmartEvent<TEventArgs>(ref eventHandler);
+			var smartEvent = new SmartEvent<TEventArgs>(ref eventHandler, eventName);
 			registeredSmartEvents?.Add(smartEvent);
 			return smartEvent;
 		}
 
 		/// <summary>
-		/// Create a SmartEVent from the event which can be find in the object by the specified event name.
+		/// Create a SmartEvent from the event which can be find in the object by the specified event name.
 		/// </summary>
 		/// <typeparam name="TEventArgs">Typeof the event arguments</typeparam>
-		/// <param name="objectContainingEvent">object which defines the event</param>
+		/// <param name="targetObject">object which defines the event</param>
 		/// <param name="eventName">nameof(object.event)</param>
 		/// <param name="registeredSmartEvents">If you want to keep track of the ISmartEvent registrations, you can pass a list here</param>
 		/// <returns>ISmartEvent</returns>
-		public static ISmartEvent<TEventArgs> FromReflection<TEventArgs>(object objectContainingEvent, string eventName, IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
+		public static ISmartEvent<TEventArgs> FromReflection<TEventArgs>(object targetObject, string eventName, IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
 		{
-			// Use reflection to get the EventInfo object for the Event
-			var objectType = objectContainingEvent.GetType();
-			var eventInfo = objectType.GetEvent(eventName, DefaultBindingFlags);
-
-			// Use reflection to get the FieldInfo object for the Event
-			var eventField = objectType.GetField(eventName, DefaultBindingFlags);
-			if (eventInfo == null || eventField == null)
-			{
-				throw new ArgumentException($"The event {eventName} does not exist in the supplied object.", nameof(eventName));
-			}
-
-			var smartEvent = new SmartEvent<TEventArgs>(
-				action =>
-				{
-					var currentDelegates = eventField.GetValue(objectContainingEvent) as Delegate;
-					var newDelegateList = Delegate.Combine(currentDelegates, action);
-					if (newDelegateList != null && !eventField.FieldType.IsInstanceOfType(newDelegateList))
-					{
-						Log.Warn().WriteLine("Can't assign {0} to {1}", newDelegateList.GetType(), eventField.FieldType);
-					}
-					eventField.SetValue(objectContainingEvent, newDelegateList);
-				},
-				//action => removeMethod.Invoke(objectContainingEvent, new object[] { (Delegate)action }),
-				action =>
-				{
-					var currentDelegates = eventField.GetValue(objectContainingEvent) as Delegate;
-					var newDelegateList = Delegate.Remove(currentDelegates, action);
-					if (newDelegateList != null && !eventField.FieldType.IsInstanceOfType(newDelegateList))
-					{
-						Log.Warn().WriteLine("Can't assign {0} to {1}", newDelegateList.GetType(), eventField.FieldType);
-					}
-					eventField.SetValue(objectContainingEvent, newDelegateList);
-				},
-				(o, eventArgs) =>
-				{
-					var eventDelegate = (Delegate)eventField.GetValue(objectContainingEvent);
-					eventDelegate?.DynamicInvoke(o, eventArgs);
-				});
-
+			// Create the SmartEvent, the Reflection is in there.
+			var smartEvent = new SmartEvent<TEventArgs>(targetObject, eventName);
 			registeredSmartEvents?.Add(smartEvent);
 			return smartEvent;
 		}
@@ -122,35 +83,53 @@ namespace Dapplo.Utils.Events
 	{
 		// ReSharper disable once StaticMemberInGenericType
 		private static readonly LogSource Log = new LogSource();
+		private static readonly BindingFlags DefaultBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
 		private bool _disposedValue; // To detect redundant calls
 		private readonly bool _useEventHandler;
 		private EventHandler<TEventArgs> _eventHandler;
-		private readonly Action<EventHandler<TEventArgs>> _addAction;
-		private readonly Action<EventHandler<TEventArgs>> _removeAction;
-		private readonly Action<object, TEventArgs> _invokeAction;
+		private readonly object _targetObject;
+		private readonly EventInfo _eventInfo;
+		private readonly Delegate _handleEventDelegate;
 		private bool _isRegistered;
 		private readonly IList<ISmartEventHandler<TEventArgs>> _eventHandlers = new List<ISmartEventHandler<TEventArgs>>();
 
 		/// <summary>
-		/// Constructor for the EventHandler ref
+		/// The name of the underlying event, might be null if not supplied
 		/// </summary>
-		/// <param name="addAction">Action to add the delegate</param>
-		/// <param name="removeAction">Action to remove the delegate</param>
-		/// <param name="invokeAction">Action to invoke the event</param>
-		internal SmartEvent(Action<EventHandler<TEventArgs>> addAction, Action<EventHandler<TEventArgs>> removeAction, Action<object, TEventArgs> invokeAction)
+		public string EventName { get; }
+
+		/// <summary>
+		/// Constructor for the FieldInfo
+		/// </summary>
+		/// <param name="targetObject">Object containing the event field/property</param>
+		/// <param name="eventName">The name of the event field / property</param>
+		internal SmartEvent(object targetObject, string eventName)
 		{
-			_addAction = addAction;
-			_removeAction = removeAction;
-			_invokeAction = invokeAction;
+			_eventInfo = targetObject.GetType().GetEvent(eventName, DefaultBindingFlags);
+			if (_eventInfo == null)
+			{
+				throw new ArgumentException($"The event {eventName} cannot be bound by FromReflection as it does not exist in the supplied object.", nameof(eventName));
+			}
+			EventName = eventName;
+
+			_targetObject = targetObject;
 			_useEventHandler = false;
+
+			// Get the method of which we need a delegate
+			var handleEventMethodInfo = GetType().GetMethod(nameof(HandleEvent), BindingFlags.Instance | BindingFlags.NonPublic);
+
+			_handleEventDelegate = handleEventMethodInfo.CreateDelegate(_eventInfo.EventHandlerType, this);
 		}
 
 		/// <summary>
 		/// Constructor for the EventHandler ref
 		/// </summary>
 		/// <param name="eventHandler"></param>
-		internal SmartEvent(ref EventHandler<TEventArgs> eventHandler)
+		/// <param name="eventName">Name of the event, can be used to find smart events in a list and logging</param>
+		internal SmartEvent(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
 		{
+			EventName = eventName;
 			_eventHandler = eventHandler;
 			_useEventHandler = true;
 		}
@@ -164,7 +143,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new InvalidOperationException("Can't be handling events after disposing.");
+				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't be handling events for {EventName} after dispose.");
 			}
 			IList<ISmartEventHandler<TEventArgs>> eventHandlers;
 			lock (_eventHandlers)
@@ -183,12 +162,19 @@ namespace Dapplo.Utils.Events
 						{
 							Unregister(smartEventHandler);
 						}
-						smartEventHandler.Action(sender, eventArgs);
+						if (smartEventHandler.NeedsUi && !UiContext.HasUiAccess)
+						{
+							UiContext.RunOn(() => smartEventHandler.Action.Invoke(sender, eventArgs)).Wait();
+						}
+						else
+						{
+							smartEventHandler.Action(sender, eventArgs);
+						}
 					}
 				}
 				catch (Exception ex)
 				{
-					Log.Error().WriteLine(ex, "An exception occured while processing an event.");
+					Log.Error().WriteLine(ex, $"An exception occured while processing event {EventName}");
 				}
 			}
 		}
@@ -200,7 +186,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new InvalidOperationException("Can't be register after being disposed.");
+				throw new ObjectDisposedException(nameof(SmartEvent), $"No registrations for {EventName} after dispose.");
 			}
 			if (!_isRegistered)
 			{
@@ -211,7 +197,7 @@ namespace Dapplo.Utils.Events
 				}
 				else
 				{
-					_addAction?.Invoke(HandleEvent);
+					_eventInfo.AddMethod.Invoke(_targetObject, new object[] { _handleEventDelegate });
 				}
 			}
 		}
@@ -232,7 +218,8 @@ namespace Dapplo.Utils.Events
 				}
 				else if (!_useEventHandler)
 				{
-					_removeAction?.Invoke(HandleEvent);
+					// Unregister the _handleEventDelegate via reflection
+					_eventInfo.RemoveMethod.Invoke(_targetObject, new object[] { _handleEventDelegate });
 				}
 			}
 		}
@@ -246,7 +233,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new InvalidOperationException("Can't trigger after being disposed.");
+				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't trigger {EventName} after dispose.");
 			}
 
 			try
@@ -257,7 +244,25 @@ namespace Dapplo.Utils.Events
 				}
 				else
 				{
-					_invokeAction(sender, eventArgs);
+					// Raise via reflection
+					var raiseMethodInfo = _eventInfo.RaiseMethod;
+					if (raiseMethodInfo != null)
+					{
+						raiseMethodInfo.Invoke(_targetObject, new[] { sender, eventArgs });
+					}
+					else 
+					{
+						var fieldInfo = _targetObject.GetType().GetField(_eventInfo.Name, DefaultBindingFlags);
+						if (fieldInfo != null)
+						{
+							var eventDelegate = (Delegate) fieldInfo.GetValue(_targetObject);
+							eventDelegate?.DynamicInvoke(sender, eventArgs);
+						}
+						else
+						{
+							throw new NotSupportedException($"Can't trigger the event {_eventInfo.Name}");
+						}
+					}
 				}
 			}
 			catch (Exception ex)
@@ -274,14 +279,14 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new InvalidOperationException("Can't register after being disposed.");
+				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't register {EventName} after dispose.");
 			}
 
-			RegisterHandleEvent();
 			lock (_eventHandlers)
 			{
 				_eventHandlers.Add(smartEventHandler);
 			}
+			RegisterHandleEvent();
 		}
 
 		/// <summary>
@@ -292,7 +297,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new InvalidOperationException("Can't Unregister after being disposed.");
+				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't Unregister {EventName} after dispose.");
 			}
 			lock (_eventHandlers)
 			{

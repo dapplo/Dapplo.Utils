@@ -28,7 +28,10 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	public interface ISmartEvent : IDisposable
 	{
-		
+		/// <summary>
+		/// The name of the underlying event, might be null if not supplied
+		/// </summary>
+		string EventName { get; }
 	}
 
 	/// <summary>

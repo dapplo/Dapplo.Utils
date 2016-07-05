@@ -59,7 +59,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (Action == null)
 			{
-				throw new ArgumentNullException(nameof(Action), "No action defined, nothing to do.");
+				throw new ArgumentNullException(nameof(Action), $"No action defined for {_parent.EventName}, nothing to do.");
 			}
 			_parent.Register(this);
 			return _parent;
@@ -78,7 +78,24 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		/// React to first event only, unregister when a match was found
 		/// </summary>
-		public bool First { get; set; }
+		public bool First { get; internal set; }
+
+		/// <summary>
+		/// React to first event only, unregister when a match was found
+		/// </summary>
+		public bool NeedsUi { get; internal set; }
+
+		/// <summary>
+		/// Make sure the action is run on the UI thread
+		/// </summary>
+		public ISmartEventHandler<TEventArgs> OnUi
+		{
+			get
+			{
+				NeedsUi = true;
+				return this;
+			}
+		}
 
 		/// <summary>
 		/// 
@@ -136,7 +153,7 @@ namespace Dapplo.Utils.Events
 			// Test state
 			if (!First)
 			{
-				throw new InvalidOperationException(nameof(WaitForAsync) + " only works if First was specified.");
+				throw new InvalidOperationException($"{nameof(WaitForAsync)} only works if First was specified.");
 			}
 			var taskCompletionSource = new TaskCompletionSource<TResult>();
 			IList<CancellationTokenRegistration> cancellationTokenRegistrations = new List<CancellationTokenRegistration>();
@@ -154,35 +171,38 @@ namespace Dapplo.Utils.Events
 				var cancellationTokenSource = new CancellationTokenSource(timeout.Value);
 
 				// Register the timeout
-				var cancellationTokenRegistration = cancellationTokenSource.Token.Register(() =>
+				var cancellationTokenSourceRegistration = cancellationTokenSource.Token.Register(() =>
 				{
 					cleanupAction(cancellationTokenRegistrations);
-					string message = $"Timeout awaiting event";
+					string message = $"Timeout awaiting event {_parent.EventName}";
 					Log.Error().WriteLine(message);
 					taskCompletionSource.TrySetException(new TimeoutException(message));
 				}, false);
-				cancellationTokenRegistrations.Add(cancellationTokenRegistration);
+				cancellationTokenRegistrations.Add(cancellationTokenSourceRegistration);
 			}
 
 			// Add cancel logic
-			cancellationToken?.Register(() =>
+			var cancellationTokenRegistration = cancellationToken?.Register(() =>
 			{
 				cleanupAction(cancellationTokenRegistrations);
-				string message = $"Cancel while waiting for event";
+				string message = $"Cancel while waiting for event {_parent.EventName}";
 				Log.Error().WriteLine(message);
 				taskCompletionSource.SetCanceled();
 			});
+			if (cancellationTokenRegistration.HasValue)
+			{
+				cancellationTokenRegistrations.Add(cancellationTokenRegistration.Value);
+			}
 
 			// Store Action, in case the caller has set a do
 			var storedAction = Action;
 			Action = (sender, args) =>
 			{
-				Log.Info().WriteLine($"Event awating action called.");
+				Log.Verbose().WriteLine("{0} awaiting action called.", _parent.EventName);
 				cleanupAction(cancellationTokenRegistrations);
 				try
 				{
 					var result = func(sender, args);
-
 					// Call the Action if there was any
 					storedAction?.Invoke(sender, args);
 
