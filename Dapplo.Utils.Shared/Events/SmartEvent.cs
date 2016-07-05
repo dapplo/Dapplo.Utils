@@ -116,9 +116,16 @@ namespace Dapplo.Utils.Events
 			_targetObject = targetObject;
 			_useEventHandler = false;
 
-			// Get the method of which we need a delegate
-			var handleEventMethodInfo = GetType().GetMethod(nameof(HandleEvent), BindingFlags.Instance | BindingFlags.NonPublic);
-
+			// Sometimes the event handler only uses a single argument, for this check the parameter count of the delegate
+			var eventHandlerInvokeDelegate = _eventInfo.EventHandlerType.GetMethod("Invoke");
+			var useWithSender = true;
+			if (eventHandlerInvokeDelegate != null)
+			{
+				useWithSender = eventHandlerInvokeDelegate.GetParameters().Length >= 2;
+			}
+			// Now decide on the handler, in the end both will function the same as we store the target and pass this as sender.
+			var eventHandleMethodName = useWithSender ? nameof(HandleEvent) : nameof(HandleEventWithoutSender);
+			var handleEventMethodInfo = GetType().GetMethod(eventHandleMethodName, BindingFlags.Instance | BindingFlags.NonPublic);
 			_handleEventDelegate = handleEventMethodInfo.CreateDelegate(_eventInfo.EventHandlerType, this);
 		}
 
@@ -132,6 +139,15 @@ namespace Dapplo.Utils.Events
 			EventName = eventName;
 			_eventHandler = eventHandler;
 			_useEventHandler = true;
+		}
+
+		/// <summary>
+		/// This will handle the event in the case where the event handler only has one argument
+		/// </summary>
+		/// <param name="eventArgs">TEventArgs</param>
+		private void HandleEventWithoutSender(TEventArgs eventArgs)
+		{
+			HandleEvent(_targetObject, eventArgs);
 		}
 
 		/// <summary>
