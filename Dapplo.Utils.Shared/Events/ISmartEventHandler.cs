@@ -20,6 +20,8 @@
 //  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Dapplo.Utils.Events
 {
@@ -62,5 +64,24 @@ namespace Dapplo.Utils.Events
 		/// The registered Action, this does whatever needs to be done when the event triggers
 		/// </summary>
 		Action<object, TEventArgs> Action { get; }
+
+		/// <summary>
+		/// This allows you to await an event, it's important that only a ISmartEventHandler created with First is allowed.
+		/// The When Predicate and Do Action, if specified, will be used.
+		/// </summary>
+		/// <param name="timeout">optional TimeSpan</param>
+		/// <param name="cancellationToken">optional CancellationToken</param>
+		/// <returns>Task to await for</returns>
+		Task WaitForAsync(TimeSpan? timeout = null, CancellationToken? cancellationToken = null);
+		
+		/// <summary>
+		/// This allows you to await an event, it's important that only a ISmartEventHandler created with First is allowed.
+		/// The When predicate, if specified, will define if the event is "finished".
+		/// </summary>
+		/// <param name="func">Function which is called when the event passes the When Predicate, the result is returned in the awaiting Task</param>
+		/// <param name="timeout">optional TimeSpan</param>
+		/// <param name="cancellationToken">optional CancellationToken</param>
+		/// <returns>Task to await for</returns>
+		Task<TResult> WaitForAsync<TResult>(Func<object, TEventArgs, TResult> func, TimeSpan? timeout = null, CancellationToken? cancellationToken = null);
 	}
 }

@@ -20,6 +20,10 @@
 //  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
 
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Dapplo.Log.Facade;
 
 namespace Dapplo.Utils.Events
 {
@@ -28,6 +32,8 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	public class SmartEventHandler<TEventArgs> : ISmartEventHandler<TEventArgs>
 	{
+		// ReSharper disable once StaticMemberInGenericType
+		private static readonly LogSource Log = new LogSource();
 		private readonly SmartEvent<TEventArgs> _parent;
 
 		/// <summary>
@@ -92,12 +98,108 @@ namespace Dapplo.Utils.Events
 		/// <returns>ISmartEventHandler (this)</returns>
 		public ISmartEventHandler<TEventArgs> When(Func<object, TEventArgs, bool> predicate)
 		{
-			if (Action != null)
-			{
-				throw new InvalidOperationException("can't register when after do.");
-			}
 			Predicate = predicate;
 			return this;
+		}
+
+		/// <summary>
+		/// This allows you to await an event, it's important that only a ISmartEventHandler created with First is allowed.
+		/// The When Predicate, if specified, specifies if the await is "finished".
+		/// The Do Action, if specified, will also be called (usefull or not)
+		/// </summary>
+		/// <param name="timeout">optional TimeSpan</param>
+		/// <param name="cancellationToken">optional CancellationToken</param>
+		/// <returns>Task to await for</returns>
+		public Task WaitForAsync(TimeSpan? timeout = null, CancellationToken? cancellationToken = null)
+		{
+			// We actually just reuse the WaitForAsync with the function, capture the action before so we can call it.
+			return WaitForAsync((o, args) => true, timeout, cancellationToken);
+		}
+
+		/// <summary>
+		/// This allows you to await an event, it's important that only a ISmartEventHandler created with First is allowed.
+		/// The When Predicate, if specified, specifies if the await is "finished".
+		/// The Do Action, if specified, will also be called (usefull or not)
+		/// </summary>
+		/// <param name="func">Function which is called when the event passes the When Predicate, the result is returned in the awaiting Task</param>
+		/// <param name="timeout">optional TimeSpan</param>
+		/// <param name="cancellationToken">optional CancellationToken</param>
+		/// <returns>Task to await for</returns>
+		public Task<TResult> WaitForAsync<TResult>(Func<object, TEventArgs, TResult> func, TimeSpan? timeout = null, CancellationToken? cancellationToken = null)
+		{
+			// Test arguments
+			if (func == null)
+			{
+				throw new ArgumentNullException(nameof(func));
+			}
+
+			// Test state
+			if (!First)
+			{
+				throw new InvalidOperationException(nameof(WaitForAsync) + " only works if First was specified.");
+			}
+			var taskCompletionSource = new TaskCompletionSource<TResult>();
+			IList<CancellationTokenRegistration> cancellationTokenRegistrations = new List<CancellationTokenRegistration>();
+			Action<IList<CancellationTokenRegistration>> cleanupAction = registrations =>
+			{
+				foreach (var tokenRegistration in registrations)
+				{
+					tokenRegistration.Dispose();
+				}
+			};
+
+			// Add timeout logic
+			if (timeout.HasValue)
+			{
+				var cancellationTokenSource = new CancellationTokenSource(timeout.Value);
+
+				// Register the timeout
+				var cancellationTokenRegistration = cancellationTokenSource.Token.Register(() =>
+				{
+					cleanupAction(cancellationTokenRegistrations);
+					string message = $"Timeout awaiting event";
+					Log.Error().WriteLine(message);
+					taskCompletionSource.TrySetException(new TimeoutException(message));
+				}, false);
+				cancellationTokenRegistrations.Add(cancellationTokenRegistration);
+			}
+
+			// Add cancel logic
+			cancellationToken?.Register(() =>
+			{
+				cleanupAction(cancellationTokenRegistrations);
+				string message = $"Cancel while waiting for event";
+				Log.Error().WriteLine(message);
+				taskCompletionSource.SetCanceled();
+			});
+
+			// Store Action, in case the caller has set a do
+			var storedAction = Action;
+			Action = (sender, args) =>
+			{
+				Log.Info().WriteLine($"Event awating action called.");
+				cleanupAction(cancellationTokenRegistrations);
+				try
+				{
+					var result = func(sender, args);
+
+					// Call the Action if there was any
+					storedAction?.Invoke(sender, args);
+
+					// Restore the state before, just in case
+					Action = storedAction;
+					taskCompletionSource.SetResult(result);
+				}
+				catch (Exception ex)
+				{
+					taskCompletionSource.SetException(ex);
+				}
+			};
+
+			// Register the event, so the await will work.
+			Start();
+
+			return taskCompletionSource.Task;
 		}
 	}
 }

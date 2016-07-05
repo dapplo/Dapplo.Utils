@@ -22,12 +22,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Xunit;
 using Dapplo.Utils.Events;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit.Abstractions;
+using System.Timers;
 
 namespace Dapplo.Utils.Tests
 {
@@ -118,6 +120,18 @@ namespace Dapplo.Utils.Tests
 				testValue = null;
 				npc.Name = "Dapplo2";
 				Assert.Null(testValue);
+			}
+		}
+
+		[Fact]
+		public async Task SmartEvent_Timer_Test()
+		{
+			var timer = new Timer(1000);
+
+			using (var smartEvent = SmartEvent.FromReflection<PropertyChangedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				timer.Start();
+				await smartEvent.First.WaitForAsync();
 			}
 		}
 	}
