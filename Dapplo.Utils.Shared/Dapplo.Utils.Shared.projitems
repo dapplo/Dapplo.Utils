@@ -25,7 +25,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHasEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IShallowCloneable.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Tasks\TaskExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Tasks\AsyncHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UiContext.cs" />
   </ItemGroup>
 </Project>

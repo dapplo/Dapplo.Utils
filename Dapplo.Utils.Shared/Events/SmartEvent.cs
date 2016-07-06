@@ -31,6 +31,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
+using Dapplo.Utils.Tasks;
 
 #endregion
 
@@ -321,11 +322,16 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<Tuple<object, TEventArgs>>, TResult> processFunc)
+		public Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<Tuple<object, TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = FromExtended;
+			if (timeout.HasValue)
+			{
+				return AsyncHelper.RunWithTimeout(() => processFunc(enumerable), timeout.Value);
+			}
 			return Task.Run(() => processFunc(enumerable));
 		}
 
@@ -335,11 +341,16 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<TEventArgs>, TResult> processFunc)
+		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<TEventArgs>, TResult> processFunc, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = From;
+			if (timeout.HasValue)
+			{
+				return AsyncHelper.RunWithTimeout(() => processFunc(enumerable), timeout.Value);
+			}
 			return Task.Run(() => processFunc(enumerable));
 		}
 
@@ -348,11 +359,16 @@ namespace Dapplo.Utils.Events
 		///     exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		public Task ProcessExtendedAsync(Action<IEnumerable<Tuple<object, TEventArgs>>> processAction)
+		public Task ProcessExtendedAsync(Action<IEnumerable<Tuple<object, TEventArgs>>> processAction, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = FromExtended;
+			if (timeout.HasValue)
+			{
+				return AsyncHelper.RunWithTimeout(() => processAction(enumerable), timeout.Value);
+			}
 			return Task.Run(() => processAction(enumerable));
 		}
 
@@ -360,8 +376,9 @@ namespace Dapplo.Utils.Events
 		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		public Task ProcessAsync(Action<IEnumerable<TEventArgs>> processAction)
+		public Task ProcessAsync(Action<IEnumerable<TEventArgs>> processAction, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = From;

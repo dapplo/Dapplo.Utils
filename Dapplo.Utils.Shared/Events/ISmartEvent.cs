@@ -99,8 +99,9 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<Tuple<object, TEventArgs>>, TResult> processFunc);
+		Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<Tuple<object, TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception or if
@@ -108,23 +109,26 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<TEventArgs>, TResult> processFunc);
+		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<TEventArgs>, TResult> processFunc, TimeSpan? timeout = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
 		///     exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		Task ProcessExtendedAsync(Action<IEnumerable<Tuple<object, TEventArgs>>> processAction);
+		Task ProcessExtendedAsync(Action<IEnumerable<Tuple<object, TEventArgs>>> processAction, TimeSpan? timeout = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
+		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		Task ProcessAsync(Action<IEnumerable<TEventArgs>> processAction);
+		Task ProcessAsync(Action<IEnumerable<TEventArgs>> processAction, TimeSpan? timeout = null);
 	}
 
 	/// <summary>

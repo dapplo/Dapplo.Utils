@@ -242,8 +242,7 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex =
-					await Assert.ThrowsAsync<TimeoutException>(async () => await AsyncHelper.RunWithTimeout(() => smartEvent.From.First(), TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => x.First(), TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -262,7 +261,7 @@ namespace Dapplo.Utils.Tests
 			{
 				timer.Start();
 				// Await with a timeout bigger than the timer tick
-				await AsyncHelper.RunWithTimeout(() => smartEvent.From.First(), TimeSpan.FromSeconds(2));
+				await smartEvent.ProcessAsync(x => x.First(), TimeSpan.FromSeconds(2));
 			}
 		}
 	}
