@@ -23,6 +23,8 @@
 
 #endregion
 
+using System;
+
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
@@ -44,14 +46,13 @@ namespace Dapplo.Utils.Events
 	/// <summary>
 	///     IInternalEventHandler, used from the SmartEvent
 	/// </summary>
-	public interface IInternalEventHandler<TEventArgs> : IEventHandler
+	public interface IInternalEventHandler<in TEventArgs> : IEventHandler
 	{
 		/// <summary>
 		///     This needs to be implemented to make sure the event data is processed
 		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="eventArgs"></param>
-		void Handle(object sender, TEventArgs eventArgs);
+		/// <param name="eventData">IEventData has all data about the event</param>
+		void Handle(IEventData<TEventArgs> eventData);
 
 		/// <summary>
 		///     This is called when the IEventHandler unsubscribed from it'S parent

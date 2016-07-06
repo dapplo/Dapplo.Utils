@@ -64,7 +64,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="predicate"></param>
 		/// <param name="action">Action for the registration</param>
 		/// <returns>IList of ISmartEvent which can be dispose with DisposeAll</returns>
-		public static IList<ISmartEvent> RegisterEvents<TEventArgs>(object targetObject, Action<object, TEventArgs> action,
+		public static IList<ISmartEvent> RegisterEvents<TEventArgs>(object targetObject, Action<IEventData<TEventArgs>> action,
 			Func<string, bool> predicate = null)
 		{
 			var smartEvents = new List<ISmartEvent>();
@@ -81,7 +81,8 @@ namespace Dapplo.Utils.Events
 				var constructedType = typeof(SmartEvent<>).MakeGenericType(eventType);
 				var args = new[] {targetObject, eventInfo.Name};
 				var smartEvent = (ISmartEvent) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
-				smartEvent.OnEach(action);
+				var onEachMethodInfo = smartEvent.GetType().GetMethod("OnEach", AllBindings);
+				onEachMethodInfo.Invoke(smartEvent, new object[] {action, predicate});
 				smartEvents.Add(smartEvent);
 			}
 
@@ -202,9 +203,8 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Triggers an event
 		/// </summary>
-		/// <param name="sender">the sender of the event</param>
-		/// <param name="eventArgs">TEventArgs</param>
-		public void Trigger(object sender, TEventArgs eventArgs)
+		/// <param name="eventData">IEventData</param>
+		public void Trigger(IEventData<EventArgs> eventData)
 		{
 			if (_disposedValue)
 			{
@@ -215,7 +215,7 @@ namespace Dapplo.Utils.Events
 			{
 				if (_useEventHandler)
 				{
-					_eventHandler?.Invoke(sender, eventArgs);
+					_eventHandler?.Invoke(eventData.Sender, (TEventArgs)(object)eventData.Args);
 				}
 				else
 				{
@@ -223,7 +223,7 @@ namespace Dapplo.Utils.Events
 					var raiseMethodInfo = _eventInfo.RaiseMethod;
 					if (raiseMethodInfo != null)
 					{
-						raiseMethodInfo.Invoke(_targetObject, new[] {sender, eventArgs});
+						raiseMethodInfo.Invoke(_targetObject, new[] { eventData.Sender, eventData.Args });
 					}
 					else
 					{
@@ -231,7 +231,7 @@ namespace Dapplo.Utils.Events
 						if (fieldInfo != null)
 						{
 							var eventDelegate = (Delegate) fieldInfo.GetValue(_targetObject);
-							eventDelegate?.DynamicInvoke(sender, eventArgs);
+							eventDelegate?.DynamicInvoke(eventData.Sender, eventData.Args);
 						}
 						else
 						{
@@ -293,22 +293,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
 		/// <returns>IEventHandler</returns>
-		public IEventHandler OnEach(Action<TEventArgs> action, Func<TEventArgs, bool> predicate = null)
-		{
-			if (predicate == null)
-			{
-				return OnEach((o, args) => action(args));
-			}
-			return OnEach((o, args) => action(args), (o, args) => predicate(args));
-		}
-
-		/// <summary>
-		///     Call the supplied action on each event.
-		/// </summary>
-		/// <param name="action">Action to call</param>
-		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
-		/// <returns>IEventHandler</returns>
-		public IEventHandler OnEach(Action<object, TEventArgs> action, Func<object, TEventArgs, bool> predicate = null)
+		public IEventHandler OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null)
 		{
 			var handler = new DirectEventHandler<TEventArgs>(this);
 			handler.Where(predicate);
@@ -324,7 +309,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<Tuple<object, TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null)
+		public Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = FromExtended;
@@ -361,7 +346,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="processAction">Action which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		public Task ProcessExtendedAsync(Action<IEnumerable<Tuple<object, TEventArgs>>> processAction, TimeSpan? timeout = null)
+		public Task ProcessExtendedAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = FromExtended;
@@ -391,14 +376,14 @@ namespace Dapplo.Utils.Events
 		/// <returns>IEnumerable with TEventArgs</returns>
 		public IEnumerable<TEventArgs> From
 		{
-			get { return FromExtended.Select(tuple => tuple.Item2); }
+			get { return FromExtended.Select(eventData => eventData.Args); }
 		}
 
 		/// <summary>
 		///     Create a QueueingEventHandler for handling the sender and the eventArgs
 		/// </summary>
 		/// <returns>IEnumerable with a tuple with object (sender) and TEventArgs</returns>
-		public IEnumerable<Tuple<object, TEventArgs>> FromExtended
+		public IEnumerable<IEventData<TEventArgs>> FromExtended
 		{
 			get
 			{
@@ -414,18 +399,6 @@ namespace Dapplo.Utils.Events
 		{
 			UnsubscribeAllHandlers();
 			_disposedValue = true;
-		}
-
-		/// <summary>
-		///     This implements the OnEach in the non generic interface
-		/// </summary>
-		/// <typeparam name="TEventArgs2">The type for this method</typeparam>
-		/// <param name="action">Action</param>
-		/// <param name="predicate">Func</param>
-		/// <returns>IEventHandler</returns>
-		public IEventHandler OnEach<TEventArgs2>(Action<object, TEventArgs2> action, Func<object, TEventArgs2, bool> predicate = null)
-		{
-			return OnEach((o, e) => action(o, (TEventArgs2) (object) e));
 		}
 
 		/// <summary>
@@ -459,7 +432,7 @@ namespace Dapplo.Utils.Events
 			{
 				try
 				{
-					eventHandler.Handle(sender, eventArgs);
+					eventHandler.Handle(EventData.Create(sender, eventArgs, EventName));
 				}
 				catch (Exception ex)
 				{

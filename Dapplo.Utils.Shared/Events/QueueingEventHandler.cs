@@ -37,7 +37,7 @@ namespace Dapplo.Utils.Events
 	/// <summary>
 	///     This is the implementation of the QueueingEventHandler
 	/// </summary>
-	public class QueueingEventHandler<TEventArgs> : BlockingCollection<Tuple<object, TEventArgs>>, IInternalEventHandler<TEventArgs>
+	public class QueueingEventHandler<TEventArgs> : BlockingCollection<IEventData<TEventArgs>>, IInternalEventHandler<TEventArgs>
 	{
 		/// <summary>
 		///     The logger for this class
@@ -56,7 +56,7 @@ namespace Dapplo.Utils.Events
 		///     Create a consuming IEnumerable
 		/// </summary>
 		/// <returns>IEnumerable with a tuple with object (sender) and TEventArgs</returns>
-		public IEnumerable<Tuple<object, TEventArgs>> GetEnumerable
+		public IEnumerable<IEventData<TEventArgs>> GetEnumerable
 		{
 			get
 			{
@@ -64,7 +64,7 @@ namespace Dapplo.Utils.Events
 				{
 					while (!IsCompleted)
 					{
-						Tuple<object, TEventArgs> item;
+						IEventData<TEventArgs> item;
 						while (TryTake(out item, TimeSpan.FromSeconds(1)))
 						{
 							// Only yield the event arguments
@@ -83,11 +83,10 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Add the passed event information to the Blocking collection
 		/// </summary>
-		/// <param name="sender">object</param>
-		/// <param name="eventArgs">TEventArgs</param>
-		public void Handle(object sender, TEventArgs eventArgs)
+		/// <param name="eventData">IEventData</param>
+		public void Handle(IEventData<TEventArgs> eventData)
 		{
-			Add(new Tuple<object, TEventArgs>(sender, eventArgs));
+			Add(eventData);
 		}
 
 		/// <summary>

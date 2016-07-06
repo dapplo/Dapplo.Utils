@@ -95,7 +95,7 @@ namespace Dapplo.Utils.Tests
 			var events = smartEvent.From;
 
 			// Create the event
-			smartEvent.Trigger(this, new SimpleTestEventArgs {TestValue = "Dapplo"});
+			smartEvent.Trigger(new EventData<SimpleTestEventArgs>(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
 			// Test if the event was processed correctly
 			Assert.Equal("Dapplo", events.Select(e => e.TestValue).First());
@@ -108,7 +108,7 @@ namespace Dapplo.Utils.Tests
 			var npc = new NotifyPropertyChangedClass();
 			using (var smartEvent = SmartEvent.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
-				var handler = smartEvent.OnEach(e => testValue = e.PropertyName);
+				var handler = smartEvent.OnEach(e => testValue = e.Args.PropertyName);
 				npc.Name = "Dapplo";
 				Assert.Equal(nameof(npc.Name), testValue);
 				testValue = null;
@@ -181,8 +181,8 @@ namespace Dapplo.Utils.Tests
 			string testValue = null;
 			using (var smartEvent = SmartEvent.From<SimpleTestEventArgs>(this, nameof(TestStringEvent)))
 			{
-				smartEvent.OnEach(e => { testValue = e.TestValue; });
-				smartEvent.Trigger(this, new SimpleTestEventArgs {TestValue = "Dapplo"});
+				smartEvent.OnEach(e => { testValue = e.Args.TestValue; });
+				smartEvent.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 			}
 			Assert.Equal("Dapplo", testValue);
 		}
@@ -201,7 +201,7 @@ namespace Dapplo.Utils.Tests
 
 			var eventHandleTask = smartEvent.ProcessAsync(enumerable => enumerable.ForEach(e => testValue = e.TestValue));
 
-			smartEvent.Trigger(this, new SimpleTestEventArgs {TestValue = "Dapplo"});
+			smartEvent.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
 			// Dispose makes sure no events are handled via the smart event, it also makes the ForEach stop!
 			smartEvent.Dispose();
@@ -222,7 +222,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var testValue = new SimpleTestEventArgs {TestValue = "Robin"};
 			EventArgs resultValue = null;
-			var smartEvents = SmartEvent.RegisterEvents<EventArgs>(this, (s, e) => resultValue = e);
+			var smartEvents = SmartEvent.RegisterEvents<EventArgs>(this, (e) => resultValue = e.Args);
 			TestStringEvent(this, testValue);
 			Assert.Equal(testValue, resultValue);
 		}

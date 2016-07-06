@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AbcComparer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AsyncLock.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Events\EventData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\SmartEvent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\DirectEventHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\QueueingEventHandler.cs" />

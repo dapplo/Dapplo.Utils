@@ -42,21 +42,13 @@ namespace Dapplo.Utils.Events
 		///     The name of the underlying event, might be null if not supplied
 		/// </summary>
 		string EventName { get; }
-
-		/// <summary>
-		///     Non generic action, which can be used to subscribe to unknown types.
-		/// </summary>
-		/// <param name="action"></param>
-		/// <param name="predicate"></param>
-		/// <returns>IEventHandler</returns>
-		IEventHandler OnEach<TEventArgs>(Action<object, TEventArgs> action, Func<object, TEventArgs, bool> predicate = null);
 	}
 
 	/// <summary>
 	///     This is the interface to a SmartEvent.
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
-	public interface ISmartEvent<TEventArgs> : ISmartEvent
+	public interface ISmartEvent<out TEventArgs> : ISmartEvent
 	{
 		/// <summary>
 		///     Get an IEnumerable with eventargs for the underlying event
@@ -68,14 +60,13 @@ namespace Dapplo.Utils.Events
 		///     Get an IEnumerable for the underlying event
 		/// </summary>
 		/// <returns>IEnumerable with tuple sender,eventargs</returns>
-		IEnumerable<Tuple<object, TEventArgs>> FromExtended { get; }
+		IEnumerable<IEventData<TEventArgs>> FromExtended { get; }
 
 		/// <summary>
 		///     Trigger the underlying event
 		/// </summary>
-		/// <param name="sender">object for sender</param>
-		/// <param name="eventArgs">TEventArgs</param>
-		void Trigger(object sender, TEventArgs eventArgs);
+		/// <param name="eventData">IEventData with all the data about the event</param>
+		void Trigger(IEventData<EventArgs> eventData);
 
 		/// <summary>
 		///     Call the supplied action on each event.
@@ -83,15 +74,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
 		/// <returns>IEventHandler</returns>
-		IEventHandler OnEach(Action<TEventArgs> action, Func<TEventArgs, bool> predicate = null);
-
-		/// <summary>
-		///     Call the supplied action on each event.
-		/// </summary>
-		/// <param name="action">Action to call</param>
-		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
-		/// <returns>IEventHandler</returns>
-		IEventHandler OnEach(Action<object, TEventArgs> action, Func<object, TEventArgs, bool> predicate = null);
+		IEventHandler OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
@@ -101,7 +84,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<Tuple<object, TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null);
+		Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception or if
@@ -120,7 +103,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="processAction">Action which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		Task ProcessExtendedAsync(Action<IEnumerable<Tuple<object, TEventArgs>>> processAction, TimeSpan? timeout = null);
+		Task ProcessExtendedAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception
@@ -135,7 +118,7 @@ namespace Dapplo.Utils.Events
 	///     The interface which is used internally
 	/// </summary>
 	/// <typeparam name="TEventArgs"></typeparam>
-	public interface IInternalSmartEvent<TEventArgs> : ISmartEvent<TEventArgs>
+	public interface IInternalSmartEvent<out TEventArgs> : ISmartEvent<TEventArgs>
 	{
 		/// <summary>
 		///     The IInternalEventHandler want to subscribe

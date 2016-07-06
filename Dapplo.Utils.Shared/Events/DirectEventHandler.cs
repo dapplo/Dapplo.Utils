@@ -37,8 +37,8 @@ namespace Dapplo.Utils.Events
 	public class DirectEventHandler<TEventArgs> : IInternalEventHandler<TEventArgs>
 	{
 		private readonly IInternalSmartEvent<TEventArgs> _parent;
-		private Action<object, TEventArgs> _action;
-		private Func<object, TEventArgs, bool> _predicate = (s, e) => true;
+		private Action<IEventData<TEventArgs>> _action;
+		private Func<IEventData<TEventArgs>, bool> _predicate = e => true;
 
 		internal DirectEventHandler(IInternalSmartEvent<TEventArgs> parent)
 		{
@@ -48,13 +48,12 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     This is called when an event occurs, and will call the registered action
 		/// </summary>
-		/// <param name="sender">object</param>
-		/// <param name="eventArgs">TEventArgs</param>
-		public void Handle(object sender, TEventArgs eventArgs)
+		/// <param name="eventData">IEventData</param>
+		public void Handle(IEventData<TEventArgs> eventData)
 		{
-			if (_predicate(sender, eventArgs))
+			if (_predicate(eventData))
 			{
-				_action?.Invoke(sender, eventArgs);
+				_action?.Invoke(eventData);
 			}
 		}
 
@@ -93,9 +92,9 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Filter the events with a predicate
 		/// </summary>
-		/// <param name="predicate">Func which gets an object and a TEventArgs, and returns a bool</param>
+		/// <param name="predicate">Func which gets IEventData, and returns a bool</param>
 		/// <returns>IEventHandler</returns>
-		public IEventHandler Where(Func<object, TEventArgs, bool> predicate)
+		public IEventHandler Where(Func<IEventData<TEventArgs>, bool> predicate)
 		{
 			if (predicate != null)
 			{
@@ -107,9 +106,9 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Register an action which is called on every event.
 		/// </summary>
-		/// <param name="action">Action which gets an object and TEventArgs</param>
+		/// <param name="action">Action which gets IEventData</param>
 		/// <returns>IEventHandler</returns>
-		public IEventHandler Do(Action<object, TEventArgs> action)
+		public IEventHandler Do(Action<IEventData<TEventArgs>> action)
 		{
 			_action = action;
 			Subscribe();
