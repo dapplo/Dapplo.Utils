@@ -192,7 +192,7 @@ namespace Dapplo.Utils
 				{
 					try
 					{
-						var backgroundResult = await CreateAsync(keyObject, cancellationToken);
+						var backgroundResult = await CreateAsync(keyObject, cancellationToken).ConfigureAwait(false);
 						completionSource.TrySetResult(backgroundResult);
 					}
 					catch (TaskCanceledException)

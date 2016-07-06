@@ -9,7 +9,7 @@ namespace Dapplo.Utils.Tests.Cache
 	{
 		protected override async Task<BitmapSource> CreateAsync(Uri key, CancellationToken cancellationToken = new CancellationToken())
 		{
-			await Task.Delay(100, cancellationToken);
+			await Task.Delay(100, cancellationToken).ConfigureAwait(false);
 			throw new ArgumentNullException(nameof(key), key.AbsoluteUri);
 		}
 	}
