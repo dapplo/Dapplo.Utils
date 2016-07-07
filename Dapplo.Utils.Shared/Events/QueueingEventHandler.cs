@@ -49,7 +49,7 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Create a consuming IEnumerable
 		/// </summary>
-		/// <returns>IEnumerable with a tuple with object (sender) and TEventArgs</returns>
+		/// <returns>IEnumerable with a IEventData</returns>
 		public IEnumerable<IEventData<TEventArgs>> GetEnumerable
 		{
 			get

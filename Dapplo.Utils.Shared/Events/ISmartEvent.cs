@@ -59,7 +59,7 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Trigger the underlying event
 		/// </summary>
-		/// <param name="eventData">IEventData with all the data about the event</param>
+		/// <param name="eventData">IEventData with all the data about the event, use EventData.Create for this.</param>
 		void Trigger(IEventData<EventArgs> eventData);
 
 		/// <summary>
@@ -71,8 +71,7 @@ namespace Dapplo.Utils.Events
 		IEventHandler OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null);
 
 		/// <summary>
-		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
-		///     exception or if the function returns
+		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an exception or if the function returns
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
@@ -80,8 +79,7 @@ namespace Dapplo.Utils.Events
 		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc);
 
 		/// <summary>
-		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
-		///     exception
+		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
 		/// <returns>Task</returns>
