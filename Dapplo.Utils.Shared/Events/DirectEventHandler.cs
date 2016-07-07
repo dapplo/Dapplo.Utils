@@ -34,59 +34,53 @@ namespace Dapplo.Utils.Events
 	/// <summary>
 	///     This is the implementation of the DirectEventHandler
 	/// </summary>
-	public class DirectEventHandler<TEventArgs> : IInternalEventHandler<TEventArgs>
+	internal class DirectEventHandler<TEventArgs> : IEventHandler, IObserver<IEventData<TEventArgs>>
 	{
-		private readonly IInternalSmartEvent<TEventArgs> _parent;
+		private readonly IObservable<IEventData<TEventArgs>> _parent;
 		private Action<IEventData<TEventArgs>> _action;
 		private Func<IEventData<TEventArgs>, bool> _predicate = e => true;
+		private IDisposable _subscription;
 
-		internal DirectEventHandler(IInternalSmartEvent<TEventArgs> parent)
+		internal DirectEventHandler(IObservable<IEventData<TEventArgs>> parent)
 		{
 			_parent = parent;
 		}
 
 		/// <summary>
-		///     This is called when an event occurs, and will call the registered action
+		///     Dispose this IEventHandler, this will cancel the subscription
+		/// </summary>
+		public void Dispose()
+		{
+			_subscription.Dispose();
+		}
+
+		/// <summary>
+		///     IObserver.OnCompleted
+		/// </summary>
+		public void OnCompleted()
+		{
+			// Do nothing
+		}
+
+		/// <summary>
+		///     IObserver.OnError
+		/// </summary>
+		/// <param name="error">Exception</param>
+		public void OnError(Exception error)
+		{
+			// Ignore
+		}
+
+		/// <summary>
+		///     IObserver.OnNext
 		/// </summary>
 		/// <param name="eventData">IEventData</param>
-		public void Handle(IEventData<TEventArgs> eventData)
+		public void OnNext(IEventData<TEventArgs> eventData)
 		{
 			if (_predicate(eventData))
 			{
 				_action?.Invoke(eventData);
 			}
-		}
-
-		/// <summary>
-		///     Signal the enumerator that it has been unsubscribed, and no longer get any new events
-		/// </summary>
-		public void Unsubscribed()
-		{
-			// Nothing to do, we just aren't called
-		}
-
-		/// <summary>
-		///     Signal the enumerator that it subscribed, and will be passed events
-		/// </summary>
-		public void Subscribed()
-		{
-			// do nothing
-		}
-
-		/// <summary>
-		///     Add this to the parent
-		/// </summary>
-		public void Subscribe()
-		{
-			_parent.Subscribe(this);
-		}
-
-		/// <summary>
-		///     Remove this from the parent
-		/// </summary>
-		public void Unsubscribe()
-		{
-			_parent.Unsubscribe(this);
 		}
 
 		/// <summary>
@@ -111,7 +105,7 @@ namespace Dapplo.Utils.Events
 		public IEventHandler Do(Action<IEventData<TEventArgs>> action)
 		{
 			_action = action;
-			Subscribe();
+			_subscription = _parent.Subscribe(this);
 			return this;
 		}
 	}

@@ -25,16 +25,27 @@
 
 #region Usings
 
-using System;
+using System.Collections.Generic;
+using System.Linq;
 
 #endregion
 
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
-	///     IEventHandler marker interface, and that what is exposed to the "outside"
+	///     Helper extension for IEventData
 	/// </summary>
-	public interface IEventHandler : IDisposable
+	public static class EventDataExtensions
 	{
+		/// <summary>
+		///     Use this to flatten the event data to only the TEventArgs
+		/// </summary>
+		/// <param name="eventEnumerable">IEnumerable with IEventData</param>
+		/// <typeparam name="TEventArgs">Type of the event arguments</typeparam>
+		/// <returns>IEnumerable with TEventArgs</returns>
+		public static IEnumerable<TEventArgs> Flatten<TEventArgs>(this IEnumerable<IEventData<TEventArgs>> eventEnumerable)
+		{
+			return eventEnumerable.Select(x => x.Args);
+		}
 	}
 }

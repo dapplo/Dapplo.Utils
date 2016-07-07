@@ -48,19 +48,13 @@ namespace Dapplo.Utils.Events
 	///     This is the interface to a SmartEvent.
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
-	public interface ISmartEvent<out TEventArgs> : ISmartEvent
+	public interface ISmartEvent<out TEventArgs> : ISmartEvent, IObservable<IEventData<TEventArgs>>
 	{
-		/// <summary>
-		///     Get an IEnumerable with eventargs for the underlying event
-		/// </summary>
-		/// <returns>IEnumerable with eventargs</returns>
-		IEnumerable<TEventArgs> From { get; }
-
 		/// <summary>
 		///     Get an IEnumerable for the underlying event
 		/// </summary>
-		/// <returns>IEnumerable with tuple sender,eventargs</returns>
-		IEnumerable<IEventData<TEventArgs>> FromExtended { get; }
+		/// <returns>IEnumerable with IEventData</returns>
+		IEnumerable<IEventData<TEventArgs>> From { get; }
 
 		/// <summary>
 		///     Trigger the underlying event
@@ -84,17 +78,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null);
-
-		/// <summary>
-		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception or if
-		///     the function returns
-		/// </summary>
-		/// <typeparam name="TResult">Type of the result</typeparam>
-		/// <param name="processFunc">Function which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
-		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<TEventArgs>, TResult> processFunc, TimeSpan? timeout = null);
+		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
@@ -103,33 +87,6 @@ namespace Dapplo.Utils.Events
 		/// <param name="processAction">Action which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		Task ProcessExtendedAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null);
-
-		/// <summary>
-		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception
-		/// </summary>
-		/// <param name="processAction">Action which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
-		/// <returns>Task</returns>
-		Task ProcessAsync(Action<IEnumerable<TEventArgs>> processAction, TimeSpan? timeout = null);
-	}
-
-	/// <summary>
-	///     The interface which is used internally
-	/// </summary>
-	/// <typeparam name="TEventArgs"></typeparam>
-	public interface IInternalSmartEvent<out TEventArgs> : ISmartEvent<TEventArgs>
-	{
-		/// <summary>
-		///     The IInternalEventHandler want to subscribe
-		/// </summary>
-		/// <param name="eventHandler"></param>
-		void Subscribe(IInternalEventHandler<TEventArgs> eventHandler);
-
-		/// <summary>
-		///     The IInternalEventHandler wants to unsubscribe
-		/// </summary>
-		/// <param name="eventHandler"></param>
-		void Unsubscribe(IInternalEventHandler<TEventArgs> eventHandler);
+		Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null);
 	}
 }

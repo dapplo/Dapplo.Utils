@@ -28,7 +28,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Dapplo.Log.Facade;
 
 #endregion
 
@@ -37,19 +36,14 @@ namespace Dapplo.Utils.Events
 	/// <summary>
 	///     This is the implementation of the QueueingEventHandler
 	/// </summary>
-	public class QueueingEventHandler<TEventArgs> : BlockingCollection<IEventData<TEventArgs>>, IInternalEventHandler<TEventArgs>
+	internal class QueueingEventHandler<TEventArgs> : IEventHandler, IObserver<IEventData<TEventArgs>>
 	{
-		/// <summary>
-		///     The logger for this class
-		/// </summary>
-		protected static readonly LogSource Log = new LogSource();
+		private readonly BlockingCollection<IEventData<TEventArgs>> _events = new BlockingCollection<IEventData<TEventArgs>>();
+		private readonly IDisposable _subscription;
 
-		private readonly IInternalSmartEvent<TEventArgs> _parent;
-
-		internal QueueingEventHandler(IInternalSmartEvent<TEventArgs> parent)
+		internal QueueingEventHandler(IObservable<IEventData<TEventArgs>> parent)
 		{
-			_parent = parent;
-			Subscribe();
+			_subscription = parent.Subscribe(this);
 		}
 
 		/// <summary>
@@ -62,10 +56,10 @@ namespace Dapplo.Utils.Events
 			{
 				try
 				{
-					while (!IsCompleted)
+					while (!_events.IsCompleted)
 					{
 						IEventData<TEventArgs> item;
-						while (TryTake(out item, TimeSpan.FromSeconds(1)))
+						while (_events.TryTake(out item, TimeSpan.FromSeconds(1)))
 						{
 							// Only yield the event arguments
 							yield return item;
@@ -75,50 +69,40 @@ namespace Dapplo.Utils.Events
 				finally
 				{
 					// "Caller" finished, unregister
-					Unsubscribe();
+					_subscription.Dispose();
+					_events.Dispose();
 				}
 			}
+		}
+
+		public void Dispose()
+		{
+			_subscription.Dispose();
 		}
 
 		/// <summary>
 		///     Add the passed event information to the Blocking collection
 		/// </summary>
 		/// <param name="eventData">IEventData</param>
-		public void Handle(IEventData<TEventArgs> eventData)
+		public void OnNext(IEventData<TEventArgs> eventData)
 		{
-			Add(eventData);
+			_events.Add(eventData);
 		}
 
 		/// <summary>
-		///     Signal the enumerator that it has been unsubscribed, and no longer get any new events
 		/// </summary>
-		public void Unsubscribed()
+		/// <param name="error"></param>
+		public void OnError(Exception error)
 		{
-			CompleteAdding();
+			// Ignore for now
 		}
 
 		/// <summary>
-		///     Signal the enumerator that it subscribed, and will be passed events
+		///     The IObservable is finished
 		/// </summary>
-		public void Subscribed()
+		public void OnCompleted()
 		{
-			// do nothing
-		}
-
-		/// <summary>
-		///     Add this to the parent
-		/// </summary>
-		public void Subscribe()
-		{
-			_parent.Subscribe(this);
-		}
-
-		/// <summary>
-		///     Remove this from the parent
-		/// </summary>
-		public void Unsubscribe()
-		{
-			_parent.Unsubscribe(this);
+			_events.CompleteAdding();
 		}
 	}
 }

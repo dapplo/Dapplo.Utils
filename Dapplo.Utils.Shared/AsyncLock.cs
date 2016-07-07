@@ -35,6 +35,8 @@ namespace Dapplo.Utils
 	public class AsyncLock : IDisposable
 	{
 		private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+		// To detect redundant calls
+		private bool _disposedValue;
 
 		/// <summary>
 		///     usage
@@ -45,7 +47,10 @@ namespace Dapplo.Utils
 		public async Task<IDisposable> LockAsync()
 		{
 			await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
-			return new Releaser(_semaphoreSlim);
+			return Disposable.Create(() =>
+			{
+				_semaphoreSlim.Release();
+			});
 		}
 
 		/// <summary>
@@ -58,7 +63,10 @@ namespace Dapplo.Utils
 		public async Task<IDisposable> LockAsync(CancellationToken cancellationToken)
 		{
 			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
-			return new Releaser(_semaphoreSlim);
+			return Disposable.Create(() =>
+			{
+				_semaphoreSlim.Release();
+			});
 		}
 
 		/// <summary>
@@ -72,47 +80,20 @@ namespace Dapplo.Utils
 		{
 			var cancellationTokenSource = new CancellationTokenSource(timeout);
 			await _semaphoreSlim.WaitAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-			return new Releaser(_semaphoreSlim, cancellationTokenSource);
-		}
-
-
-		/// <summary>
-		/// Internal structure used to make it possible to dispose
-		/// </summary>
-		private struct Releaser : IDisposable
-		{
-			private readonly SemaphoreSlim _semaphoreSlim;
-			private readonly IDisposable _otherDisposable;
-			private bool _isReleased;
-
-			public Releaser(SemaphoreSlim semaphoreSlim, IDisposable otherDisposable = null)
+			return Disposable.Create(() =>
 			{
-				_isReleased = false;
-				_semaphoreSlim = semaphoreSlim;
-				_otherDisposable = otherDisposable;
-			}
-
-			public void Dispose()
-			{
-				if (!_isReleased)
-				{
-					_semaphoreSlim.Release();
-					_otherDisposable?.Dispose();
-					_isReleased = true;
-				}
-			}
+				cancellationTokenSource.Dispose();
+				_semaphoreSlim.Release();
+			});
 		}
 
 		#region IDisposable Support
 
-		// To detect redundant calls
-		private bool _disposedValue;
 
 		/// <summary>
 		/// Dispose the current async lock, and it's underlying SemaphoreSlim
 		/// </summary>
-		/// <param name="disposing">bool which is currently ignored as we have no managed objects</param>
-		private void Dispose(bool disposing)
+		private void DisposeInternal()
 		{
 			if (!_disposedValue)
 			{
@@ -123,11 +104,11 @@ namespace Dapplo.Utils
 		}
 
 		/// <summary>
-		/// Finalizer, as it would be bad to leave a SemaphoreSlim
+		/// Finalizer, as it would be bad to leave a SemaphoreSlim hanging around
 		/// </summary>
 		~AsyncLock()
 		{
-			Dispose(false);
+			DisposeInternal();
 		}
 
 		/// <summary>
@@ -135,8 +116,8 @@ namespace Dapplo.Utils
 		/// </summary>
 		public void Dispose()
 		{
-			Dispose(true);
-			// Make sure the finalizer for this instance is not called
+			DisposeInternal();
+			// Make sure the finalizer for this instance is not called, as we already did what we need to do
 			GC.SuppressFinalize(this);
 		}
 

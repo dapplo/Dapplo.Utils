@@ -29,12 +29,42 @@ using System;
 
 #endregion
 
-namespace Dapplo.Utils.Events
+namespace Dapplo.Utils
 {
 	/// <summary>
-	///     IEventHandler marker interface, and that what is exposed to the "outside"
+	///     A simple way to return something, which calls an action on Dispose.
 	/// </summary>
-	public interface IEventHandler : IDisposable
+	public class Disposable : IDisposable
 	{
+		private readonly Action _action;
+		// To detect redundant calls, we store a flag
+		private bool _disposed;
+
+		private Disposable(Action action)
+		{
+			_action = action;
+		}
+
+		/// <summary>
+		///     Dispose will call the stored action
+		/// </summary>
+		public void Dispose()
+		{
+			if (!_disposed)
+			{
+				_disposed = true;
+				_action();
+			}
+		}
+
+		/// <summary>
+		///     Create an IDisposable which will call the passed action on Dispose.
+		/// </summary>
+		/// <param name="action">Action to call when the object is disposed.</param>
+		/// <returns>IDisposable</returns>
+		public static IDisposable Create(Action action)
+		{
+			return new Disposable(action);
+		}
 	}
 }

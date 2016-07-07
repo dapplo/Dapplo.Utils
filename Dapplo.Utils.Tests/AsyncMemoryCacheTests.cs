@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-using Dapplo.HttpExtensions;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Xunit;

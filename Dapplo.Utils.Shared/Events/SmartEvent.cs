@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
 using Dapplo.Utils.Tasks;
@@ -42,7 +43,10 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	public static class SmartEvent
 	{
-		private const BindingFlags AllBindings = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+		/// <summary>
+		///     Default BindingFlags for finding events and methods via reflection
+		/// </summary>
+		public const BindingFlags AllBindings = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 		/// <summary>
 		///     Dispose all ISmartEvent in the list
@@ -57,6 +61,41 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
+		///     Removes all the event handlers from the defined events in an object
+		///     This is usefull to do internally, after a MemberwiseClone is made, to prevent memory leaks
+		/// </summary>
+		/// <param name="instance">object instance where events need to be removed</param>
+		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
+		public static void RemoveEventHandlers(object instance, string regExPattern = null)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+			Regex regex = null;
+			if (!string.IsNullOrEmpty(regExPattern))
+			{
+				regex = new Regex(regExPattern);
+			}
+			var typeWithEvents = instance.GetType();
+			foreach (var eventInfo in typeWithEvents.GetEvents(AllBindings))
+			{
+				if (regex != null && !regex.IsMatch(eventInfo.Name))
+				{
+					continue;
+				}
+				var fieldInfo = typeWithEvents.GetField(eventInfo.Name, AllBindings);
+				if (fieldInfo == null)
+				{
+					continue;
+				}
+				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
+				var removeMethod = eventInfo.GetRemoveMethod(true);
+				removeMethod?.Invoke(instance, new object[] {eventDelegate});
+			}
+		}
+
+		/// <summary>
 		///     Register the supplied action to all events in the targe class.
 		///     Although this is somewhat restrictive, it might be usefull for logs
 		/// </summary>
@@ -64,8 +103,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="predicate"></param>
 		/// <param name="action">Action for the registration</param>
 		/// <returns>IList of ISmartEvent which can be dispose with DisposeAll</returns>
-		public static IList<ISmartEvent> RegisterEvents<TEventArgs>(object targetObject, Action<IEventData<TEventArgs>> action,
-			Func<string, bool> predicate = null)
+		public static IList<ISmartEvent> RegisterEvents<TEventArgs>(object targetObject, Action<IEventData<TEventArgs>> action, Func<string, bool> predicate = null)
 		{
 			var smartEvents = new List<ISmartEvent>();
 
@@ -98,16 +136,10 @@ namespace Dapplo.Utils.Events
 		///     The name of the event, e.g. via nameof(object.event), used for logging and finding the
 		///     ISmartEvent
 		/// </param>
-		/// <param name="registeredSmartEvents">
-		///     If you want to keep track of the ISmartEvent registrations, you can pass a list
-		///     here
-		/// </param>
-		public static ISmartEvent<TEventArgs> From<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, string eventName = null,
-			IList<ISmartEvent> registeredSmartEvents = null) where TEventArgs : EventArgs
+		public static ISmartEvent<TEventArgs> From<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
+			where TEventArgs : EventArgs
 		{
-			var smartEvent = new SmartEvent<TEventArgs>(ref eventHandler, eventName);
-			registeredSmartEvents?.Add(smartEvent);
-			return smartEvent;
+			return new SmartEvent<TEventArgs>(ref eventHandler, eventName);
 		}
 
 		/// <summary>
@@ -116,18 +148,11 @@ namespace Dapplo.Utils.Events
 		/// <typeparam name="TEventArgs">Typeof the event arguments</typeparam>
 		/// <param name="targetObject">object which defines the event</param>
 		/// <param name="eventName">nameof(object.event)</param>
-		/// <param name="registeredSmartEvents">
-		///     If you want to keep track of the ISmartEvent registrations, you can pass a list
-		///     here
-		/// </param>
 		/// <returns>ISmartEvent</returns>
-		public static ISmartEvent<TEventArgs> From<TEventArgs>(object targetObject, string eventName, IList<ISmartEvent> registeredSmartEvents = null)
-			where TEventArgs : EventArgs
+		public static ISmartEvent<TEventArgs> From<TEventArgs>(object targetObject, string eventName) where TEventArgs : EventArgs
 		{
 			// Create the Parent, the Reflection is in there.
-			var smartEvent = new SmartEvent<TEventArgs>(targetObject, eventName);
-			registeredSmartEvents?.Add(smartEvent);
-			return smartEvent;
+			return new SmartEvent<TEventArgs>(targetObject, eventName);
 		}
 	}
 
@@ -135,22 +160,19 @@ namespace Dapplo.Utils.Events
 	///     This creates a smart event for the supplied event.
 	/// </summary>
 	/// <typeparam name="TEventArgs">the underlying type for the EventHandler</typeparam>
-	public class SmartEvent<TEventArgs> : IInternalSmartEvent<TEventArgs>
+	public class SmartEvent<TEventArgs> : ISmartEvent<TEventArgs>
 	{
 		// ReSharper disable once StaticMemberInGenericType
 		private static readonly LogSource Log = new LogSource();
-
-		private static readonly BindingFlags DefaultBindingFlags = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public |
-																	BindingFlags.NonPublic;
-
-		private readonly IList<IInternalEventHandler<TEventArgs>> _eventHandlers = new List<IInternalEventHandler<TEventArgs>>();
 		private readonly EventInfo _eventInfo;
 		private readonly Delegate _handleEventDelegate;
+
+		private readonly IList<IObserver<IEventData<TEventArgs>>> _observers = new List<IObserver<IEventData<TEventArgs>>>();
 		private readonly object _targetObject;
 		private readonly bool _useEventHandler;
 		private bool _disposedValue; // To detect redundant calls
 		private EventHandler<TEventArgs> _eventHandler;
-		private bool _isRegistered;
+		private bool _subscribedToEvents;
 
 		/// <summary>
 		///     Constructor for the FieldInfo
@@ -159,7 +181,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="eventName">The name of the event field / property</param>
 		internal SmartEvent(object targetObject, string eventName)
 		{
-			_eventInfo = targetObject.GetType().GetEvent(eventName, DefaultBindingFlags);
+			_eventInfo = targetObject.GetType().GetEvent(eventName, SmartEvent.AllBindings);
 			if (_eventInfo == null)
 			{
 				throw new ArgumentException($"The event {eventName} cannot be bound by FromReflection as it does not exist in the supplied object.",
@@ -215,7 +237,7 @@ namespace Dapplo.Utils.Events
 			{
 				if (_useEventHandler)
 				{
-					_eventHandler?.Invoke(eventData.Sender, (TEventArgs)(object)eventData.Args);
+					_eventHandler?.Invoke(eventData.Sender, (TEventArgs) (object) eventData.Args);
 				}
 				else
 				{
@@ -223,11 +245,11 @@ namespace Dapplo.Utils.Events
 					var raiseMethodInfo = _eventInfo.RaiseMethod;
 					if (raiseMethodInfo != null)
 					{
-						raiseMethodInfo.Invoke(_targetObject, new[] { eventData.Sender, eventData.Args });
+						raiseMethodInfo.Invoke(_targetObject, new[] {eventData.Sender, eventData.Args});
 					}
 					else
 					{
-						var fieldInfo = _targetObject.GetType().GetField(_eventInfo.Name, DefaultBindingFlags);
+						var fieldInfo = _targetObject.GetType().GetField(_eventInfo.Name, SmartEvent.AllBindings);
 						if (fieldInfo != null)
 						{
 							var eventDelegate = (Delegate) fieldInfo.GetValue(_targetObject);
@@ -247,47 +269,6 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Subscribe an IEventHandler
-		/// </summary>
-		/// <param name="eventHandler">IEventHandler</param>
-		public void Subscribe(IInternalEventHandler<TEventArgs> eventHandler)
-		{
-			if (_disposedValue)
-			{
-				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't register {EventName} after dispose.");
-			}
-
-			lock (_eventHandlers)
-			{
-				if (!_eventHandlers.Contains(eventHandler))
-				{
-					_eventHandlers.Add(eventHandler);
-				}
-			}
-			Subscribe();
-		}
-
-		/// <summary>
-		///     Unsubscribe the IEventHandler
-		/// </summary>
-		/// <param name="eventHandler">IEventHandler</param>
-		public void Unsubscribe(IInternalEventHandler<TEventArgs> eventHandler)
-		{
-			lock (_eventHandlers)
-			{
-				if (_eventHandlers.Remove(eventHandler))
-				{
-					if (_eventHandlers.Count == 0)
-					{
-						Unsubscribe();
-						// signal removed
-						eventHandler.Unsubscribed();
-					}
-				}
-			}
-		}
-
-		/// <summary>
 		///     Call the supplied action on each event.
 		/// </summary>
 		/// <param name="action">Action to call</param>
@@ -302,88 +283,39 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
+		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an
 		///     exception or if the function returns
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessExtendedAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null)
-		{
-			// Start the registration inside the current thread
-			var enumerable = FromExtended;
-			if (timeout.HasValue)
-			{
-				return AsyncHelper.RunWithTimeout(() => processFunc(enumerable), timeout.Value);
-			}
-			return Task.Run(() => processFunc(enumerable));
-		}
-
-		/// <summary>
-		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception or if
-		///     the function returns
-		/// </summary>
-		/// <typeparam name="TResult">Type of the result</typeparam>
-		/// <param name="processFunc">Function which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
-		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<TEventArgs>, TResult> processFunc, TimeSpan? timeout = null)
+		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = From;
-			if (timeout.HasValue)
-			{
-				return AsyncHelper.RunWithTimeout(() => processFunc(enumerable), timeout.Value);
-			}
-			return Task.Run(() => processFunc(enumerable));
+			return Task.Run(() => processFunc(enumerable)).WithTimeout(timeout);
 		}
 
 		/// <summary>
-		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
+		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an
 		///     exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
 		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		public Task ProcessExtendedAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null)
-		{
-			// Start the registration inside the current thread
-			var enumerable = FromExtended;
-			if (timeout.HasValue)
-			{
-				return AsyncHelper.RunWithTimeout(() => processAction(enumerable), timeout.Value);
-			}
-			return Task.Run(() => processAction(enumerable));
-		}
-
-		/// <summary>
-		///     Process events (IEnumerable with eventargs) in a background task, the task will only finish on an exception
-		/// </summary>
-		/// <param name="processAction">Action which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
-		/// <returns>Task</returns>
-		public Task ProcessAsync(Action<IEnumerable<TEventArgs>> processAction, TimeSpan? timeout = null)
+		public Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null)
 		{
 			// Start the registration inside the current thread
 			var enumerable = From;
-			return Task.Run(() => processAction(enumerable));
-		}
-
-		/// <summary>
-		///     Create a QueueingEventHandler for handling only the eventArgs
-		/// </summary>
-		/// <returns>IEnumerable with TEventArgs</returns>
-		public IEnumerable<TEventArgs> From
-		{
-			get { return FromExtended.Select(eventData => eventData.Args); }
+			return Task.Run(() => processAction(enumerable)).WithTimeout(timeout);
 		}
 
 		/// <summary>
 		///     Create a QueueingEventHandler for handling the sender and the eventArgs
 		/// </summary>
-		/// <returns>IEnumerable with a tuple with object (sender) and TEventArgs</returns>
-		public IEnumerable<IEventData<TEventArgs>> FromExtended
+		/// <returns>IEnumerable with a IEventData</returns>
+		public IEnumerable<IEventData<TEventArgs>> From
 		{
 			get
 			{
@@ -399,6 +331,73 @@ namespace Dapplo.Utils.Events
 		{
 			UnsubscribeAllHandlers();
 			_disposedValue = true;
+		}
+
+		/// <summary>
+		///     IObservable.Subscript implementation
+		/// </summary>
+		/// <param name="observer">IObserver which wants to subscribe</param>
+		/// <returns>IDisposable which needs to be disposed to unsubscribe</returns>
+		public IDisposable Subscribe(IObserver<IEventData<TEventArgs>> observer)
+		{
+			if (_disposedValue)
+			{
+				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't subscribe to {EventName} after the SmartEvent was disposed.");
+			}
+
+			lock (_observers)
+			{
+				if (!_observers.Contains(observer))
+				{
+					_observers.Add(observer);
+				}
+			}
+			if (!_subscribedToEvents)
+			{
+				_subscribedToEvents = true;
+				// Start the processing in the background by registering the event
+				if (_useEventHandler)
+				{
+					_eventHandler += HandleEvent;
+				}
+				else
+				{
+					_eventInfo.AddMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
+				}
+			}
+			return Disposable.Create(() => Unsubscribe(observer));
+		}
+
+		/// <summary>
+		///     Unsubscribe the IObserver, this is used internally
+		/// </summary>
+		/// <param name="observer">IObserver</param>
+		private void Unsubscribe(IObserver<IEventData<TEventArgs>> observer)
+		{
+			lock (_observers)
+			{
+				if (_observers.Remove(observer))
+				{
+					// Unsubscribe the HandleEvent from the event as no-one is interested
+					if (_observers.Count == 0 && _subscribedToEvents)
+					{
+						_subscribedToEvents = false;
+						// We finished adding events, so the processing can stop
+						if (_useEventHandler && _eventHandler != null)
+						{
+							// ReSharper disable once DelegateSubtraction
+							_eventHandler -= HandleEvent;
+						}
+						else if (!_useEventHandler)
+						{
+							// Unsubscribe the _handleEventDelegate via reflection
+							_eventInfo.RemoveMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
+						}
+					}
+					// signal that it was removed by telling that there will be no more data
+					observer.OnCompleted();
+				}
+			}
 		}
 
 		/// <summary>
@@ -422,17 +421,17 @@ namespace Dapplo.Utils.Events
 			{
 				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't be handling events for {EventName} after dispose.");
 			}
-			IList<IInternalEventHandler<TEventArgs>> eventHandlers;
-			lock (_eventHandlers)
+			IList<IObserver<IEventData<TEventArgs>>> eventHandlers;
+			lock (_observers)
 			{
-				eventHandlers = _eventHandlers.ToList();
+				eventHandlers = _observers.ToList();
 			}
 			// Loop over all event handlers, and add the item to their BlockingCollection
 			foreach (var eventHandler in eventHandlers)
 			{
 				try
 				{
-					eventHandler.Handle(EventData.Create(sender, eventArgs, EventName));
+					eventHandler.OnNext(EventData.Create(sender, eventArgs, EventName));
 				}
 				catch (Exception ex)
 				{
@@ -442,59 +441,14 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Subscribe to the underlying event
-		/// </summary>
-		private void Subscribe()
-		{
-			if (_disposedValue)
-			{
-				throw new ObjectDisposedException(nameof(SmartEvent), $"No registrations for {EventName} after dispose.");
-			}
-			if (!_isRegistered)
-			{
-				// Start the processing in the background by registering the event
-				if (_useEventHandler)
-				{
-					_eventHandler += HandleEvent;
-				}
-				else
-				{
-					_eventInfo.AddMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
-				}
-			}
-		}
-
-		/// <summary>
-		///     Unsubscribe to the underlying event
-		/// </summary>
-		private void Unsubscribe()
-		{
-			if (_isRegistered)
-			{
-				_isRegistered = false;
-				// We finished adding events, so the processing can stop
-				if (_useEventHandler && _eventHandler != null)
-				{
-					// ReSharper disable once DelegateSubtraction
-					_eventHandler -= HandleEvent;
-				}
-				else if (!_useEventHandler)
-				{
-					// Unsubscribe the _handleEventDelegate via reflection
-					_eventInfo.RemoveMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
-				}
-			}
-		}
-
-		/// <summary>
 		///     Remove all registered IEventHandler
 		/// </summary>
 		private void UnsubscribeAllHandlers()
 		{
-			IList<IInternalEventHandler<TEventArgs>> eventHandlers;
-			lock (_eventHandlers)
+			IList<IObserver<IEventData<TEventArgs>>> eventHandlers;
+			lock (_observers)
 			{
-				eventHandlers = _eventHandlers.ToList();
+				eventHandlers = _observers.ToList();
 			}
 			// Loop over all event handlers, and add the item to their BlockingCollection
 			foreach (var eventHandler in eventHandlers)

@@ -21,9 +21,7 @@
 
 #region using
 
-using System;
-using System.Reflection;
-using System.Text.RegularExpressions;
+using Dapplo.Utils.Events;
 
 #endregion
 
@@ -34,50 +32,15 @@ namespace Dapplo.Utils.Extensions
 	/// </summary>
 	public static class EventExtensions
 	{
-		private const BindingFlags EventBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 		/// <summary>
 		///     Removes all the event handlers on a IHasEvents
-		///     This is usefull to do internally, after the clone is made, to prevent memory leaks
+		///     This is usefull to do internally, after a clone is made, to prevent memory leaks
 		/// </summary>
 		/// <param name="hasEvents">IHasEvents instance</param>
 		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
 		public static void RemoveEventHandlers(this IHasEvents hasEvents, string regExPattern = null)
 		{
-			RemoveEventHandlers((object)hasEvents, regExPattern);
-		}
-
-		/// <summary>
-		/// Removes all the event handlers from the defined events in an object
-		/// This is usefull to do internally, after a MemberwiseClone is made, to prevent memory leaks
-		/// </summary>
-		/// <param name="instance">object instance where events need to be removed</param>
-		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
-		public static void RemoveEventHandlers(object instance, string regExPattern = null)
-		{
-			if (instance == null)
-			{
-				throw new ArgumentNullException(nameof(instance));
-			}
-			Regex regex = null;
-			if (!string.IsNullOrEmpty(regExPattern))
-			{
-				regex = new Regex(regExPattern);
-			}
-			var typeWithEvents = instance.GetType();
-			foreach (var eventInfo in typeWithEvents.GetEvents(EventBindingFlags))
-			{
-				if (regex != null && !regex.IsMatch(eventInfo.Name)) {
-					continue;
-				}
-				var fieldInfo = typeWithEvents.GetField(eventInfo.Name, EventBindingFlags);
-				if (fieldInfo == null)
-				{
-					continue;
-				}
-				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
-				var removeMethod = eventInfo.GetRemoveMethod(true);
-				removeMethod?.Invoke(instance, new object[] { eventDelegate });
-			}
+			SmartEvent.RemoveEventHandlers(hasEvents, regExPattern);
 		}
 	}
 }

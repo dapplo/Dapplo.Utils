@@ -36,7 +36,6 @@ using Dapplo.HttpExtensions;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Events;
-using Dapplo.Utils.Tasks;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;
 using Xunit.Abstractions;
@@ -74,7 +73,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task EnumerableEvent_Reflectiont_Timer_Test()
 		{
-			var timer = new Timer(1000);
+			var timer = new Timer(100);
 
 			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
@@ -89,7 +88,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void SmartEvent_Enumerable_Test()
 		{
-			var smartEvent = SmartEvent.From<SimpleTestEventArgs>(this, nameof(TestStringEvent), _enumerableEvents);
+			var smartEvent = SmartEvent.From<SimpleTestEventArgs>(this, nameof(TestStringEvent));
 
 			// Create IEnumerable, this also registers for events
 			var events = smartEvent.From;
@@ -98,7 +97,7 @@ namespace Dapplo.Utils.Tests
 			smartEvent.Trigger(new EventData<SimpleTestEventArgs>(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
 			// Test if the event was processed correctly
-			Assert.Equal("Dapplo", events.Select(e => e.TestValue).First());
+			Assert.Equal("Dapplo", events.Flatten().Select(e => e.TestValue).First());
 		}
 
 		[Fact]
@@ -113,7 +112,7 @@ namespace Dapplo.Utils.Tests
 				Assert.Equal(nameof(npc.Name), testValue);
 				testValue = null;
 				// Test after Unsubscribe
-				handler.Unsubscribe();
+				handler.Dispose();
 				npc.Name = "Dapplo2";
 				Assert.Null(testValue);
 			}
@@ -126,7 +125,7 @@ namespace Dapplo.Utils.Tests
 			using (var smartEvent = SmartEvent.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
 				// Register a do which throws an exception
-				var task = smartEvent.ProcessAsync(eventArgs => eventArgs.Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).First());
+				var task = smartEvent.ProcessAsync(eventArgs => eventArgs.Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).First());
 				npc.Name = "Dapplo";
 				Thread.Sleep(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -144,7 +143,7 @@ namespace Dapplo.Utils.Tests
 			using (var smartEvent = SmartEvent.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
 				// Register ProcessAsync which throws an exception if there is a "2" in the PropertyName
-				var task = smartEvent.ProcessAsync(eventArgs => eventArgs.
+				var task = smartEvent.ProcessAsync(eventArgs => eventArgs.Flatten().
 					Where(e => e.PropertyName.Contains("2")).
 					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).First());
 				npc.Name = "Dapplo";
@@ -162,7 +161,7 @@ namespace Dapplo.Utils.Tests
 			var npc = new NotifyPropertyChangedClass();
 			using (var smartEvent = SmartEvent.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
-				var task = smartEvent.ProcessAsync(eventArgs => eventArgs.Where(e => e.PropertyName.Contains("2")).Take(1).Count());
+				var task = smartEvent.ProcessAsync(eventArgs => eventArgs.Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).Count());
 				npc.Name = "Dapplo";
 				Thread.Sleep(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -197,9 +196,11 @@ namespace Dapplo.Utils.Tests
 			string testValue2 = null;
 			TestStringEvent += (sender, eventArgs) => testValue2 = eventArgs.TestValue;
 
-			var smartEvent = SmartEvent.From(ref TestStringEvent, nameof(TestStringEvent), _enumerableEvents);
+			var smartEvent = SmartEvent.From(ref TestStringEvent, nameof(TestStringEvent));
+			// For later disposing
+			_enumerableEvents.Add(smartEvent);
 
-			var eventHandleTask = smartEvent.ProcessAsync(enumerable => enumerable.ForEach(e => testValue = e.TestValue));
+			var eventHandleTask = smartEvent.ProcessAsync(enumerable => enumerable.ForEach(e => testValue = e.Args.TestValue));
 
 			smartEvent.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
@@ -222,7 +223,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var testValue = new SimpleTestEventArgs {TestValue = "Robin"};
 			EventArgs resultValue = null;
-			var smartEvents = SmartEvent.RegisterEvents<EventArgs>(this, (e) => resultValue = e.Args);
+			SmartEvent.RegisterEvents<EventArgs>(this, (e) => resultValue = e.Args);
 			TestStringEvent(this, testValue);
 			Assert.Equal(testValue, resultValue);
 		}
@@ -233,16 +234,31 @@ namespace Dapplo.Utils.Tests
 		///     This should create a timeout exception
 		/// </summary>
 		[Fact]
-		public async Task SmartEvent_Timer_TimeoutTest()
+		public async Task SmartEvent_Timer_TimeoutFunctionTest()
 		{
-			var timer = new Timer(2000);
+			var timer = new Timer(200);
 
 			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => x.First(), TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => x.First(), TimeSpan.FromMilliseconds(100)));
+				Log.Info().WriteLine(ex.Message);
+			}
+		}
+
+		[Fact]
+		public async Task SmartEvent_Timer_TimeoutActionTest()
+		{
+			var timer = new Timer(200);
+
+			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				timer.Start();
+
+				// Await with a timeout smaller than the timer tick
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.First().Args.SignalTime), TimeSpan.FromMilliseconds(100)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -255,13 +271,13 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task SmartEvent_TimerOk_Test()
 		{
-			var timer = new Timer(1000);
+			var timer = new Timer(100);
 
 			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 				// Await with a timeout bigger than the timer tick
-				await smartEvent.ProcessAsync(x => x.First(), TimeSpan.FromSeconds(2));
+				await smartEvent.ProcessAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.First().Args.SignalTime), TimeSpan.FromMilliseconds(200));
 			}
 		}
 	}
