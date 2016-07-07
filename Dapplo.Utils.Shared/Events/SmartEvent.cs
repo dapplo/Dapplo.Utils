@@ -288,13 +288,12 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null)
+		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc)
 		{
 			// Start the registration inside the current thread
 			var enumerable = From;
-			return Task.Run(() => processFunc(enumerable)).WithTimeout(timeout);
+			return Task.Run(() => processFunc(enumerable));
 		}
 
 		/// <summary>
@@ -302,13 +301,12 @@ namespace Dapplo.Utils.Events
 		///     exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		public Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null)
+		public Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction)
 		{
 			// Start the registration inside the current thread
 			var enumerable = From;
-			return Task.Run(() => processAction(enumerable)).WithTimeout(timeout);
+			return Task.Run(() => processAction(enumerable));
 		}
 
 		/// <summary>

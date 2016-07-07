@@ -76,17 +76,15 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <typeparam name="TResult">Type of the result</typeparam>
 		/// <param name="processFunc">Function which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc, TimeSpan? timeout = null);
+		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc);
 
 		/// <summary>
 		///     Process events (IEnumerable with tuple sender,eventargs) in a background task, the task will only finish on an
 		///     exception
 		/// </summary>
 		/// <param name="processAction">Action which will process the IEnumerable</param>
-		/// <param name="timeout">Optional TimeSpan for a timeout</param>
 		/// <returns>Task</returns>
-		Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction, TimeSpan? timeout = null);
+		Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction);
 	}
 }

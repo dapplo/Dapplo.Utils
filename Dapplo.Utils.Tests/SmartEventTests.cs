@@ -36,6 +36,7 @@ using Dapplo.HttpExtensions;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Events;
+using Dapplo.Utils.Tasks;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;
 using Xunit.Abstractions;
@@ -224,6 +225,7 @@ namespace Dapplo.Utils.Tests
 			var testValue = new SimpleTestEventArgs {TestValue = "Robin"};
 			EventArgs resultValue = null;
 			SmartEvent.RegisterEvents<EventArgs>(this, (e) => resultValue = e.Args);
+			Assert.NotNull(TestStringEvent);
 			TestStringEvent(this, testValue);
 			Assert.Equal(testValue, resultValue);
 		}
@@ -236,14 +238,14 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task SmartEvent_Timer_TimeoutFunctionTest()
 		{
-			var timer = new Timer(200);
+			var timer = new Timer(TimeSpan.FromSeconds(2).TotalMilliseconds);
 
 			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => x.First(), TimeSpan.FromMilliseconds(100)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => x.First()).WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -251,14 +253,14 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task SmartEvent_Timer_TimeoutActionTest()
 		{
-			var timer = new Timer(200);
+			var timer = new Timer(TimeSpan.FromSeconds(2).TotalMilliseconds);
 
 			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.First().Args.SignalTime), TimeSpan.FromMilliseconds(100)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await smartEvent.ProcessAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.First().Args.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -271,13 +273,13 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task SmartEvent_TimerOk_Test()
 		{
-			var timer = new Timer(100);
+			var timer = new Timer(TimeSpan.FromSeconds(1).TotalMilliseconds);
 
 			using (var smartEvent = SmartEvent.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 				// Await with a timeout bigger than the timer tick
-				await smartEvent.ProcessAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.First().Args.SignalTime), TimeSpan.FromMilliseconds(200));
+				await smartEvent.ProcessAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.First().Args.SignalTime)).WithTimeout(TimeSpan.FromSeconds(2));
 			}
 		}
 	}
