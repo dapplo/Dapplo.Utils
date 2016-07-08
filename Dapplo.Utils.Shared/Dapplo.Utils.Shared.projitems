@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)AbcComparer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AsyncLock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Disposable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Enumerable\EnumerableExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventDataExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventObservable.cs" />

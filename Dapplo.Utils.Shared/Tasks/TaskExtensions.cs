@@ -34,7 +34,8 @@ using System.Threading.Tasks;
 namespace Dapplo.Utils.Tasks
 {
 	/// <summary>
-	///     A few simple task helpers, these could be simplified.
+	///     A few simple task helpers.
+	///     These are in a different package so it doesn't hinder other IEnumerable extensions.
 	///     The code was based, but slightly modified, upon the blog entry <a href="http://blogs.msdn.com/b/pfxteam/archive/2011/11/10/10235834.aspx">here</a>
 	/// </summary>
 	public static class TaskExtensions
@@ -157,7 +158,10 @@ namespace Dapplo.Utils.Tasks
 			}
 		}
 
-		// Simulate a Task<void> to satisfy the WithTimeoutInternal Type argument
+
+		/// <summary>
+		/// Used to simulate a Task "of void" to satisfy the WithTimeoutInternal required Type argument
+		/// </summary>
 		private struct VoidTypeStruct
 		{
 		}
