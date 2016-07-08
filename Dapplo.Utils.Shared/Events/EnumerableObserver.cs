@@ -26,6 +26,7 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -34,34 +35,34 @@ using System.Collections.Generic;
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
-	///     This is the implementation of the QueueingEventHandler
+	///     This is the implementation of the EnumerableObserver
 	/// </summary>
-	internal class QueueingEventHandler<TEventArgs> : IEventHandler, IObserver<IEventData<TEventArgs>>
+	internal class EnumerableObserver<TValue> : IObserver<TValue>, IEnumerable<TValue>, IDisposable
 	{
-		private readonly BlockingCollection<IEventData<TEventArgs>> _events = new BlockingCollection<IEventData<TEventArgs>>();
+		private readonly BlockingCollection<TValue> _values = new BlockingCollection<TValue>();
 		private readonly IDisposable _subscription;
 
-		internal QueueingEventHandler(IObservable<IEventData<TEventArgs>> parent)
+		public EnumerableObserver(IObservable<TValue> parent)
 		{
 			_subscription = parent.Subscribe(this);
 		}
 
 		/// <summary>
-		///     Create a consuming IEnumerable
+		///     Create a consuming TValue IEnumerable
 		/// </summary>
-		/// <returns>IEnumerable with a IEventData</returns>
-		public IEnumerable<IEventData<TEventArgs>> GetEnumerable
+		/// <returns>IEnumerable with a TValue</returns>
+		public IEnumerable<TValue> GetEnumerable
 		{
 			get
 			{
 				try
 				{
-					while (!_events.IsCompleted)
+					while (!_values.IsCompleted)
 					{
-						IEventData<TEventArgs> item;
-						while (_events.TryTake(out item, TimeSpan.FromSeconds(1)))
+						TValue item;
+						while (_values.TryTake(out item, TimeSpan.FromSeconds(1)))
 						{
-							// Only yield the event arguments
+							// Just yield the value
 							yield return item;
 						}
 					}
@@ -70,23 +71,24 @@ namespace Dapplo.Utils.Events
 				{
 					// "Caller" finished, unregister
 					_subscription.Dispose();
-					_events.Dispose();
+					_values.Dispose();
 				}
 			}
 		}
 
 		public void Dispose()
 		{
+			_values.CompleteAdding();
 			_subscription.Dispose();
 		}
 
 		/// <summary>
-		///     Add the passed event information to the Blocking collection
+		///     Add the value to the Blocking collection
 		/// </summary>
-		/// <param name="eventData">IEventData</param>
-		public void OnNext(IEventData<TEventArgs> eventData)
+		/// <param name="value">TValue</param>
+		public void OnNext(TValue value)
 		{
-			_events.Add(eventData);
+			_values.Add(value);
 		}
 
 		/// <summary>
@@ -102,7 +104,25 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		public void OnCompleted()
 		{
-			_events.CompleteAdding();
+			_values.CompleteAdding();
+		}
+
+		/// <summary>
+		/// Implementation of the generic IEnumerable.GetEnumerator
+		/// </summary>
+		/// <returns>IEnumerator with TValue</returns>
+		public IEnumerator<TValue> GetEnumerator()
+		{
+			return GetEnumerable.GetEnumerator();
+		}
+
+		/// <summary>
+		/// Implementation of the IEnumerable.GetEnumerator
+		/// </summary>
+		/// <returns>IEnumerator</returns>
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerable.GetEnumerator();
 		}
 	}
 }

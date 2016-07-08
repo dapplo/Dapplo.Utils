@@ -34,9 +34,9 @@ using System.Threading.Tasks;
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
-	///     Base marker interface for the SmartEvent
+	///     Base marker interface for the IEventObservable
 	/// </summary>
-	public interface ISmartEvent : IDisposable
+	public interface IEventObservable : IDisposable
 	{
 		/// <summary>
 		///     The name of the underlying event, might be null if not supplied
@@ -45,10 +45,10 @@ namespace Dapplo.Utils.Events
 	}
 
 	/// <summary>
-	///     This is the interface to a SmartEvent.
+	///     This is the interface to a EventObservable.
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
-	public interface ISmartEvent<out TEventArgs> : ISmartEvent, IObservable<IEventData<TEventArgs>>
+	public interface IEventObservable<out TEventArgs> : IEventObservable, IObservable<IEventData<TEventArgs>>
 	{
 		/// <summary>
 		///     Get an IEnumerable for the underlying event
@@ -67,8 +67,8 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
-		/// <returns>IEventHandler</returns>
-		IEventHandler OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null);
+		/// <returns>IDisposable</returns>
+		IDisposable OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null);
 
 		/// <summary>
 		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an exception or if the function returns

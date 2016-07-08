@@ -32,18 +32,18 @@ using System;
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
-	///     This is the implementation of the DirectEventHandler
+	///     This is the implementation of the DirectObserver,  the implementation does nothing more than call a supplied action when OnNext is called.
 	/// </summary>
-	internal class DirectEventHandler<TEventArgs> : IEventHandler, IObserver<IEventData<TEventArgs>>
+	internal class DirectObserver<TValue> : IObserver<TValue>, IDisposable
 	{
-		private readonly IObservable<IEventData<TEventArgs>> _parent;
-		private Action<IEventData<TEventArgs>> _action;
-		private Func<IEventData<TEventArgs>, bool> _predicate = e => true;
+		private readonly IObservable<TValue> _observable;
+		private Action<TValue> _action;
+		private Func<TValue, bool> _predicate = e => true;
 		private IDisposable _subscription;
 
-		internal DirectEventHandler(IObservable<IEventData<TEventArgs>> parent)
+		public DirectObserver(IObservable<TValue> observable)
 		{
-			_parent = parent;
+			_observable = observable;
 		}
 
 		/// <summary>
@@ -74,39 +74,37 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     IObserver.OnNext
 		/// </summary>
-		/// <param name="eventData">IEventData</param>
-		public void OnNext(IEventData<TEventArgs> eventData)
+		/// <param name="value">TValue</param>
+		public void OnNext(TValue value)
 		{
-			if (_predicate(eventData))
+			if (_predicate(value))
 			{
-				_action?.Invoke(eventData);
+				_action?.Invoke(value);
 			}
 		}
 
 		/// <summary>
 		///     Filter the events with a predicate
 		/// </summary>
-		/// <param name="predicate">Func which gets IEventData, and returns a bool</param>
+		/// <param name="predicate">Func which gets TValue, and returns a bool</param>
 		/// <returns>IEventHandler</returns>
-		public IEventHandler Where(Func<IEventData<TEventArgs>, bool> predicate)
+		public void Where(Func<TValue, bool> predicate)
 		{
 			if (predicate != null)
 			{
 				_predicate = predicate;
 			}
-			return this;
 		}
 
 		/// <summary>
 		///     Register an action which is called on every event.
 		/// </summary>
-		/// <param name="action">Action which gets IEventData</param>
+		/// <param name="action">Action which gets TValue</param>
 		/// <returns>IEventHandler</returns>
-		public IEventHandler Do(Action<IEventData<TEventArgs>> action)
+		public void Do(Action<TValue> action)
 		{
 			_action = action;
-			_subscription = _parent.Subscribe(this);
-			return this;
+			_subscription = _observable.Subscribe(this);
 		}
 	}
 }

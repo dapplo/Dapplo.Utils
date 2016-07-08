@@ -40,7 +40,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
 		public static void RemoveEventHandlers(this IHasEvents hasEvents, string regExPattern = null)
 		{
-			SmartEvent.RemoveEventHandlers(hasEvents, regExPattern);
+			EventObservable.RemoveEventHandlers(hasEvents, regExPattern);
 		}
 	}
 }

@@ -28,7 +28,7 @@ using System.ComponentModel;
 namespace Dapplo.Utils.Tests.TestEntities
 {
 	/// <summary>
-	/// Class used for testing the SmartEvent with INotifyPropertyChanged
+	/// Class used for testing the EventObservable with INotifyPropertyChanged
 	/// </summary>
 	public class NotifyPropertyChangedClass : INotifyPropertyChanged
 	{

@@ -32,16 +32,15 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
-using Dapplo.Utils.Tasks;
 
 #endregion
 
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
-	///     Static methods to create a generic Parent
+	///     Static factory methods to create a EventObservable
 	/// </summary>
-	public static class SmartEvent
+	public static class EventObservable
 	{
 		/// <summary>
 		///     Default BindingFlags for finding events and methods via reflection
@@ -49,14 +48,17 @@ namespace Dapplo.Utils.Events
 		public const BindingFlags AllBindings = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 		/// <summary>
-		///     Dispose all ISmartEvent in the list
+		///     Dispose all IEventObservable in the list
 		/// </summary>
-		/// <param name="smartEvents">IList with ISmartEvent</param>
-		public static void DisposeAll(IEnumerable<ISmartEvent> smartEvents)
+		/// <param name="eventObservables">IList with IEventObservable</param>
+		public static void DisposeAll(IEnumerable<IEventObservable> eventObservables)
 		{
-			foreach (var smartEvent in smartEvents)
+			if (eventObservables != null)
 			{
-				smartEvent.Dispose();
+				foreach (var eventObservable in eventObservables)
+				{
+					eventObservable.Dispose();
+				}
 			}
 		}
 
@@ -102,10 +104,10 @@ namespace Dapplo.Utils.Events
 		/// <param name="targetObject"></param>
 		/// <param name="predicate"></param>
 		/// <param name="action">Action for the registration</param>
-		/// <returns>IList of ISmartEvent which can be dispose with DisposeAll</returns>
-		public static IList<ISmartEvent> RegisterEvents<TEventArgs>(object targetObject, Action<IEventData<TEventArgs>> action, Func<string, bool> predicate = null)
+		/// <returns>IList of IEventObservable which can be dispose with DisposeAll</returns>
+		public static IList<IEventObservable> RegisterEvents<TEventArgs>(object targetObject, Action<IEventData<TEventArgs>> action, Func<string, bool> predicate = null)
 		{
-			var smartEvents = new List<ISmartEvent>();
+			var eventObservables = new List<IEventObservable>();
 
 			foreach (var eventInfo in targetObject.GetType().GetEvents(AllBindings))
 			{
@@ -116,15 +118,15 @@ namespace Dapplo.Utils.Events
 				}
 				var eventHandlerInvokeDelegate = eventInfo.EventHandlerType.GetMethod("Invoke");
 				var eventType = eventHandlerInvokeDelegate.GetParameters().Last().ParameterType;
-				var constructedType = typeof(SmartEvent<>).MakeGenericType(eventType);
+				var constructedType = typeof(EventObservable<>).MakeGenericType(eventType);
 				var args = new[] {targetObject, eventInfo.Name};
-				var smartEvent = (ISmartEvent) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
-				var onEachMethodInfo = smartEvent.GetType().GetMethod("OnEach", AllBindings);
-				onEachMethodInfo.Invoke(smartEvent, new object[] {action, predicate});
-				smartEvents.Add(smartEvent);
+				var eventObservable = (IEventObservable) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
+				var onEachMethodInfo = eventObservable.GetType().GetMethod("OnEach", AllBindings);
+				onEachMethodInfo.Invoke(eventObservable, new object[] {action, predicate});
+				eventObservables.Add(eventObservable);
 			}
 
-			return smartEvents;
+			return eventObservables;
 		}
 
 		/// <summary>
@@ -133,13 +135,12 @@ namespace Dapplo.Utils.Events
 		/// <typeparam name="TEventArgs">Type for the event</typeparam>
 		/// <param name="eventHandler">EventHandler</param>
 		/// <param name="eventName">
-		///     The name of the event, e.g. via nameof(object.event), used for logging and finding the
-		///     ISmartEvent
+		///     The name of the event, e.g. via nameof(object.event), used for logging and finding the IEventObservable
 		/// </param>
-		public static ISmartEvent<TEventArgs> From<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
+		public static IEventObservable<TEventArgs> From<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
 			where TEventArgs : EventArgs
 		{
-			return new SmartEvent<TEventArgs>(ref eventHandler, eventName);
+			return new EventObservable<TEventArgs>(ref eventHandler, eventName);
 		}
 
 		/// <summary>
@@ -148,19 +149,20 @@ namespace Dapplo.Utils.Events
 		/// <typeparam name="TEventArgs">Typeof the event arguments</typeparam>
 		/// <param name="targetObject">object which defines the event</param>
 		/// <param name="eventName">nameof(object.event)</param>
-		/// <returns>ISmartEvent</returns>
-		public static ISmartEvent<TEventArgs> From<TEventArgs>(object targetObject, string eventName) where TEventArgs : EventArgs
+		/// <returns>IEventObservable</returns>
+		public static IEventObservable<TEventArgs> From<TEventArgs>(object targetObject, string eventName)
+			where TEventArgs : EventArgs
 		{
 			// Create the Parent, the Reflection is in there.
-			return new SmartEvent<TEventArgs>(targetObject, eventName);
+			return new EventObservable<TEventArgs>(targetObject, eventName);
 		}
 	}
 
 	/// <summary>
-	///     This creates a smart event for the supplied event.
+	///     This creates a EventObservable for the supplied event information.
 	/// </summary>
 	/// <typeparam name="TEventArgs">the underlying type for the EventHandler</typeparam>
-	public class SmartEvent<TEventArgs> : ISmartEvent<TEventArgs>
+	public class EventObservable<TEventArgs> : IEventObservable<TEventArgs>
 	{
 		// ReSharper disable once StaticMemberInGenericType
 		private static readonly LogSource Log = new LogSource();
@@ -179,9 +181,9 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <param name="targetObject">Object containing the event field/property</param>
 		/// <param name="eventName">The name of the event field / property</param>
-		internal SmartEvent(object targetObject, string eventName)
+		internal EventObservable(object targetObject, string eventName)
 		{
-			_eventInfo = targetObject.GetType().GetEvent(eventName, SmartEvent.AllBindings);
+			_eventInfo = targetObject.GetType().GetEvent(eventName, EventObservable.AllBindings);
 			if (_eventInfo == null)
 			{
 				throw new ArgumentException($"The event {eventName} cannot be bound by FromReflection as it does not exist in the supplied object.",
@@ -209,8 +211,8 @@ namespace Dapplo.Utils.Events
 		///     Constructor for the EventHandler ref
 		/// </summary>
 		/// <param name="eventHandler"></param>
-		/// <param name="eventName">Name of the event, can be used to find smart events in a list and logging</param>
-		internal SmartEvent(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
+		/// <param name="eventName">Name of the event, can be used to find EventObservable's in a list and logging</param>
+		internal EventObservable(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
 		{
 			EventName = eventName;
 			_eventHandler = eventHandler;
@@ -230,7 +232,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't trigger {EventName} after dispose.");
+				throw new ObjectDisposedException(nameof(EventObservable), $"Can't trigger {EventName} after dispose.");
 			}
 
 			try
@@ -249,7 +251,7 @@ namespace Dapplo.Utils.Events
 					}
 					else
 					{
-						var fieldInfo = _targetObject.GetType().GetField(_eventInfo.Name, SmartEvent.AllBindings);
+						var fieldInfo = _targetObject.GetType().GetField(_eventInfo.Name, EventObservable.AllBindings);
 						if (fieldInfo != null)
 						{
 							var eventDelegate = (Delegate) fieldInfo.GetValue(_targetObject);
@@ -274,9 +276,9 @@ namespace Dapplo.Utils.Events
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
 		/// <returns>IEventHandler</returns>
-		public IEventHandler OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null)
+		public IDisposable OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null)
 		{
-			var handler = new DirectEventHandler<TEventArgs>(this);
+			var handler = new DirectObserver<IEventData<TEventArgs>>(this);
 			handler.Where(predicate);
 			handler.Do(action);
 			return handler;
@@ -310,14 +312,14 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Create a QueueingEventHandler for handling the sender and the eventArgs
+		///     Create a EnumerableObserver for handling the sender and the eventArgs
 		/// </summary>
 		/// <returns>IEnumerable with a IEventData</returns>
 		public IEnumerable<IEventData<TEventArgs>> From
 		{
 			get
 			{
-				var handler = new QueueingEventHandler<TEventArgs>(this);
+				var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
 				return handler.GetEnumerable;
 			}
 		}
@@ -340,7 +342,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't subscribe to {EventName} after the SmartEvent was disposed.");
+				throw new ObjectDisposedException(nameof(EventObservable), $"Can't subscribe to {EventName} after the EventObservable was disposed.");
 			}
 
 			lock (_observers)
@@ -417,7 +419,7 @@ namespace Dapplo.Utils.Events
 		{
 			if (_disposedValue)
 			{
-				throw new ObjectDisposedException(nameof(SmartEvent), $"Can't be handling events for {EventName} after dispose.");
+				throw new ObjectDisposedException(nameof(EventObservable), $"Can't be handling events for {EventName} after dispose.");
 			}
 			IList<IObserver<IEventData<TEventArgs>>> eventHandlers;
 			lock (_observers)
