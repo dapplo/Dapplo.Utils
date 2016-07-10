@@ -13,3 +13,4 @@ Some things that are available in this library:
 - Extensions for Type, e.g. getting the default of a type: typeof(int).Default() this returns 0 (like default(int) but usable in non generic code)
 - Extensions for string, e.g. FormatWith allows more clear formatting.
 - UiContext which can be used to have Tasks run on the UI.
+- Events to Linq, yes it's like reactive extensions but smaller and a bit more restrictive.

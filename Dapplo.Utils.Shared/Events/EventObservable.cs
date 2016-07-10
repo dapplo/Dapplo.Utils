@@ -102,31 +102,22 @@ namespace Dapplo.Utils.Events
 		///     Although this is somewhat restrictive, it might be usefull for logs
 		/// </summary>
 		/// <param name="targetObject"></param>
-		/// <param name="predicate"></param>
-		/// <param name="action">Action for the registration</param>
 		/// <returns>IList of IEventObservable which can be dispose with DisposeAll</returns>
-		public static IList<IEventObservable> RegisterEvents<TEventArgs>(object targetObject, Action<IEventData<TEventArgs>> action, Func<string, bool> predicate = null)
+		public static IEnumerable<IEventObservable<TEventArgs>> EventsIn<TEventArgs>(object targetObject)
 		{
 			var eventObservables = new List<IEventObservable>();
-
 			foreach (var eventInfo in targetObject.GetType().GetEvents(AllBindings))
 			{
-				// Skip if predicate is defined and returns false
-				if (predicate?.Invoke(eventInfo.Name) == false)
-				{
-					continue;
-				}
 				var eventHandlerInvokeDelegate = eventInfo.EventHandlerType.GetMethod("Invoke");
 				var eventType = eventHandlerInvokeDelegate.GetParameters().Last().ParameterType;
-				var constructedType = typeof(EventObservable<>).MakeGenericType(eventType);
-				var args = new[] {targetObject, eventInfo.Name};
-				var eventObservable = (IEventObservable) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
-				var onEachMethodInfo = eventObservable.GetType().GetMethod("OnEach", AllBindings);
-				onEachMethodInfo.Invoke(eventObservable, new object[] {action, predicate});
-				eventObservables.Add(eventObservable);
+				if (typeof(TEventArgs).IsAssignableFrom(eventType))
+				{
+					var constructedType = typeof(EventObservable<>).MakeGenericType(eventType);
+					var args = new[] { targetObject, eventInfo.Name };
+					var eventObservable = (IEventObservable<TEventArgs>)Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
+					yield return eventObservable;
+				}
 			}
-
-			return eventObservables;
 		}
 
 		/// <summary>

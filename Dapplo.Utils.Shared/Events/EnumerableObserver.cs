@@ -57,9 +57,11 @@ namespace Dapplo.Utils.Events
 			{
 				try
 				{
+					// Check if the Observable is ready with suplying values
 					while (!_values.IsCompleted)
 					{
 						TValue item;
+						// Try getting a value, this blocks for one second unless a value is available.
 						while (_values.TryTake(out item, TimeSpan.FromSeconds(1)))
 						{
 							// Just yield the value

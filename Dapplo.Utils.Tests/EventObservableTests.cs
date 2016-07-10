@@ -99,6 +99,8 @@ namespace Dapplo.Utils.Tests
 
 			// Test if the event was processed correctly
 			Assert.Equal("Dapplo", events.Flatten().Select(e => e.TestValue).First());
+			// All event handlers should have unsubscribed
+			Assert.Null(TestStringEvent);
 		}
 
 		[Fact]
@@ -126,7 +128,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
 				// Register a do which throws an exception
-				var task = eventObservable.Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => x.First());
+				var task = eventObservable.Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => { return x.First(); });
 				npc.Name = "Dapplo";
 				Thread.Sleep(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -185,6 +187,8 @@ namespace Dapplo.Utils.Tests
 				eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 			}
 			Assert.Equal("Dapplo", testValue);
+			// All event handlers should have unsubscribed
+			Assert.Null(TestStringEvent);
 		}
 
 		/// <summary>
@@ -195,7 +199,8 @@ namespace Dapplo.Utils.Tests
 		{
 			string testValue = null;
 			string testValue2 = null;
-			TestStringEvent += (sender, eventArgs) => testValue2 = eventArgs.TestValue;
+			EventHandler<SimpleTestEventArgs> action = (sender, eventArgs) => testValue2 = eventArgs.TestValue;
+			TestStringEvent += action;
 
 			var eventObservable = EventObservable.From(ref TestStringEvent, nameof(TestStringEvent));
 			// For later disposing
@@ -214,6 +219,10 @@ namespace Dapplo.Utils.Tests
 			// Make sure both values are what they are supposed to!
 			Assert.Equal("Dapplo", testValue);
 			Assert.Equal("Robin", testValue2);
+			TestStringEvent -= action;
+
+			// All event handlers should have unsubscribed
+			Assert.Null(TestStringEvent);
 		}
 
 		/// <summary>
@@ -223,19 +232,26 @@ namespace Dapplo.Utils.Tests
 		public void EventObservable_RegisterEvents()
 		{
 			var testValue = new SimpleTestEventArgs {TestValue = "Robin"};
-			EventArgs resultValue = null;
-			IList<IEventObservable> eventObservables = null;
-			try
+			EventArgs receivedValue = null;
+			IDisposable subscription = null;
+			foreach (var eventObservable in EventObservable.EventsIn<EventArgs>(this))
 			{
-				eventObservables = EventObservable.RegisterEvents<EventArgs>(this, (e) => resultValue = e.Args);
-				Assert.NotNull(TestStringEvent);
-				TestStringEvent(this, testValue);
-				Assert.Equal(testValue, resultValue);
+				subscription = eventObservable.OnEach(x => receivedValue = x.Args);
+				break;
 			}
-			finally
-			{
-				EventObservable.DisposeAll(eventObservables);
-			}
+			// Test for subscriptions.
+			Assert.NotNull(TestStringEvent);
+
+			// Create an event
+			TestStringEvent(this, testValue);
+			// Make sure it arrived
+			Assert.Equal(testValue, receivedValue);
+
+			// Remove OnEach
+			subscription?.Dispose();
+
+			// All event handlers should have unsubscribed
+			Assert.Null(TestStringEvent);
 		}
 
 		/// <summary>
@@ -268,7 +284,7 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Flatten().ForEachAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Flatten().ToTask(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
