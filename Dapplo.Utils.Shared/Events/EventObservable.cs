@@ -26,11 +26,11 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Dapplo.Log.Facade;
 
 #endregion
@@ -285,46 +285,6 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an
-		///     exception or if the function returns
-		/// </summary>
-		/// <typeparam name="TResult">Type of the result</typeparam>
-		/// <param name="processFunc">Function which will process the IEnumerable</param>
-		/// <returns>Task with the result of the function</returns>
-		public Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc)
-		{
-			// Start the registration inside the current thread
-			var enumerable = From;
-			return Task.Run(() => processFunc(enumerable));
-		}
-
-		/// <summary>
-		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an
-		///     exception
-		/// </summary>
-		/// <param name="processAction">Action which will process the IEnumerable</param>
-		/// <returns>Task</returns>
-		public Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction)
-		{
-			// Start the registration inside the current thread
-			var enumerable = From;
-			return Task.Run(() => processAction(enumerable));
-		}
-
-		/// <summary>
-		///     Create a EnumerableObserver for handling the sender and the eventArgs
-		/// </summary>
-		/// <returns>IEnumerable with a IEventData</returns>
-		public IEnumerable<IEventData<TEventArgs>> From
-		{
-			get
-			{
-				var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
-				return handler.GetEnumerable;
-			}
-		}
-
-		/// <summary>
 		///     Implement IDisposable.Dispose()
 		/// </summary>
 		void IDisposable.Dispose()
@@ -455,6 +415,30 @@ namespace Dapplo.Utils.Events
 			{
 				Unsubscribe(eventHandler);
 			}
+		}
+
+		/// <summary>
+		/// This creates an EnumerableObserver and returns the IEnumerator
+		/// </summary>
+		/// <returns>IEnumerator for IEventData of TEventArgs</returns>
+		public IEnumerable<IEventData<TEventArgs>> Subscribe()
+		{
+			var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
+			return handler;
+		}
+
+		/// <summary>
+		/// Get an IEnumerator from this IEnumerable
+		/// </summary>
+		/// <returns>IEnumerator</returns>
+		public IEnumerator<IEventData<TEventArgs>> GetEnumerator()
+		{
+			return Subscribe().GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return GetEnumerator();
 		}
 	}
 }

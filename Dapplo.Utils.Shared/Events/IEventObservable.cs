@@ -27,7 +27,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 #endregion
 
@@ -48,14 +47,8 @@ namespace Dapplo.Utils.Events
 	///     This is the interface to a EventObservable.
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
-	public interface IEventObservable<out TEventArgs> : IEventObservable, IObservable<IEventData<TEventArgs>>
+	public interface IEventObservable<out TEventArgs> : IEventObservable, IObservable<IEventData<TEventArgs>>, IEnumerable<IEventData<TEventArgs>>
 	{
-		/// <summary>
-		///     Get an IEnumerable for the underlying event
-		/// </summary>
-		/// <returns>IEnumerable with IEventData</returns>
-		IEnumerable<IEventData<TEventArgs>> From { get; }
-
 		/// <summary>
 		///     Trigger the underlying event
 		/// </summary>
@@ -63,26 +56,18 @@ namespace Dapplo.Utils.Events
 		void Trigger(IEventData<EventArgs> eventData);
 
 		/// <summary>
-		///     Call the supplied action on each event.
+		/// If only an LINQ Query is defined, the subscription is not made and events might be lost.
+		/// So if you want to define a query and later on have the events evaluated, call this before the events are triggered.
+		/// </summary>
+		/// <returns>IEnumerable with IEventData</returns>
+		IEnumerable<IEventData<TEventArgs>> Subscribe();
+
+		/// <summary>
+		///     Call the supplied action directly when the event arrives.
 		/// </summary>
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
 		/// <returns>IDisposable</returns>
 		IDisposable OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null);
-
-		/// <summary>
-		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an exception or if the function returns
-		/// </summary>
-		/// <typeparam name="TResult">Type of the result</typeparam>
-		/// <param name="processFunc">Function which will process the IEnumerable</param>
-		/// <returns>Task with the result of the function</returns>
-		Task<TResult> ProcessAsync<TResult>(Func<IEnumerable<IEventData<TEventArgs>>, TResult> processFunc);
-
-		/// <summary>
-		///     Process events (IEnumerable with IEventData) in a background task, the task will only finish on an exception
-		/// </summary>
-		/// <param name="processAction">Action which will process the IEnumerable</param>
-		/// <returns>Task</returns>
-		Task ProcessAsync(Action<IEnumerable<IEventData<TEventArgs>>> processAction);
 	}
 }

@@ -33,6 +33,7 @@ namespace Dapplo.Utils.Events
 {
 	/// <summary>
 	///     This is the implementation of the DirectObserver,  the implementation does nothing more than call a supplied action when OnNext is called.
+	/// Another way of doing this, woulb be EventObservable.Next.ForEachAsync(action).
 	/// </summary>
 	internal class DirectObserver<TValue> : IObserver<TValue>, IDisposable
 	{
