@@ -130,10 +130,10 @@ namespace Dapplo.Utils.Tests
 				// Register a do which throws an exception
 				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => { return x.First(); });
 				npc.Name = "Dapplo";
-				Thread.Sleep(100);
+				Thread.Sleep(500);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
 				npc.Name2 = "Dapplo";
-				Thread.Sleep(100);
+				Thread.Sleep(500);
 				Assert.True(task.IsCompleted);
 				Assert.Equal("Name2", await task);
 			}
@@ -150,10 +150,10 @@ namespace Dapplo.Utils.Tests
 					Where(e => e.PropertyName.Contains("2")).
 					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).ToTask(x=> x.First());
 				npc.Name = "Dapplo";
-				Thread.Sleep(100);
+				Thread.Sleep(500);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
 				npc.Name2 = "Dapplo";
-				Thread.Sleep(100);
+				Thread.Sleep(500);
 				Assert.True(task.IsFaulted);
 			}
 		}
