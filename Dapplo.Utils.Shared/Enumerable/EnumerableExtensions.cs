@@ -50,7 +50,7 @@ namespace Dapplo.Utils.Enumerable
 		/// <returns>Task with an IEnumerable of type TResult</returns>
 		public static async Task<IEnumerable<TResult>> ToTask<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return await Task.Run(() => source.ToList(), cancellationToken);
+			return await Task.Run(() => source.ToList(), cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -65,7 +65,7 @@ namespace Dapplo.Utils.Enumerable
 		/// <returns>Task with TResult</returns>
 		public static async Task<TResult> ToTask<TSource, TResult>(this IEnumerable<TSource> source, Func<IEnumerable<TSource>, TResult> resultFunc, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return await Task.Run(() => resultFunc(source), cancellationToken);
+			return await Task.Run(() => resultFunc(source), cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -95,7 +95,7 @@ namespace Dapplo.Utils.Enumerable
 				{
 					action(item);
 				}
-			}, cancellationToken);
+			}, cancellationToken).ConfigureAwait(false);
 		}
 	}
 }

@@ -43,7 +43,7 @@ namespace Dapplo.Utils.Tests.Cache
 		{
 			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
-				return await Task.Run(() => stream.BitmapFromStream(), cancellationToken);
+				return await Task.Run(() => stream.BitmapFromStream(), cancellationToken).ConfigureAwait(false);
 			}
 		}
 	}
