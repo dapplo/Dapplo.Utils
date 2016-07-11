@@ -122,7 +122,7 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public async Task EventObservable_NotifyPropertyChanged_Process_AwaitTest()
+		public async Task EventObservable_NotifyPropertyChanged_ToTask_Test()
 		{
 			var npc = new NotifyPropertyChangedClass();
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
@@ -140,7 +140,7 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public void EventObservable_NotifyPropertyChanged_Process_ExceptionTest()
+		public void EventObservable_NotifyPropertyChanged_ToTask_ExceptionTest()
 		{
 			var npc = new NotifyPropertyChangedClass();
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
@@ -166,10 +166,10 @@ namespace Dapplo.Utils.Tests
 			{
 				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToTask(x => x.Count());
 				npc.Name = "Dapplo";
-				Thread.Sleep(100);
+				Thread.Sleep(500);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
 				npc.Name2 = "Dapplo";
-				Thread.Sleep(100);
+				Thread.Sleep(500);
 				Assert.True(task.IsCompleted);
 			}
 		}
