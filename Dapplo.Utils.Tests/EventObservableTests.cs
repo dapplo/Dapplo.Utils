@@ -79,7 +79,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
-				await eventObservable.Take(1).ToTask();
+				await eventObservable.Subscribe().Take(1).ToTask();
 			}
 		}
 
@@ -128,7 +128,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
 				// Register a do which throws an exception
-				var task = eventObservable.Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => { return x.First(); });
+				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => { return x.First(); });
 				npc.Name = "Dapplo";
 				Thread.Sleep(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -146,7 +146,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
 				// Register ProcessAsync which throws an exception if there is a "2" in the PropertyName
-				var task = eventObservable.Flatten().
+				var task = eventObservable.Subscribe().Flatten().
 					Where(e => e.PropertyName.Contains("2")).
 					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).ToTask(x=> x.First());
 				npc.Name = "Dapplo";
@@ -159,12 +159,12 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public void EventObservable_NotifyPropertyChanged_ProcessTest()
+		public void EventObservable_NotifyPropertyChanged_EnumerableTest()
 		{
 			var npc = new NotifyPropertyChangedClass();
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
-				var task = eventObservable.Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToTask(x => x.Count());
+				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToTask(x => x.Count());
 				npc.Name = "Dapplo";
 				Thread.Sleep(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -195,7 +195,7 @@ namespace Dapplo.Utils.Tests
 		///     Test the basic functionality for setting up an event handler via a reference
 		/// </summary>
 		[Fact]
-		public async Task EventObservable_ProcessTest()
+		public async Task EventObservable_ToTaskTest()
 		{
 			string testValue = null;
 			string testValue2 = null;
@@ -206,7 +206,7 @@ namespace Dapplo.Utils.Tests
 			// For later disposing
 			_enumerableEvents.Add(eventObservable);
 
-			var eventHandleTask = eventObservable.Flatten().ToTask(e => testValue = e.First().TestValue);
+			var eventHandleTask = eventObservable.Subscribe().Flatten().ToTask(e => testValue = e.First().TestValue);
 
 			eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
@@ -269,7 +269,7 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Flatten().ToTask(x => x.First()).WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().ToTask(x => x.First()).WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -284,7 +284,7 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Flatten().ToTask(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().ToTask(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -304,7 +304,7 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout bigger than the timer tick
-				await eventObservable.Take(1).ToTask().WithTimeout(TimeSpan.FromSeconds(2));
+				await eventObservable.Subscribe().Take(1).ToTask().WithTimeout(TimeSpan.FromSeconds(2));
 			}
 		}
 	}

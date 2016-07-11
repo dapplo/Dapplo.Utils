@@ -26,7 +26,6 @@
 #region Usings
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -105,7 +104,6 @@ namespace Dapplo.Utils.Events
 		/// <returns>IList of IEventObservable which can be dispose with DisposeAll</returns>
 		public static IEnumerable<IEventObservable<TEventArgs>> EventsIn<TEventArgs>(object targetObject)
 		{
-			var eventObservables = new List<IEventObservable>();
 			foreach (var eventInfo in targetObject.GetType().GetEvents(AllBindings))
 			{
 				var eventHandlerInvokeDelegate = eventInfo.EventHandlerType.GetMethod("Invoke");
@@ -168,6 +166,11 @@ namespace Dapplo.Utils.Events
 		private bool _subscribedToEvents;
 
 		/// <summary>
+		///     The name of the underlying event, might be null if not supplied
+		/// </summary>
+		public string EventName { get; }
+
+		/// <summary>
 		///     Constructor for the FieldInfo
 		/// </summary>
 		/// <param name="targetObject">Object containing the event field/property</param>
@@ -209,11 +212,6 @@ namespace Dapplo.Utils.Events
 			_eventHandler = eventHandler;
 			_useEventHandler = true;
 		}
-
-		/// <summary>
-		///     The name of the underlying event, might be null if not supplied
-		/// </summary>
-		public string EventName { get; }
 
 		/// <summary>
 		///     Triggers an event
@@ -269,10 +267,7 @@ namespace Dapplo.Utils.Events
 		/// <returns>IEventHandler</returns>
 		public IDisposable OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null)
 		{
-			var handler = new DirectObserver<IEventData<TEventArgs>>(this);
-			handler.Where(predicate);
-			handler.Do(action);
-			return handler;
+			return new DirectObserver<IEventData<TEventArgs>>(this, action, predicate);
 		}
 
 		/// <summary>
@@ -291,6 +286,10 @@ namespace Dapplo.Utils.Events
 		/// <returns>IDisposable which needs to be disposed to unsubscribe</returns>
 		public IDisposable Subscribe(IObserver<IEventData<TEventArgs>> observer)
 		{
+			if (observer == null)
+			{
+				throw new ArgumentNullException(nameof(observer));
+			}
 			if (_disposedValue)
 			{
 				throw new ObjectDisposedException(nameof(EventObservable), $"Can't subscribe to {EventName} after the EventObservable was disposed.");
@@ -325,6 +324,10 @@ namespace Dapplo.Utils.Events
 		/// <param name="observer">IObserver</param>
 		private void Unsubscribe(IObserver<IEventData<TEventArgs>> observer)
 		{
+			if (observer == null)
+			{
+				throw new ArgumentNullException(nameof(observer));
+			}
 			lock (_observers)
 			{
 				if (_observers.Remove(observer))
@@ -409,27 +412,13 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		/// This creates an EnumerableObserver and returns the IEnumerator
+		/// This subscribes an EnumerableObserver (which implements IEnumerable) and returns this
 		/// </summary>
 		/// <returns>IEnumerator for IEventData of TEventArgs</returns>
 		public IEnumerable<IEventData<TEventArgs>> Subscribe()
 		{
 			var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
 			return handler;
-		}
-
-		/// <summary>
-		/// Get an IEnumerator from this IEnumerable
-		/// </summary>
-		/// <returns>IEnumerator</returns>
-		public IEnumerator<IEventData<TEventArgs>> GetEnumerator()
-		{
-			return Subscribe().GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return GetEnumerator();
 		}
 	}
 }

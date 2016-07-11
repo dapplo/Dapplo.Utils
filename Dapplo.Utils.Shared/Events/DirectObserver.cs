@@ -37,14 +37,26 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	internal class DirectObserver<TValue> : IObserver<TValue>, IDisposable
 	{
-		private readonly IObservable<TValue> _observable;
-		private Action<TValue> _action;
-		private Func<TValue, bool> _predicate = e => true;
-		private IDisposable _subscription;
+		private readonly Action<TValue> _action;
+		private readonly Func<TValue, bool> _predicate = e => true;
+		private readonly IDisposable _subscription;
 
-		public DirectObserver(IObservable<TValue> observable)
+		public DirectObserver(IObservable<TValue> observable, Action<TValue> action, Func<TValue, bool> predicate)
 		{
-			_observable = observable;
+			if (observable == null)
+			{
+				throw new ArgumentNullException(nameof(observable));
+			}
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			_action = action;
+			if (predicate != null)
+			{
+				_predicate = predicate;
+			}
+			_subscription = observable.Subscribe(this);
 		}
 
 		/// <summary>
@@ -82,30 +94,6 @@ namespace Dapplo.Utils.Events
 			{
 				_action?.Invoke(value);
 			}
-		}
-
-		/// <summary>
-		///     Filter the events with a predicate
-		/// </summary>
-		/// <param name="predicate">Func which gets TValue, and returns a bool</param>
-		/// <returns>IEventHandler</returns>
-		public void Where(Func<TValue, bool> predicate)
-		{
-			if (predicate != null)
-			{
-				_predicate = predicate;
-			}
-		}
-
-		/// <summary>
-		///     Register an action which is called on every event.
-		/// </summary>
-		/// <param name="action">Action which gets TValue</param>
-		/// <returns>IEventHandler</returns>
-		public void Do(Action<TValue> action)
-		{
-			_action = action;
-			_subscription = _observable.Subscribe(this);
 		}
 	}
 }

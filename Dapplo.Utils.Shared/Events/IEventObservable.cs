@@ -47,7 +47,7 @@ namespace Dapplo.Utils.Events
 	///     This is the interface to a EventObservable.
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
-	public interface IEventObservable<out TEventArgs> : IEventObservable, IObservable<IEventData<TEventArgs>>, IEnumerable<IEventData<TEventArgs>>
+	public interface IEventObservable<out TEventArgs> : IEventObservable, IObservable<IEventData<TEventArgs>>
 	{
 		/// <summary>
 		///     Trigger the underlying event
@@ -56,14 +56,14 @@ namespace Dapplo.Utils.Events
 		void Trigger(IEventData<EventArgs> eventData);
 
 		/// <summary>
-		/// If only an LINQ Query is defined, the subscription is not made and events might be lost.
-		/// So if you want to define a query and later on have the events evaluated, call this before the events are triggered.
+		/// This subscribes to the event and returns a IEnumerable
+		/// The IEnumerable can be used for queries which return a limited amount or make a task out of it.
 		/// </summary>
 		/// <returns>IEnumerable with IEventData</returns>
 		IEnumerable<IEventData<TEventArgs>> Subscribe();
 
 		/// <summary>
-		///     Call the supplied action directly when the event arrives.
+		/// This allows non blocking processing of the events, the supplied action is directly on event arrival
 		/// </summary>
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
