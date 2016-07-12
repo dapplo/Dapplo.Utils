@@ -53,7 +53,7 @@ namespace Dapplo.Utils.Events
 		///     Trigger the underlying event
 		/// </summary>
 		/// <param name="eventData">IEventData with all the data about the event, use EventData.Create for this.</param>
-		void Trigger(IEventData<EventArgs> eventData);
+		bool Trigger(IEventData<EventArgs> eventData);
 
 		/// <summary>
 		/// This subscribes to the event and returns a IEnumerable

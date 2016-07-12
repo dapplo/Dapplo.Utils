@@ -95,7 +95,7 @@ namespace Dapplo.Utils.Tests
 			var events = eventObservable.Subscribe();
 
 			// Create the event
-			eventObservable.Trigger(new EventData<SimpleTestEventArgs>(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
+			Assert.True(eventObservable.Trigger(new EventData<SimpleTestEventArgs>(this, new SimpleTestEventArgs {TestValue = "Dapplo"})));
 
 			// Test if the event was processed correctly
 			Assert.Equal("Dapplo", events.Flatten().Select(e => e.TestValue).First());
@@ -128,6 +128,22 @@ namespace Dapplo.Utils.Tests
 				npc.Name = "Dapplo2";
 				Assert.Null(testValue);
 			}
+		}
+
+
+		[Fact]
+		public void EventObservable_NotifyPropertyChanged_OnEach_GC()
+		{
+			string testValue = null;
+			var eventObservable = EventObservable.From(new NotifyPropertyChangedClass());
+			var handler = eventObservable.OnEach(e => testValue = e.Args.PropertyName);
+			// Make sure the NotifyPropertyChangedClass is garbage collected!
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			// Trigger should now return false
+			Assert.False(eventObservable.Trigger(EventData.Create(null, new PropertyChangedEventArgs("blub"))));
+			handler.Dispose();
+			eventObservable.Dispose();
 		}
 
 		[Fact]
@@ -193,7 +209,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<SimpleTestEventArgs>(this, nameof(TestStringEvent)))
 			{
 				eventObservable.OnEach(e => { testValue = e.Args.TestValue; });
-				eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
+				Assert.True(eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"})));
 			}
 			Assert.Equal("Dapplo", testValue);
 			// All event handlers should have unsubscribed
@@ -217,7 +233,7 @@ namespace Dapplo.Utils.Tests
 
 			var eventHandleTask = eventObservable.Subscribe().Flatten().ToTask(e => testValue = e.First().TestValue);
 
-			eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"}));
+			Assert.True(eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"})));
 
 			// Dispose makes sure no events are handled via the EventObservable, it also makes the ForEach stop!
 			eventObservable.Dispose();

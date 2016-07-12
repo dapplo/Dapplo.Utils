@@ -249,7 +249,8 @@ namespace Dapplo.Utils.Events
 		///     Triggers an event, this will try different techniques
 		/// </summary>
 		/// <param name="eventData">IEventData</param>
-		public void Trigger(IEventData<EventArgs> eventData)
+		/// <returns>true if the trigger call actually did something</returns>
+		public bool Trigger(IEventData<EventArgs> eventData)
 		{
 			if (_disposedValue)
 			{
@@ -263,7 +264,7 @@ namespace Dapplo.Utils.Events
 					if (_eventHandler != null)
 					{
 						_eventHandler.Invoke(eventData.Sender, (TEventArgs)(object)eventData.Args);
-						return;
+						return true;
 					}
 				}
 
@@ -272,14 +273,14 @@ namespace Dapplo.Utils.Events
 				if (targetObject == null)
 				{
 					Log.Warn().WriteLine($"Target object to trigger {EventName} was garbage collected.");
-					return;
+					return false;
 				}
 				// Raise via reflection
 				var raiseMethodInfo = _eventInfo?.RaiseMethod;
 				if (raiseMethodInfo != null)
 				{
 					raiseMethodInfo.Invoke(targetObject, new[] { eventData.Sender, eventData.Args });
-					return;
+					return true;
 				}
 				// Invoke by retrieving the delegate of the field
 				var fieldInfo = targetObject.GetType().GetField(EventName, EventObservable.AllBindings);
@@ -288,20 +289,21 @@ namespace Dapplo.Utils.Events
 					var eventDelegate = (Delegate)fieldInfo.GetValue(targetObject);
 					eventDelegate?.DynamicInvoke(eventData.Sender, eventData.Args);
 					// Return, even if eventDelegate was null.. it might have been empty!!
-					return;
+					return eventDelegate != null;
 				}
 				// Use a special invoke method, created by Dapplo.InterfaceImpl
 				if (_invokeMethod != null)
 				{
 					_invokeMethod.Invoke(targetObject, new[] {eventData.Sender, eventData.Args});
-					return;
+					return true;
 				}
+				Log.Warn().WriteLine("Can't trigger the event {0}", EventName);
 			}
 			catch (Exception ex)
 			{
 				Log.Error().WriteLine(ex, $"An exception occured while trying to trigger {EventName}");
 			}
-			throw new NotSupportedException($"Can't trigger the event {EventName}");
+			return false;
 		}
 
 		/// <summary>
