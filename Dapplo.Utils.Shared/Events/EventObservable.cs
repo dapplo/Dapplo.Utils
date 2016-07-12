@@ -187,7 +187,7 @@ namespace Dapplo.Utils.Events
 		private readonly Delegate _handleEventDelegate;
 
 		private readonly IList<IObserver<IEventData<TEventArgs>>> _observers = new List<IObserver<IEventData<TEventArgs>>>();
-		private readonly object _targetObject;
+		private readonly WeakReference _targetObject;
 		private readonly bool _useEventHandler;
 		private bool _disposedValue; // To detect redundant calls
 		private EventHandler<TEventArgs> _eventHandler;
@@ -216,7 +216,7 @@ namespace Dapplo.Utils.Events
 			_eventInfo = targetType.GetEvent(eventName, EventObservable.AllBindings);
 			EventName = eventName;
 
-			_targetObject = targetObject;
+			_targetObject = new WeakReference(targetObject);
 			_useEventHandler = false;
 
 			// Sometimes the event handler only uses a single argument, for this check the parameter count of the delegate
@@ -266,18 +266,26 @@ namespace Dapplo.Utils.Events
 						return;
 					}
 				}
+
+				var targetObject = _targetObject.Target;
+				// Do nothing if the target object was garbage collected
+				if (targetObject == null)
+				{
+					Log.Warn().WriteLine($"Target object to trigger {EventName} was garbage collected.");
+					return;
+				}
 				// Raise via reflection
 				var raiseMethodInfo = _eventInfo?.RaiseMethod;
 				if (raiseMethodInfo != null)
 				{
-					raiseMethodInfo.Invoke(_targetObject, new[] { eventData.Sender, eventData.Args });
+					raiseMethodInfo.Invoke(targetObject, new[] { eventData.Sender, eventData.Args });
 					return;
 				}
 				// Invoke by retrieving the delegate of the field
-				var fieldInfo = _targetObject.GetType().GetField(EventName, EventObservable.AllBindings);
+				var fieldInfo = targetObject.GetType().GetField(EventName, EventObservable.AllBindings);
 				if (fieldInfo != null)
 				{
-					var eventDelegate = (Delegate)fieldInfo.GetValue(_targetObject);
+					var eventDelegate = (Delegate)fieldInfo.GetValue(targetObject);
 					eventDelegate?.DynamicInvoke(eventData.Sender, eventData.Args);
 					// Return, even if eventDelegate was null.. it might have been empty!!
 					return;
@@ -285,7 +293,7 @@ namespace Dapplo.Utils.Events
 				// Use a special invoke method, created by Dapplo.InterfaceImpl
 				if (_invokeMethod != null)
 				{
-					_invokeMethod.Invoke(_targetObject, new[] {eventData.Sender, eventData.Args});
+					_invokeMethod.Invoke(targetObject, new[] {eventData.Sender, eventData.Args});
 					return;
 				}
 			}
@@ -310,7 +318,7 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Implement IDisposable.Dispose()
 		/// </summary>
-		void IDisposable.Dispose()
+		public void Dispose()
 		{
 			UnsubscribeAllHandlers();
 			_disposedValue = true;
@@ -347,13 +355,24 @@ namespace Dapplo.Utils.Events
 				{
 					_eventHandler += HandleEvent;
 				}
-				else if (_eventInfo != null)
-				{
-					_eventInfo.AddMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
-				}
 				else
 				{
-					_addMethod.Invoke(_targetObject, new object[] { _handleEventDelegate });
+					// Check weak reference, throw exception (as the called SHOULD know this)
+					var targetObject = _targetObject.Target;
+					if (targetObject == null)
+					{
+						var message = $"Target object with containing {EventName} event was garbage collected.";
+						Log.Error().WriteLine(message);
+						throw new ObjectDisposedException(EventName, message);
+					}
+					if (_eventInfo != null)
+					{
+						_eventInfo.AddMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+					}
+					else
+					{
+						_addMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+					}
 				}
 			}
 			return Disposable.Create(() => Unsubscribe(observer));
@@ -369,6 +388,7 @@ namespace Dapplo.Utils.Events
 			{
 				throw new ArgumentNullException(nameof(observer));
 			}
+
 			lock (_observers)
 			{
 				if (_observers.Remove(observer))
@@ -382,15 +402,21 @@ namespace Dapplo.Utils.Events
 						{
 							// ReSharper disable once DelegateSubtraction
 							_eventHandler -= HandleEvent;
+							return;
 						}
-						else if (!_useEventHandler && _eventInfo != null)
+						// Check weak reference, do nothing if the object is garbage collected
+						var targetObject = _targetObject.Target;
+						if (targetObject != null)
 						{
-							// Unsubscribe the _handleEventDelegate via reflection
-							_eventInfo.RemoveMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
-						}
-						else
-						{
-							_removeMethod.Invoke(_targetObject, new object[] { _handleEventDelegate });
+							if (!_useEventHandler && _eventInfo != null)
+							{
+								// Unsubscribe the _handleEventDelegate via reflection
+								_eventInfo.RemoveMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+							}
+							else
+							{
+								_removeMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+							}
 						}
 					}
 					// signal that it was removed by telling that there will be no more data
@@ -406,7 +432,9 @@ namespace Dapplo.Utils.Events
 		/// <param name="eventArgs">TEventArgs</param>
 		private void HandleEventWithoutSender(TEventArgs eventArgs)
 		{
-			HandleEvent(_targetObject, eventArgs);
+			// Check weak reference, if the target was disposed null will be passed
+			var targetObject = _targetObject.Target;
+			HandleEvent(targetObject, eventArgs);
 		}
 
 		/// <summary>
