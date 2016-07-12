@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -67,12 +68,14 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <param name="instance">object instance where events need to be removed</param>
 		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
-		public static void RemoveEventHandlers(object instance, string regExPattern = null)
+		/// <returns>number of removed events</returns>
+		public static int RemoveEventHandlers(object instance, string regExPattern = null)
 		{
 			if (instance == null)
 			{
 				throw new ArgumentNullException(nameof(instance));
 			}
+			int count = 0;
 			Regex regex = null;
 			if (!string.IsNullOrEmpty(regExPattern))
 			{
@@ -92,8 +95,13 @@ namespace Dapplo.Utils.Events
 				}
 				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
 				var removeMethod = eventInfo.GetRemoveMethod(true);
-				removeMethod?.Invoke(instance, new object[] {eventDelegate});
+				if (eventDelegate != null && removeMethod != null)
+				{
+					count += eventDelegate.GetInvocationList().Length;
+					removeMethod.Invoke(instance, new object[] { eventDelegate });
+				}
 			}
+			return count;
 		}
 
 		/// <summary>
@@ -119,7 +127,7 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Create a Parent for the referenced EventHandler
+		///     Create a EventObservable for the referenced EventHandler
 		/// </summary>
 		/// <typeparam name="TEventArgs">Type for the event</typeparam>
 		/// <param name="eventHandler">EventHandler</param>
@@ -133,7 +141,7 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Create a Parent from the event which can be find in the object by the specified event name.
+		///     Create a EventObservable from the event which can be find in the object by the specified event name.
 		/// </summary>
 		/// <typeparam name="TEventArgs">Typeof the event arguments</typeparam>
 		/// <param name="targetObject">object which defines the event</param>
@@ -142,8 +150,28 @@ namespace Dapplo.Utils.Events
 		public static IEventObservable<TEventArgs> From<TEventArgs>(object targetObject, string eventName)
 			where TEventArgs : EventArgs
 		{
-			// Create the Parent, the Reflection is in there.
+			// Create the EventObservable, the Reflection is in there.
 			return new EventObservable<TEventArgs>(targetObject, eventName);
+		}
+
+		/// <summary>
+		///     Create IEventObservable for the supplied INotifyPropertyChanged
+		/// </summary>
+		/// <param name="notifyPropertyChanged">INotifyPropertyChanged</param>
+		/// <returns>IEventObservable for PropertyChangedEventArgs</returns>
+		public static IEventObservable<PropertyChangedEventArgs> From(INotifyPropertyChanged notifyPropertyChanged)
+		{
+			return new EventObservable<PropertyChangedEventArgs>(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged));
+		}
+
+		/// <summary>
+		///     Create IEventObservable for the supplied INotifyPropertyChanging
+		/// </summary>
+		/// <param name="notifyPropertyChanging">INotifyPropertyChanging</param>
+		/// <returns>IEventObservable for PropertyChangingEventArgs</returns>
+		public static IEventObservable<PropertyChangingEventArgs> From(INotifyPropertyChanging notifyPropertyChanging)
+		{
+			return new EventObservable<PropertyChangingEventArgs>(notifyPropertyChanging, nameof(INotifyPropertyChanging.PropertyChanging));
 		}
 	}
 
@@ -164,6 +192,9 @@ namespace Dapplo.Utils.Events
 		private bool _disposedValue; // To detect redundant calls
 		private EventHandler<TEventArgs> _eventHandler;
 		private bool _subscribedToEvents;
+		private readonly MethodInfo _addMethod;
+		private readonly MethodInfo _removeMethod;
+		private readonly MethodInfo _invokeMethod;
 
 		/// <summary>
 		///     The name of the underlying event, might be null if not supplied
@@ -177,28 +208,29 @@ namespace Dapplo.Utils.Events
 		/// <param name="eventName">The name of the event field / property</param>
 		internal EventObservable(object targetObject, string eventName)
 		{
-			_eventInfo = targetObject.GetType().GetEvent(eventName, EventObservable.AllBindings);
-			if (_eventInfo == null)
-			{
-				throw new ArgumentException($"The event {eventName} cannot be bound by FromReflection as it does not exist in the supplied object.",
-					nameof(eventName));
-			}
+			var targetType = targetObject.GetType();
+			Log.Info().WriteLine("{0}", string.Join(",", targetType.GetMethods(EventObservable.AllBindings).Select(x => x.Name)));
+			_addMethod = targetType.GetMethod($"add_{eventName}", EventObservable.AllBindings);
+			_removeMethod = targetType.GetMethod($"remove_{eventName}", EventObservable.AllBindings);
+			_invokeMethod = targetType.GetMethod($"invoke_{eventName}", EventObservable.AllBindings);
+			_eventInfo = targetType.GetEvent(eventName, EventObservable.AllBindings);
 			EventName = eventName;
 
 			_targetObject = targetObject;
 			_useEventHandler = false;
 
 			// Sometimes the event handler only uses a single argument, for this check the parameter count of the delegate
-			var eventHandlerInvokeDelegate = _eventInfo.EventHandlerType.GetMethod("Invoke");
 			var useWithSender = true;
+			Type eventHandlerType = _eventInfo?.EventHandlerType ?? _addMethod?.GetParameters()[0].ParameterType;
+			var eventHandlerInvokeDelegate = eventHandlerType?.GetMethod("Invoke", EventObservable.AllBindings);
 			if (eventHandlerInvokeDelegate != null)
 			{
 				useWithSender = eventHandlerInvokeDelegate.GetParameters().Length >= 2;
 			}
 			// Now decide on the handler, in the end both will function the same as we store the target and pass this as sender.
 			var eventHandleMethodName = useWithSender ? nameof(HandleEvent) : nameof(HandleEventWithoutSender);
-			var handleEventMethodInfo = GetType().GetMethod(eventHandleMethodName, BindingFlags.Instance | BindingFlags.NonPublic);
-			_handleEventDelegate = handleEventMethodInfo.CreateDelegate(_eventInfo.EventHandlerType, this);
+			var handleEventMethodInfo = GetType().GetMethod(eventHandleMethodName, EventObservable.AllBindings);
+			_handleEventDelegate = handleEventMethodInfo.CreateDelegate(eventHandlerType, this);
 		}
 
 		/// <summary>
@@ -214,7 +246,7 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Triggers an event
+		///     Triggers an event, this will try different techniques
 		/// </summary>
 		/// <param name="eventData">IEventData</param>
 		public void Trigger(IEventData<EventArgs> eventData)
@@ -228,35 +260,40 @@ namespace Dapplo.Utils.Events
 			{
 				if (_useEventHandler)
 				{
-					_eventHandler?.Invoke(eventData.Sender, (TEventArgs) (object) eventData.Args);
+					if (_eventHandler != null)
+					{
+						_eventHandler.Invoke(eventData.Sender, (TEventArgs)(object)eventData.Args);
+						return;
+					}
 				}
-				else
+				// Raise via reflection
+				var raiseMethodInfo = _eventInfo?.RaiseMethod;
+				if (raiseMethodInfo != null)
 				{
-					// Raise via reflection
-					var raiseMethodInfo = _eventInfo.RaiseMethod;
-					if (raiseMethodInfo != null)
-					{
-						raiseMethodInfo.Invoke(_targetObject, new[] {eventData.Sender, eventData.Args});
-					}
-					else
-					{
-						var fieldInfo = _targetObject.GetType().GetField(_eventInfo.Name, EventObservable.AllBindings);
-						if (fieldInfo != null)
-						{
-							var eventDelegate = (Delegate) fieldInfo.GetValue(_targetObject);
-							eventDelegate?.DynamicInvoke(eventData.Sender, eventData.Args);
-						}
-						else
-						{
-							throw new NotSupportedException($"Can't trigger the event {_eventInfo.Name}");
-						}
-					}
+					raiseMethodInfo.Invoke(_targetObject, new[] { eventData.Sender, eventData.Args });
+					return;
+				}
+				// Invoke by retrieving the delegate of the field
+				var fieldInfo = _targetObject.GetType().GetField(EventName, EventObservable.AllBindings);
+				if (fieldInfo != null)
+				{
+					var eventDelegate = (Delegate)fieldInfo.GetValue(_targetObject);
+					eventDelegate?.DynamicInvoke(eventData.Sender, eventData.Args);
+					// Return, even if eventDelegate was null.. it might have been empty!!
+					return;
+				}
+				// Use a special invoke method, created by Dapplo.InterfaceImpl
+				if (_invokeMethod != null)
+				{
+					_invokeMethod.Invoke(_targetObject, new[] {eventData.Sender, eventData.Args});
+					return;
 				}
 			}
 			catch (Exception ex)
 			{
-				Log.Error().WriteLine(ex, "An exception occured while triggering an event.");
+				Log.Error().WriteLine(ex, $"An exception occured while trying to trigger {EventName}");
 			}
+			throw new NotSupportedException($"Can't trigger the event {EventName}");
 		}
 
 		/// <summary>
@@ -310,9 +347,13 @@ namespace Dapplo.Utils.Events
 				{
 					_eventHandler += HandleEvent;
 				}
-				else
+				else if (_eventInfo != null)
 				{
 					_eventInfo.AddMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
+				}
+				else
+				{
+					_addMethod.Invoke(_targetObject, new object[] { _handleEventDelegate });
 				}
 			}
 			return Disposable.Create(() => Unsubscribe(observer));
@@ -342,10 +383,14 @@ namespace Dapplo.Utils.Events
 							// ReSharper disable once DelegateSubtraction
 							_eventHandler -= HandleEvent;
 						}
-						else if (!_useEventHandler)
+						else if (!_useEventHandler && _eventInfo != null)
 						{
 							// Unsubscribe the _handleEventDelegate via reflection
 							_eventInfo.RemoveMethod.Invoke(_targetObject, new object[] {_handleEventDelegate});
+						}
+						else
+						{
+							_removeMethod.Invoke(_targetObject, new object[] { _handleEventDelegate });
 						}
 					}
 					// signal that it was removed by telling that there will be no more data

@@ -29,13 +29,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Enumerable;
 using Dapplo.Utils.Events;
+using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tasks;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;
@@ -104,11 +104,20 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
+		public void EventObservable_NotifyPropertyChanged_RemoveEventHandlers()
+		{
+			var npc = new NotifyPropertyChangedClass();
+			npc.PropertyChanged += (sender, args) => { };
+			npc.PropertyChanged += (sender, args) => { };
+			Assert.Equal(2, npc.RemoveEventHandlers());
+		}
+
+		[Fact]
 		public void EventObservable_NotifyPropertyChanged_OnEach()
 		{
 			string testValue = null;
 			var npc = new NotifyPropertyChangedClass();
-			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			using (var eventObservable = EventObservable.From(npc))
 			{
 				var handler = eventObservable.OnEach(e => testValue = e.Args.PropertyName);
 				npc.Name = "Dapplo";
@@ -125,7 +134,7 @@ namespace Dapplo.Utils.Tests
 		public async Task EventObservable_NotifyPropertyChanged_ToTask_Test()
 		{
 			var npc = new NotifyPropertyChangedClass();
-			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			using (var eventObservable = EventObservable.From(npc))
 			{
 				// Register a do which throws an exception
 				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => { return x.First(); });
@@ -162,7 +171,7 @@ namespace Dapplo.Utils.Tests
 		public async Task EventObservable_NotifyPropertyChanged_EnumerableTest()
 		{
 			var npc = new NotifyPropertyChangedClass();
-			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
+			using (var eventObservable = EventObservable.From(npc))
 			{
 				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToTask(x => x.Count());
 				npc.Name = "Dapplo";

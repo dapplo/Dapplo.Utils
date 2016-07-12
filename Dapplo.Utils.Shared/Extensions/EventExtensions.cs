@@ -21,6 +21,7 @@
 
 #region using
 
+using System.Collections.Generic;
 using Dapplo.Utils.Events;
 
 #endregion
@@ -38,9 +39,21 @@ namespace Dapplo.Utils.Extensions
 		/// </summary>
 		/// <param name="hasEvents">IHasEvents instance</param>
 		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
-		public static void RemoveEventHandlers(this IHasEvents hasEvents, string regExPattern = null)
+		/// <returns>number of removed event handlers</returns>
+		public static int RemoveEventHandlers(this IHasEvents hasEvents, string regExPattern = null)
 		{
-			EventObservable.RemoveEventHandlers(hasEvents, regExPattern);
+			return EventObservable.RemoveEventHandlers(hasEvents, regExPattern);
+		}
+
+		/// <summary>
+		/// This gives an IEnumerable of IEventObservable for the specified EventArgs type. 
+		/// </summary>
+		/// <param name="hasEvents"></param>
+		/// <typeparam name="TEventArgs">Type of the EventArgs, use EventArgs to get most events</typeparam>
+		/// <returns>IEnumerable with IEventObservable</returns>
+		public static IEnumerable<IEventObservable<TEventArgs>> EventsIn<TEventArgs>(this IHasEvents hasEvents)
+		{
+			return EventObservable.EventsIn<TEventArgs>(hasEvents);
 		}
 	}
 }

@@ -27,7 +27,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -50,7 +49,22 @@ namespace Dapplo.Utils.Enumerable
 		/// <returns>Task with an IEnumerable of type TResult</returns>
 		public static async Task<IEnumerable<TResult>> ToTask<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			return await Task.Run(() => source.ToList(), cancellationToken).ConfigureAwait(false);
+			return await Task.Run(() =>
+			{
+				var results = new List<TResult>();
+				if (!cancellationToken.IsCancellationRequested)
+				{
+					foreach (var item in source)
+					{
+						if (cancellationToken.IsCancellationRequested)
+						{
+							break;
+						}
+						results.Add(item);
+					}
+				}
+				return results;
+			}, cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -91,9 +105,16 @@ namespace Dapplo.Utils.Enumerable
 			// Process inside the task
 			await Task.Run(() =>
 			{
-				foreach (var item in source)
+				if (!cancellationToken.IsCancellationRequested)
 				{
-					action(item);
+					foreach (var item in source)
+					{
+						if (cancellationToken.IsCancellationRequested)
+						{
+							break;
+						}
+						action(item);
+					}
 				}
 			}, cancellationToken).ConfigureAwait(false);
 		}
