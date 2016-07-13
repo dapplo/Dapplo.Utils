@@ -28,11 +28,11 @@ using System.ComponentModel;
 namespace Dapplo.Utils.Tests.TestEntities
 {
 	/// <summary>
-	/// Class used for testing the EventObservable with INotifyPropertyChanged
+	/// Class used for testing the EventObservable with INotifyPropertyChanging
 	/// </summary>
-	public class NotifyPropertyChangedClass : INotifyPropertyChanged, IHasEvents
+	public class NotifyPropertyChangingImpl : INotifyPropertyChanging, IHasEvents
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
+		public event PropertyChangingEventHandler PropertyChanging;
 		private string _name;
 
 		public string Name
@@ -43,7 +43,7 @@ namespace Dapplo.Utils.Tests.TestEntities
 				if (_name != value)
 				{
 					_name = value;
-					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+					PropertyChanging?.Invoke(this, new PropertyChangingEventArgs(nameof(Name)));
 				}
 			}
 		}
@@ -58,7 +58,7 @@ namespace Dapplo.Utils.Tests.TestEntities
 				if (_name2 != value)
 				{
 					_name2 = value;
-					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name2)));
+					PropertyChanging?.Invoke(this, new PropertyChangingEventArgs(nameof(Name2)));
 				}
 			}
 		}

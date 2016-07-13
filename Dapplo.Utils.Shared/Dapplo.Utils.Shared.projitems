@@ -23,6 +23,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EventExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EnumExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\ExpressionExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\NotifyPropertyExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\PropertyInfoExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
