@@ -79,6 +79,7 @@
     <Compile Include="Cache\AsyncAwaitExceptionCache.cs" />
     <Compile Include="Cache\AsyncFileCache.cs" />
     <Compile Include="Cache\StreamExtensions.cs" />
+    <Compile Include="EnumerableExtensionsTests.cs" />
     <Compile Include="EventObservableTests.cs" />
     <Compile Include="EventExtensionsTests.cs" />
     <Compile Include="NotifyPropertyTests.cs" />

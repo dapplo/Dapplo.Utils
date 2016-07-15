@@ -118,5 +118,61 @@ namespace Dapplo.Utils.Enumerable
 				}
 			}, cancellationToken).ConfigureAwait(false);
 		}
+
+		/// <summary>
+		/// Skip the last n elements of an IEnumerable
+		/// </summary>
+		/// <typeparam name="T">Type for the IEnumerable</typeparam>
+		/// <param name="source"></param>
+		/// <param name="skipN">the number of elements to skip, default is 1 and should be positive (0 skips nothing)</param>
+		/// <returns>IEnumerable</returns>
+		public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source, int skipN = 1)
+		{
+			// Check arguments
+			if (source == null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+			if (skipN < 0)
+			{
+				throw new ArgumentException("Cannot be less than 0", nameof(skipN));
+			}
+			// Do not add logic when skipN == 0, just return the source
+			if (skipN == 0)
+			{
+				return source;
+			}
+			// No do the real skip last
+			return InternalSkipLast(source, skipN);
+		}
+
+		/// <summary>
+		/// Internal method to skip the last n elements of an IEnumerable
+		/// </summary>
+		/// <typeparam name="T">Type for the IEnumerable</typeparam>
+		/// <param name="source"></param>
+		/// <param name="skipN">the number of elements to skip, default is 1 and should be positive (0 skips nothing)</param>
+		/// <returns>IEnumerable</returns>
+		private static IEnumerable<T> InternalSkipLast<T>(this IEnumerable<T> source, int skipN = 1)
+		{
+			using (var enumerator = source.GetEnumerator())
+			{
+				bool hasRemainingItems;
+				var cache = new Queue<T>(skipN + 1);
+
+				do
+				{
+					hasRemainingItems = enumerator.MoveNext();
+					if (hasRemainingItems)
+					{
+						cache.Enqueue(enumerator.Current);
+						if (cache.Count > skipN)
+						{
+							yield return cache.Dequeue();
+						}
+					}
+				} while (hasRemainingItems);
+			}
+		}
 	}
 }
