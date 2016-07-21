@@ -86,7 +86,7 @@ namespace Dapplo.Utils
 		{
 			if (HasScheduler && !HasUiAccess)
 			{
-				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
+				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.DenyChildAttach, UiTaskScheduler);
 			}
 			return Task.Run(function, cancellationToken);
 		}
@@ -102,7 +102,7 @@ namespace Dapplo.Utils
 		{
 			if (HasScheduler && !HasUiAccess)
 			{
-				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.None, UiTaskScheduler).Unwrap();
+				return Task.Factory.StartNew(function, cancellationToken, TaskCreationOptions.DenyChildAttach, UiTaskScheduler).Unwrap();
 			}
 			return Task.Run(function, cancellationToken);
 		}
@@ -118,7 +118,7 @@ namespace Dapplo.Utils
 		{
 			if (HasScheduler && !HasUiAccess)
 			{
-				return Task.Factory.StartNew(action, cancellationToken, TaskCreationOptions.None, UiTaskScheduler);
+				return Task.Factory.StartNew(action, cancellationToken, TaskCreationOptions.DenyChildAttach, UiTaskScheduler);
 			}
 			return Task.Run(action, cancellationToken);
 		}

@@ -43,6 +43,70 @@ namespace Dapplo.Utils.Extensions
 		private static readonly LogSource Log = new LogSource();
 
 		/// <summary>
+		/// Shortcut to create an EventObservable for a INotifyPropertyChanged
+		/// </summary>
+		/// <param name="notifyPropertyChanged">INotifyPropertyChanged</param>
+		/// <returns>IEventObservable for PropertyChangedEventArgs</returns>
+		public static IEventObservable<PropertyChangedEventArgs> ToObservable(this INotifyPropertyChanged notifyPropertyChanged)
+		{
+			if (notifyPropertyChanged == null)
+			{
+				throw new ArgumentNullException(nameof(notifyPropertyChanged));
+			}
+			return EventObservable.From(notifyPropertyChanged);
+		}
+
+		/// <summary>
+		///     Automatically call the update action when the INotifyPropertyChanged fires
+		///     If the is called on a DI object, make sure it's available.
+		///     When using MEF, it would be best to call this from IPartImportsSatisfiedNotification.OnImportsSatisfied
+		/// </summary>
+		/// <param name="notifyPropertyChangedEventObservable">EventObservable for PropertyChangedEventArgs</param>
+		/// <param name="notifyAction">Action to call on active and update, the argument is the property name</param>
+		/// <param name="pattern">Optional Regex pattern to match the property name in the event against, null matches everything</param>
+		/// <param name="run">specify if the action also needs to be run, true is the default, this might be needed to make sure the property or properties are updated</param>
+		/// <returns>an IDisposable, calling Dispose on this will stop everything</returns>
+		public static IDisposable OnPropertyChanged(this IEventObservable<PropertyChangedEventArgs> notifyPropertyChangedEventObservable, Action<string> notifyAction, string pattern = null, bool run = true)
+		{
+			if (notifyPropertyChangedEventObservable == null)
+			{
+				throw new ArgumentNullException(nameof(notifyPropertyChangedEventObservable));
+			}
+			if (notifyAction == null)
+			{
+				throw new ArgumentNullException(nameof(notifyAction));
+			}
+
+			// Test if we need to run the action now, this might be needed to make sure the property or properties are updated
+			if (run)
+			{
+				Log.Verbose().WriteLine("Running your action, as run is true.");
+				notifyAction("*");
+			}
+
+			// Create predicate
+			Func<IEventData<PropertyChangedEventArgs>, bool> predicate = null;
+			if (!string.IsNullOrEmpty(pattern))
+			{
+				predicate = propertyChangedEventArgs =>
+				{
+					try
+					{
+						var propertyName = propertyChangedEventArgs.Args.PropertyName;
+						return !string.IsNullOrEmpty(propertyName) && propertyName != "*" && !string.IsNullOrEmpty(pattern) && !Regex.IsMatch(propertyName, pattern);
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "Error in predicate for OnPropertyChanged");
+					}
+					return false;
+				};
+			}
+
+			return notifyPropertyChangedEventObservable.OnEach(pce => notifyAction(pce.Args.PropertyName), predicate);
+		}
+
+		/// <summary>
 		///     Automatically call the update action when the INotifyPropertyChanged fires
 		///     If the is called on a DI object, make sure it's available.
 		///     When using MEF, it would be best to call this from IPartImportsSatisfiedNotification.OnImportsSatisfied
@@ -50,23 +114,74 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="notifyPropertyChanged">INotifyPropertyChanged</param>
 		/// <param name="updateAction">Action to call on active and update, the argument is the property name</param>
 		/// <param name="pattern">Optional Regex pattern to match the property name in the event against, null matches everything</param>
+		/// <param name="run">specify if the action also needs to be run, true is the default, this might be needed to make sure the property or properties are updated</param>
 		/// <returns>an IDisposable, calling Dispose on this will stop everything</returns>
-		public static IDisposable OnPropertyChanged(this INotifyPropertyChanged notifyPropertyChanged, Action<string> updateAction, string pattern = null)
+		public static IDisposable OnPropertyChanged(this INotifyPropertyChanged notifyPropertyChanged, Action<string> updateAction, string pattern = null, bool run = true)
 		{
-			if (notifyPropertyChanged == null)
+			return notifyPropertyChanged.ToObservable().OnPropertyChanged(updateAction, pattern, run);
+		}
+
+		/// <summary>
+		/// Shortcut to create an EventObservable for a INotifyPropertyChanging
+		/// </summary>
+		/// <param name="notifyPropertyChanging">INotifyPropertyChanging</param>
+		/// <returns>IEventObservable for PropertyChangingEventArgs</returns>
+		public static IEventObservable<PropertyChangingEventArgs> ToObservable(this INotifyPropertyChanging notifyPropertyChanging)
+		{
+			if (notifyPropertyChanging == null)
 			{
-				throw new ArgumentNullException(nameof(notifyPropertyChanged));
+				throw new ArgumentNullException(nameof(notifyPropertyChanging));
 			}
-			if (updateAction == null)
+			return EventObservable.From(notifyPropertyChanging);
+		}
+
+		/// <summary>
+		///     Automatically call the update action when the INotifyPropertyChanging fires
+		///     If the is called on a DI object, make sure it's available.
+		///     When using MEF, it would be best to call this from IPartImportsSatisfiedNotification.OnImportsSatisfied
+		/// </summary>
+		/// <param name="notifyPropertyChangedEventObservable">IEventObservable for PropertyChangingEventArgs</param>
+		/// <param name="notifyAction">Action to call on active and update, the argument is the property name</param>
+		/// <param name="pattern">Optional Regex pattern to match the property name in the event against, null matches everything</param>
+		/// <param name="run">specify if the action also needs to be run, true is the default, this might be needed to make sure the property or properties are updated</param>
+		/// <returns>an IDisposable, calling Dispose on this will unsubscribe the event handler</returns>
+		public static IDisposable OnPropertyChanging(this IEventObservable<PropertyChangingEventArgs> notifyPropertyChangedEventObservable, Action<string> notifyAction, string pattern = null, bool run = true)
+		{
+			if (notifyPropertyChangedEventObservable == null)
 			{
-				throw new ArgumentNullException(nameof(updateAction));
+				throw new ArgumentNullException(nameof(notifyPropertyChangedEventObservable));
+			}
+			if (notifyAction == null)
+			{
+				throw new ArgumentNullException(nameof(notifyAction));
 			}
 
-			// Create the action
-			var notifyAction = WrapNotifyProperty(updateAction, pattern, nameof(OnPropertyChanged));
-			// Always run the action once, to make sure the property or properties are updated
-			notifyAction("*");
-			return EventObservable.From(notifyPropertyChanged).OnEach(pce => notifyAction(pce.Args.PropertyName));
+			// Test if we need to run the action now, this might be needed to make sure the property or properties are updated
+			if (run)
+			{
+				Log.Verbose().WriteLine("Running your action, as run is true.");
+				notifyAction("*");
+			}
+
+			// Create predicate
+			Func<IEventData<PropertyChangingEventArgs>, bool> predicate = null;
+			if (!string.IsNullOrEmpty(pattern))
+			{
+				predicate = propertyChangingEventArgs =>
+				{
+					try
+					{
+						var propertyName = propertyChangingEventArgs.Args.PropertyName;
+						return !string.IsNullOrEmpty(propertyName) && propertyName != "*" && !string.IsNullOrEmpty(pattern) && !Regex.IsMatch(propertyName, pattern);
+					}
+					catch (Exception ex)
+					{
+						Log.Error().WriteLine(ex, "Error in predicate for OnPropertyChanging");
+					}
+					return false;
+				};
+			}
+			return notifyPropertyChangedEventObservable.OnEach(pce => notifyAction(pce.Args.PropertyName), predicate);
 		}
 
 		/// <summary>
@@ -75,54 +190,13 @@ namespace Dapplo.Utils.Extensions
 		///     When using MEF, it would be best to call this from IPartImportsSatisfiedNotification.OnImportsSatisfied
 		/// </summary>
 		/// <param name="notifyPropertyChanging">INotifyPropertyChanging</param>
-		/// <param name="updateAction">Action to call on active and update, the argument is the property name</param>
+		/// <param name="notifyAction">Action to call on active and update, the argument is the property name</param>
 		/// <param name="pattern">Optional Regex pattern to match the property name in the event against, null matches everything</param>
-		/// <returns>an IDisposable, calling Dispose on this will stop everything</returns>
-		public static IDisposable OnPropertyChanging(this INotifyPropertyChanging notifyPropertyChanging, Action<string> updateAction, string pattern = null)
+		/// <param name="run">specify if the action also needs to be run, true is the default, this might be needed to make sure the property or properties are updated</param>
+		/// <returns>an IDisposable, calling Dispose on this will unsubscribe the event handler</returns>
+		public static IDisposable OnPropertyChanging(this INotifyPropertyChanging notifyPropertyChanging, Action<string> notifyAction, string pattern = null, bool run = true)
 		{
-			if (notifyPropertyChanging == null)
-			{
-				throw new ArgumentNullException(nameof(notifyPropertyChanging));
-			}
-			if (updateAction == null)
-			{
-				throw new ArgumentNullException(nameof(updateAction));
-			}
-			var notifyAction = WrapNotifyProperty(updateAction, pattern, nameof(OnPropertyChanging));
-			return EventObservable.From(notifyPropertyChanging).OnEach(pce => notifyAction(pce.Args.PropertyName));
-		}
-
-		/// <summary>
-		/// Create a wrapping action, which handles the pattern check and logsexceptions
-		/// </summary>
-		/// <param name="notifyAction">Action which was passed by the caller</param>
-		/// <param name="pattern">Pattern which was called by the caller</param>
-		/// <param name="source">string with OnPropertyChanged or OnPropertyChanging</param>
-		/// <returns>Action which accepts a string</returns>
-		private static Action<string> WrapNotifyProperty(Action<string> notifyAction, string pattern, string source)
-		{
-			return (propertyName) =>
-			{
-				try
-				{
-					if (!string.IsNullOrEmpty(propertyName) && propertyName != "*" && !string.IsNullOrEmpty(pattern) && !Regex.IsMatch(propertyName, pattern))
-					{
-						return;
-					}
-				}
-				catch (Exception ex)
-				{
-					Log.Error().WriteLine(ex);
-				}
-				try
-				{
-					notifyAction(propertyName);
-				}
-				catch (Exception ex)
-				{
-					Log.Error().WriteLine(ex, "An error occured while calling updateAction from {0}", source);
-				}
-			};
+			return notifyPropertyChanging.ToObservable().OnPropertyChanging(notifyAction, pattern, run);
 		}
 	}
 }
