@@ -60,6 +60,24 @@ namespace Dapplo.Utils.Tests
 			Assert.True(testValue2);
 		}
 
+		/// <summary>
+		/// Shows the usage of the + operator
+		/// </summary>
+		[Fact]
+		public void Disposables_AddOperator_Test()
+		{
+			var testValue1 = false;
+			var testValue2 = false;
+
+			var disposables = Disposables.Create();
+			disposables += Disposable.Create(() => testValue1 = true);
+			disposables += Disposable.Create(() => testValue2 = true);
+			disposables.Dispose();
+
+			Assert.True(testValue1);
+			Assert.True(testValue2);
+		}
+
 		[Fact]
 		public void Disposables_Order_Test()
 		{

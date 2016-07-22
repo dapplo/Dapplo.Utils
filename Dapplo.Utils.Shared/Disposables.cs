@@ -86,7 +86,7 @@ namespace Dapplo.Utils
 		/// <summary>
 		///     Dispose will dispose all the the stored IDisposables
 		/// </summary>
-		void IDisposable.Dispose()
+		public void Dispose()
 		{
 			IDisposable disposable;
 			while (_disposables.TryTake(out disposable))
@@ -118,6 +118,18 @@ namespace Dapplo.Utils
 		{
 			_disposables.TryAdd(disposable);
 			return this;
+		}
+
+		/// <summary>
+		/// Simplify the adding of a disposable to the Disposables, just add it.
+		/// </summary>
+		/// <param name="disposables">Disposables</param>
+		/// <param name="disposable">IDisposable</param>
+		/// <returns></returns>
+		public static Disposables operator +(Disposables disposables, IDisposable disposable)
+		{
+			disposables.Add(disposable);
+			return disposables;
 		}
 	}
 }
