@@ -41,6 +41,11 @@ namespace Dapplo.Utils.Events
 		///     The name of the underlying event, might be null if not supplied
 		/// </summary>
 		string EventName { get; }
+
+		/// <summary>
+		/// The object which contains the event, could be null depending on how the event was registered
+		/// </summary>
+		object Source { get; }
 	}
 
 	/// <summary>

@@ -202,6 +202,11 @@ namespace Dapplo.Utils.Events
 		public string EventName { get; }
 
 		/// <summary>
+		/// The object which contains the event, could be null depending on how the event was registered
+		/// </summary>
+		public object Source => _targetObject.Target;
+
+		/// <summary>
 		///     Constructor for the FieldInfo
 		/// </summary>
 		/// <param name="targetObject">Object containing the event field/property</param>
