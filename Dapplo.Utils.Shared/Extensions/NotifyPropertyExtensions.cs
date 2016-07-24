@@ -93,7 +93,7 @@ namespace Dapplo.Utils.Extensions
 					try
 					{
 						var propertyName = propertyChangedEventArgs.Args.PropertyName;
-						return !string.IsNullOrEmpty(propertyName) && propertyName != "*" && !string.IsNullOrEmpty(pattern) && !Regex.IsMatch(propertyName, pattern);
+						return string.IsNullOrEmpty(propertyName) || propertyName == "*" || string.IsNullOrEmpty(pattern) || Regex.IsMatch(propertyName, pattern);
 					}
 					catch (Exception ex)
 					{
@@ -172,7 +172,7 @@ namespace Dapplo.Utils.Extensions
 					try
 					{
 						var propertyName = propertyChangingEventArgs.Args.PropertyName;
-						return !string.IsNullOrEmpty(propertyName) && propertyName != "*" && !string.IsNullOrEmpty(pattern) && !Regex.IsMatch(propertyName, pattern);
+						return string.IsNullOrEmpty(propertyName) || propertyName == "*" || string.IsNullOrEmpty(pattern) || Regex.IsMatch(propertyName, pattern);
 					}
 					catch (Exception ex)
 					{
