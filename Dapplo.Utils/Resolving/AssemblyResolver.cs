@@ -251,11 +251,22 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
-		///     Load the specified assembly from the file system, or return null
+		///     Load the specified assembly from the ResolveDirectories, or return null
 		/// </summary>
 		/// <param name="assemblyName">string with the name without path</param>
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFileSystem(string assemblyName)
+		{
+			return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName);
+		}
+
+		/// <summary>
+		///     Load the specified assembly from the specified directories, or return null
+		/// </summary>
+		/// <param name="directories">IEnumerable with directories</param>
+		/// <param name="assemblyName">string with the name without path</param>
+		/// <returns>Assembly</returns>
+		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName)
 		{
 			var dllName = $"{assemblyName}.dll";
 
