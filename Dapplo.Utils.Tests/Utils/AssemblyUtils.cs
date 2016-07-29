@@ -25,25 +25,41 @@
 
 #region Usings
 
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
+using System;
+using System.Reflection;
 
 #endregion
 
-namespace Dapplo.Utils.Tests.Cache
+namespace Dapplo.Utils.Tests.Utils
 {
 	/// <summary>
-	///     Test AsyncMemoryCache which retrieves a bitmap from the supplied Uri
+	/// Helper class for the tests
 	/// </summary>
-	public class AsyncFileCache : AsyncMemoryCache<string, BitmapSource>
+	internal static class AssemblyUtils
 	{
-		protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
+		/// <summary>
+		///     Allows setting the Entry Assembly when needed.
+		///     Use SetEntryAssembly() only for tests
+		/// </summary>
+		/// <param name="assembly">Assembly to set as entry assembly</param>
+		public static void SetEntryAssembly(Assembly assembly)
 		{
-			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			if (Assembly.GetEntryAssembly() != null)
 			{
-				return await Task.Run(() => stream.BitmapImageFromStream(), cancellationToken).ConfigureAwait(false);
+				return;
+			}
+			var manager = new AppDomainManager();
+			var entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (entryAssemblyfield != null)
+			{
+				entryAssemblyfield.SetValue(manager, assembly);
+			}
+
+			var domain = AppDomain.CurrentDomain;
+			var domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (domainManagerField != null)
+			{
+				domainManagerField.SetValue(domain, manager);
 			}
 		}
 	}

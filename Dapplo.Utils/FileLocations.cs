@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 #endregion
@@ -56,15 +57,17 @@ namespace Dapplo.Utils
 		/// </summary>
 		/// <param name="directories"></param>
 		/// <param name="filePattern">Regular expression for the filename</param>
-		/// <returns>IEnumerable&lt;Tuple&lt;string,Match&gt;&gt;</returns>
-		public static IEnumerable<Tuple<string, Match>> Scan(ICollection<string> directories, Regex filePattern)
+		/// <param name="searchOption">Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is default, use SearchOption.TopDirectoryOnly for non recursive</param>
+		/// <returns>IEnumerable with paths</returns>
+		public static IEnumerable<Tuple<string, Match>> Scan(IEnumerable<string> directories, Regex filePattern, SearchOption searchOption = SearchOption.AllDirectories)
 		{
-			return from path in directories
-				where Directory.Exists(path)
-				from file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
-				let match = filePattern.Match(file)
-				where match.Success
-				select Tuple.Create(file, match);
+			return from directory in directories
+				    from path in DirectoriesFor(directory)
+				    where Directory.Exists(path)
+					from file in Directory.EnumerateFiles(path, "*.*", searchOption)
+					let match = filePattern.Match(file)
+					where match.Success
+					select Tuple.Create(file, match);
 		}
 
 		/// <summary>
@@ -72,13 +75,91 @@ namespace Dapplo.Utils
 		/// </summary>
 		/// <param name="directories"></param>
 		/// <param name="simplePattern"></param>
-		/// <returns>IEnumerable&lt;string&gt;</returns>
-		public static IEnumerable<string> Scan(ICollection<string> directories, string simplePattern)
+		/// <param name="searchOption">Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is default, use SearchOption.TopDirectoryOnly for non recursive</param>
+		/// <returns>IEnumerable with paths</returns>
+		public static IEnumerable<string> Scan(IEnumerable<string> directories, string simplePattern, SearchOption searchOption = SearchOption.AllDirectories)
 		{
-			return from path in directories
-				where Directory.Exists(path)
-				from file in Directory.EnumerateFiles(path, simplePattern, SearchOption.AllDirectories)
-				select file;
+			return from directory in directories
+				    from path in DirectoriesFor(directory)
+					where Directory.Exists(path)
+					from file in Directory.EnumerateFiles(path, simplePattern, searchOption)
+					select file;
+		}
+
+		/// <summary>
+		/// For the given directory this will return possible location.
+		/// It might be that multiple are returned, also normalization is made
+		/// </summary>
+		/// <param name="directory">A absolute or relative directory</param>
+		/// <param name="allowCurrentDirectory">true to allow relative to current working directory</param>
+		/// <returns>IEnumerable with possible directories</returns>
+		public static IEnumerable<string> DirectoriesFor(string directory, bool allowCurrentDirectory = true)
+		{
+			var directories = new HashSet<string>();
+
+			if (Path.IsPathRooted(directory))
+			{
+				try
+				{
+					var normalizedDirectory = Path.GetFullPath(new Uri(directory, UriKind.RelativeOrAbsolute).LocalPath)
+						.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+						.ToUpperInvariant();
+					if (Directory.Exists(normalizedDirectory))
+					{
+						directories.Add(normalizedDirectory);
+					}
+				}
+				catch
+				{
+					// Do nothing
+				}
+
+				if (Directory.Exists(directory))
+				{
+					directories.Add(directory);
+				}
+			}
+
+			// Relative to the assembly location
+			try
+			{
+				var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+				if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
+				{
+					var exeDirectory = Path.GetDirectoryName(assemblyLocation);
+					if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+					{
+						var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory));
+						if (Directory.Exists(relativeToExe))
+						{
+							directories.Add(relativeToExe);
+						}
+					}
+				}
+			}
+			catch
+			{
+				// Do nothing
+			}
+			// Relative to the current working directory
+
+			try
+			{
+				if (allowCurrentDirectory)
+				{
+					var relativetoCurrent = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory));
+
+					if (Directory.Exists(relativetoCurrent))
+					{
+						directories.Add(relativetoCurrent);
+					}
+				}
+			}
+			catch
+			{
+				// Do nothing
+			}
+			return directories.OrderBy(x => x);
 		}
 	}
 }

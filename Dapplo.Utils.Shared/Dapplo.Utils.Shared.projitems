@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)AsyncLock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Disposable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Disposables.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Embedded\EmbeddedResources.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Enumerable\EnumerableExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventDataExtensions.cs" />
@@ -26,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\ExpressionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\NotifyPropertyExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\PropertyInfoExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHasEvents.cs" />

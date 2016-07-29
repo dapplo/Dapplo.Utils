@@ -23,28 +23,20 @@
 
 #endregion
 
-#region Usings
-
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
-
-#endregion
-
-namespace Dapplo.Utils.Tests.Cache
+namespace Dapplo.Utils.Tests.TestAssembly
 {
 	/// <summary>
-	///     Test AsyncMemoryCache which retrieves a bitmap from the supplied Uri
+	/// A class external to the Dapplo.Utils.Tests DLL
 	/// </summary>
-	public class AsyncFileCache : AsyncMemoryCache<string, BitmapSource>
+	public static class ExternalClass
 	{
-		protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
+		/// <summary>
+		/// A method returning HelloWord
+		/// </summary>
+		/// <returns></returns>
+		public static string HelloWord()
 		{
-			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-			{
-				return await Task.Run(() => stream.BitmapImageFromStream(), cancellationToken).ConfigureAwait(false);
-			}
+			return nameof(HelloWord);
 		}
 	}
 }

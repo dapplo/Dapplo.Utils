@@ -28,6 +28,7 @@
 using System.IO;
 using System.Windows.Media.Imaging;
 using Dapplo.Log.Facade;
+using System.Drawing;
 
 #endregion
 
@@ -45,7 +46,7 @@ namespace Dapplo.Utils.Tests.Cache
 		/// </summary>
 		/// <param name="stream">Stream</param>
 		/// <returns>BitmapSource</returns>
-		public static BitmapSource BitmapFromStream(this Stream stream)
+		public static BitmapSource BitmapImageFromStream(this Stream stream)
 		{
 			Log.Debug().WriteLine("Creating a BitmapImage from the MemoryStream.");
 			var bitmap = new BitmapImage();
@@ -56,6 +57,16 @@ namespace Dapplo.Utils.Tests.Cache
 			// This is very important to make the bitmap usable in the UI thread:
 			bitmap.Freeze();
 			return bitmap;
+		}
+
+		/// <summary>
+		///     Creates a Image from the passed stream
+		/// </summary>
+		/// <param name="stream">Stream</param>
+		/// <returns>Bitmap</returns>
+		public static Image ImageFromStream(this Stream stream)
+		{
+			return Image.FromStream(stream);
 		}
 	}
 }

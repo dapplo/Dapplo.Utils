@@ -27,7 +27,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -35,7 +34,6 @@ using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Enumerable;
 using Dapplo.Utils.Events;
-using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tasks;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;

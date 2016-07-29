@@ -26,24 +26,27 @@
 #region Usings
 
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Media.Imaging;
 
 #endregion
 
-namespace Dapplo.Utils.Tests.Cache
+namespace Dapplo.Utils.Extensions
 {
 	/// <summary>
-	///     Test AsyncMemoryCache which retrieves a bitmap from the supplied Uri
+	/// Extensions for Stream
 	/// </summary>
-	public class AsyncFileCache : AsyncMemoryCache<string, BitmapSource>
+	public static class StreamExtensions
 	{
-		protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
+		/// <summary>
+		/// Create a byte array for the stream
+		/// </summary>
+		/// <param name="stream">Stream</param>
+		/// <returns>byte array</returns>
+		public static byte[] ToByteArray(this Stream stream)
 		{
-			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			using (var memoryStream = new MemoryStream())
 			{
-				return await Task.Run(() => stream.BitmapImageFromStream(), cancellationToken).ConfigureAwait(false);
+				stream.CopyTo(memoryStream);
+				return memoryStream.ToArray();
 			}
 		}
 	}

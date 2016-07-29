@@ -11,6 +11,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Dapplo.Utils.Shared", "Dapp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Utils.PCL", "Dapplo.Utils.PCL\Dapplo.Utils.PCL.csproj", "{51C825CE-E5FD-417A-824B-331590F6E397}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapplo.Utils.Tests.TestAssembly", "Dapplo.Utils.Tests.TestAssembly\Dapplo.Utils.Tests.TestAssembly.csproj", "{01F660A0-5F8B-4071-86CA-6A6AD6E18840}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Dapplo.Utils.Shared\Dapplo.Utils.Shared.projitems*{34c1972e-4b09-43f8-8a8a-1aacf09218c9}*SharedItemsImports = 4
@@ -34,6 +36,10 @@ Global
 		{51C825CE-E5FD-417A-824B-331590F6E397}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{51C825CE-E5FD-417A-824B-331590F6E397}.Release|AnyCPU.ActiveCfg = Release|Any CPU
 		{51C825CE-E5FD-417A-824B-331590F6E397}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{01F660A0-5F8B-4071-86CA-6A6AD6E18840}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
+		{01F660A0-5F8B-4071-86CA-6A6AD6E18840}.Debug|AnyCPU.Build.0 = Debug|Any CPU
+		{01F660A0-5F8B-4071-86CA-6A6AD6E18840}.Release|AnyCPU.ActiveCfg = Release|Any CPU
+		{01F660A0-5F8B-4071-86CA-6A6AD6E18840}.Release|AnyCPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
