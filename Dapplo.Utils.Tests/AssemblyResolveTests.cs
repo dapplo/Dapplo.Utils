@@ -63,6 +63,7 @@ namespace Dapplo.Utils.Tests
 				File.Delete(dllName);
 			}
 
+
 			// Register OUR AssemblyResolver, not the one of ILBundle.
 			using (AssemblyResolver.RegisterAssemblyResolve())
 			{

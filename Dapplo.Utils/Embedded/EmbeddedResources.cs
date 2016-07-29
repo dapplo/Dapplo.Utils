@@ -87,5 +87,16 @@ namespace Dapplo.Utils.Embedded
 		{
 			return type.Assembly.FindEmbeddedResources(regexPattern, regexOptions);
 		}
+
+		/// <summary>
+		///     Scan the manifest of the Assembly of the supplied Type with a regex pattern for embedded resources
+		/// </summary>
+		/// <param name="type">Type is used to get the assembly </param>
+		/// <param name="regex">Regex to scan for</param>
+		/// <returns>IEnumerable with matching resource names</returns>
+		public static IEnumerable<string> FindEmbeddedResources(this Type type, Regex regex)
+		{
+			return type.Assembly.FindEmbeddedResources(regex);
+		}
 	}
 }
