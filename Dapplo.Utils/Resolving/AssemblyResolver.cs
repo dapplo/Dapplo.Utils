@@ -46,7 +46,7 @@ namespace Dapplo.Utils.Resolving
 	public static class AssemblyResolver
 	{
 		private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
-		private static readonly IDictionary<string, Assembly> Assemblies = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+		private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		///     Setup and Register some of the default assemblies in the assembly cache
@@ -69,11 +69,11 @@ namespace Dapplo.Utils.Resolving
 			{
 				return;
 			}
-			lock (Assemblies)
+			lock (AssembliesByName)
 			{
-				if (!Assemblies.ContainsKey(assembly.GetName().Name))
+				if (!AssembliesByName.ContainsKey(assembly.GetName().Name))
 				{
-					Assemblies[assembly.GetName().Name] = assembly;
+					AssembliesByName[assembly.GetName().Name] = assembly;
 				}
 			}
 		}
@@ -81,7 +81,7 @@ namespace Dapplo.Utils.Resolving
 		/// <summary>
 		///     IEnumerable with all cached assemblies
 		/// </summary>
-		public static IEnumerable<Assembly> AssemblyCache => Assemblies.Values;
+		public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
 
 		/// <summary>
 		///     A collection of all directories where the resolver will look to resolve resources
@@ -166,7 +166,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFile(string filepath)
 		{
-			var assembly = Assemblies.Values.FirstOrDefault(x => x.Location == filepath);
+			var assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
 			if (assembly == null)
 			{
 				assembly = Assembly.LoadFile(filepath);
@@ -201,10 +201,10 @@ namespace Dapplo.Utils.Resolving
 		public static Assembly FindAssembly(string assemblyName)
 		{
 			Assembly assembly;
-			lock (Assemblies)
+			lock (AssembliesByName)
 			{
 				// Try the cache
-				if (Assemblies.TryGetValue(assemblyName, out assembly))
+				if (AssembliesByName.TryGetValue(assemblyName, out assembly))
 				{
 					return assembly;
 				}
@@ -236,10 +236,7 @@ namespace Dapplo.Utils.Resolving
 				var resourceTuple = AssemblyCache.FindEmbeddedResources(dllName).FirstOrDefault();
 				if (resourceTuple != null)
 				{
-					using (var stream = resourceTuple.Item1.GetEmbeddedResourceAsStream(resourceTuple.Item2))
-					{
-						return LoadAssemblyFromStream(stream);
-					}
+					return resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
 				}
 			}
 			catch (Exception ex)
@@ -248,6 +245,21 @@ namespace Dapplo.Utils.Resolving
 				Trace.WriteLine($"Error loading {dllName} from manifest resources: {ex.Message}");
 			}
 			return null;
+		}
+
+		/// <summary>
+		///     Load the specified assembly from an embedded (manifest) resource, or return null
+		/// </summary>
+		/// <param name="assembly">Assembly to load the resource from</param>
+		/// <param name="resourceName">Name of the embedded resource for the assembly to load</param>
+		/// <returns>Assembly</returns>
+		public static Assembly LoadEmbeddedAssembly(this Assembly assembly, string resourceName)
+		{
+			using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
+			{
+				return LoadAssemblyFromStream(stream);
+			}
+
 		}
 
 		/// <summary>
