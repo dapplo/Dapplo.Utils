@@ -95,15 +95,15 @@ namespace Dapplo.Utils
 		/// <returns>IEnumerable with possible directories</returns>
 		public static IEnumerable<string> DirectoriesFor(string directory, bool allowCurrentDirectory = true)
 		{
-			var directories = new HashSet<string>();
+			var directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+			// If the path is rooted, it's absolute
 			if (Path.IsPathRooted(directory))
 			{
 				try
 				{
-					var normalizedDirectory = Path.GetFullPath(new Uri(directory, UriKind.RelativeOrAbsolute).LocalPath)
-						.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-						.ToUpperInvariant();
+					var normalizedDirectory = Path.GetFullPath(new Uri(directory, UriKind.Absolute).LocalPath)
+						.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 					if (Directory.Exists(normalizedDirectory))
 					{
 						directories.Add(normalizedDirectory);
@@ -119,45 +119,49 @@ namespace Dapplo.Utils
 					directories.Add(directory);
 				}
 			}
-
-			// Relative to the assembly location
-			try
+			else
 			{
-				var assemblyLocation = Assembly.GetExecutingAssembly().Location;
-				if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
+				// Relative to the assembly location
+				try
 				{
-					var exeDirectory = Path.GetDirectoryName(assemblyLocation);
-					if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+					var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+					if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
 					{
-						var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory));
-						if (Directory.Exists(relativeToExe))
+						var exeDirectory = Path.GetDirectoryName(assemblyLocation);
+						if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
 						{
-							directories.Add(relativeToExe);
+							var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory))
+								.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+							if (Directory.Exists(relativeToExe))
+							{
+								directories.Add(relativeToExe);
+							}
 						}
 					}
 				}
-			}
-			catch
-			{
-				// Do nothing
-			}
-			// Relative to the current working directory
-
-			try
-			{
-				if (allowCurrentDirectory)
+				catch
 				{
-					var relativetoCurrent = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory));
+					// Do nothing
+				}
 
-					if (Directory.Exists(relativetoCurrent))
+				// Relative to the current working directory
+				try
+				{
+					if (allowCurrentDirectory)
 					{
-						directories.Add(relativetoCurrent);
+						var relativetoCurrent = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory))
+								.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+						if (Directory.Exists(relativetoCurrent))
+						{
+							directories.Add(relativetoCurrent);
+						}
 					}
 				}
-			}
-			catch
-			{
-				// Do nothing
+				catch
+				{
+					// Do nothing
+				}
 			}
 			return directories.OrderBy(x => x);
 		}
