@@ -53,7 +53,7 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>Stream for the filePath, or null if not found</returns>
 		public static Stream GetEmbeddedResourceAsStream(this Assembly assembly, string filePath, bool ignoreCase = true)
 		{
-			if (filePath == null)
+			if (string.IsNullOrEmpty(filePath))
 			{
 				throw new ArgumentNullException(nameof(filePath));
 			}
@@ -81,9 +81,7 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>IEnumerable with matching resource names</returns>
 		public static IEnumerable<string> FindEmbeddedResources(this Assembly assembly, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
 		{
-			return from resourceName in assembly.GetManifestResourceNames()
-				where Regex.IsMatch(resourceName, regexPattern, regexOptions)
-				select resourceName;
+			return assembly.FindEmbeddedResources(new Regex(regexPattern, regexOptions));
 		}
 
 		/// <summary>
@@ -108,9 +106,20 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>IEnumerable with matching resource names</returns>
 		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this IEnumerable<Assembly> assemblies, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
 		{
+			return assemblies.FindEmbeddedResources(new Regex(regexPattern, regexOptions));
+		}
+
+		/// <summary>
+		///     Scan the manifest of the supplied Assembly elements with a regex pattern for embedded resources
+		/// </summary>
+		/// <param name="assemblies">IEnumerable with Assembly elements to scan</param>
+		/// <param name="regex">Regex to scan for</param>
+		/// <returns>IEnumerable with matching resource names</returns>
+		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this IEnumerable<Assembly> assemblies, Regex regex)
+		{
 			return from assembly in assemblies
 				   from resourceName in assembly.GetManifestResourceNames()
-				   where Regex.IsMatch(resourceName, regexPattern, regexOptions)
+				   where regex.IsMatch(resourceName)
 				   select new Tuple<Assembly, string>(assembly, resourceName);
 		}
 	}
