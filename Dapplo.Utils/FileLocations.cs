@@ -64,7 +64,7 @@ namespace Dapplo.Utils
 			return from directory in directories
 				    from path in DirectoriesFor(directory)
 				    where Directory.Exists(path)
-					from file in Directory.EnumerateFiles(path, "*.*", searchOption)
+					from file in Directory.EnumerateFiles(path, "*", searchOption)
 					let match = filePattern.Match(file)
 					where match.Success
 					select Tuple.Create(file, match);

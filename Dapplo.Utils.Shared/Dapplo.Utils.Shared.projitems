@@ -30,7 +30,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)FilePattern.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHasEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IShallowCloneable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NoSynchronizationContextScope.cs" />

@@ -34,6 +34,9 @@ using System.Linq;
 using System.Reflection;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Extensions;
+using Dapplo.Log.Facade;
+using System.Text.RegularExpressions;
+using System.IO.Compression;
 
 #endregion
 
@@ -45,8 +48,11 @@ namespace Dapplo.Utils.Resolving
 	/// </summary>
 	public static class AssemblyResolver
 	{
+		private static readonly LogSource Log = new LogSource();
 		private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
+		private static readonly ISet<string> _resolveDirectories = new HashSet<string>();
 		private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+		private static readonly IDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		///     Setup and Register some of the default assemblies in the assembly cache
@@ -56,17 +62,31 @@ namespace Dapplo.Utils.Resolving
 			Register(Assembly.GetCallingAssembly());
 			Register(Assembly.GetEntryAssembly());
 			Register(Assembly.GetExecutingAssembly());
-			ResolveDirectories.Add(".");
+			AddDirectory(".");
+		}
+
+		/// <summary>
+		/// Add the specified directory, by converting it to an absolute directory
+		/// </summary>
+		/// <param name="directory">Directory to add for resolving</param>
+		public static void AddDirectory(string directory)
+		{
+			foreach (var absoluteDirectory in FileLocations.DirectoriesFor(directory))
+			{
+				_resolveDirectories.Add(absoluteDirectory);
+			}
 		}
 
 		/// <summary>
 		/// Extension to register an assembly to the AssemblyResolver, this is used for resolving embedded assemblies
 		/// </summary>
 		/// <param name="assembly">Assembly</param>
-		public static void Register(this Assembly assembly)
+		/// <param name="filePath">Path to assembly, or null if it isn't loaded from the file system</param>
+		public static void Register(this Assembly assembly, string filePath = null)
 		{
 			if (assembly == null)
 			{
+				Log.Verbose().WriteLine("Register was callled with null.");
 				return;
 			}
 			lock (AssembliesByName)
@@ -76,17 +96,20 @@ namespace Dapplo.Utils.Resolving
 					AssembliesByName[assembly.GetName().Name] = assembly;
 				}
 			}
+			lock (AssembliesByPath)
+			{
+				filePath = filePath ?? assembly.Location;
+				if (!string.IsNullOrEmpty(filePath) && !AssembliesByPath.ContainsKey(filePath))
+				{
+					AssembliesByPath[filePath] = assembly;
+				}
+			}
 		}
 
 		/// <summary>
 		///     IEnumerable with all cached assemblies
 		/// </summary>
 		public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
-
-		/// <summary>
-		///     A collection of all directories where the resolver will look to resolve resources
-		/// </summary>
-		public static ISet<string> ResolveDirectories { get; } = new HashSet<string>();
 
 		/// <summary>
 		///     Defines if the resolving is first loading internal files, if nothing was found check the file system
@@ -154,7 +177,7 @@ namespace Dapplo.Utils.Resolving
 		private static Assembly ResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
 		{
 			var assemblyName = new AssemblyName(resolveEventArgs.Name);
-
+			Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
 			return FindAssembly(assemblyName.Name);
 		}
 
@@ -166,12 +189,40 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFile(string filepath)
 		{
+			if (string.IsNullOrEmpty(filepath))
+			{
+				throw new ArgumentNullException(nameof(filepath));
+			}
 			var assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
+
 			if (assembly == null)
 			{
-				assembly = Assembly.LoadFile(filepath);
+				AssembliesByPath.TryGetValue(filepath, out assembly);
+			}
 
-				Register(assembly);
+			if (assembly == null)
+			{
+				if (filepath.EndsWith(".gz"))
+				{
+					// Gzipped file, needs to be loaded via a stream, and change to a 
+					byte[] assemblyBytes;
+					using (var fileStream = new FileStream(filepath, FileMode.Open, FileAccess.ReadWrite))
+					using (var stream = new GZipStream(fileStream, CompressionMode.Decompress))
+					{
+						assemblyBytes = stream.ToByteArray();
+					}
+					assembly = Assembly.Load(assemblyBytes);
+				}
+				else
+				{
+					assembly = Assembly.LoadFile(filepath);
+				}
+				// Make sure the directory of the file is known to the resolver
+				// this takes care of dlls which are in the same directory as this assembly.
+				// It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
+				_resolveDirectories.Add(Path.GetDirectoryName(filepath));
+				// Register the assembly in the cache, by name and by path
+				Register(assembly, filepath);
 			}
 			return assembly;
 		}
@@ -224,16 +275,27 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
+		/// Create a regex to find the specified assembly
+		/// </summary>
+		/// <param name="assemblyName">string with the name of the assembly</param>
+		/// <param name="ignoreCase">default true which means the case should be ignored</param>
+		/// <returns>Regex</returns>
+		private static Regex AssemblyNameToRegex(string assemblyName, bool ignoreCase = true)
+		{
+			return new Regex($@"{assemblyName.Replace(".", @"\.")}(\.dll|\.dll.gz|\.exe|\.exe.gz)", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
+		}
+
+		/// <summary>
 		///     Load the specified assembly from a manifest resource, or return null
 		/// </summary>
 		/// <param name="assemblyName">string</param>
 		/// <returns>Assembly</returns>
 		public static Assembly LoadEmbeddedAssembly(string assemblyName)
 		{
-			var dllName = $"{assemblyName}.dll";
+			var assemblyRegex = AssemblyNameToRegex(assemblyName);
 			try
 			{
-				var resourceTuple = AssemblyCache.FindEmbeddedResources(dllName).FirstOrDefault();
+				var resourceTuple = AssemblyCache.FindEmbeddedResources(assemblyRegex).FirstOrDefault();
 				if (resourceTuple != null)
 				{
 					return resourceTuple.Item1.LoadEmbeddedAssembly(resourceTuple.Item2);
@@ -241,8 +303,7 @@ namespace Dapplo.Utils.Resolving
 			}
 			catch (Exception ex)
 			{
-				// don't log with other libraries as this might cause issues / recurse resolving
-				Trace.WriteLine($"Error loading {dllName} from manifest resources: {ex.Message}");
+				Log.Error().WriteLine("Error loading {0} from manifest resources: {1}", assemblyName, ex.Message);
 			}
 			return null;
 		}
@@ -269,7 +330,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFileSystem(string assemblyName)
 		{
-			return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName);
+			return LoadAssemblyFromFileSystem(_resolveDirectories, assemblyName);
 		}
 
 		/// <summary>
@@ -280,9 +341,8 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName)
 		{
-			var dllName = $"{assemblyName}.dll";
-
-			var filepath = FileLocations.Scan(ResolveDirectories, dllName).FirstOrDefault();
+			var assemblyRegex = AssemblyNameToRegex(assemblyName);
+			var filepath = FileLocations.Scan(_resolveDirectories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
 			if (!string.IsNullOrEmpty(filepath) && File.Exists(filepath))
 			{
 				try
@@ -292,7 +352,7 @@ namespace Dapplo.Utils.Resolving
 				catch (Exception ex)
 				{
 					// don't log with other libraries as this might cause issues / recurse resolving
-					Trace.WriteLine($"Error loading {filepath} : {ex.Message}");
+					Log.Error().WriteLine("Error loading assembly from file {0}: {1}", filepath, ex.Message);
 				}
 			}
 			return null;
