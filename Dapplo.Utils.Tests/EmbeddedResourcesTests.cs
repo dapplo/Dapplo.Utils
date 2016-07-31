@@ -44,15 +44,6 @@ namespace Dapplo.Utils.Tests
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
-		[Fact]
-		public void Test_FilePattern()
-		{
-			var regex = FilePattern.FilePatternToRegex("*.dll");
-			var dlls = GetType().FindEmbeddedResources(regex);
-			Assert.True(dlls.Any());
-		}
-
-
 		/// <summary>
 		/// Test if resources can be found
 		/// </summary>
