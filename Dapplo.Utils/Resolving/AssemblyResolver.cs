@@ -49,7 +49,7 @@ namespace Dapplo.Utils.Resolving
 	public static class AssemblyResolver
 	{
 		private static readonly LogSource Log = new LogSource();
-		private static readonly string[] DefaultExtensions = { ".dll", ".dll.gz", ".exe", ".exe.gz" };
+		private static readonly string[] DefaultExtensions = { "dll", "dll.gz" };
 		private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
 		private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
 		private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -282,12 +282,28 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
+		///     Find the specified assemblies from a manifest resource or from the file system.
+		///     It is possible to use wildcards but the first match will be loaded!
+		/// </summary>
+		/// <param name="assemblyNames">IEnumerable with the assembly names, e.g. from AssemblyName.Name, do not specify an extension</param>
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
+		/// <returns>IEnumerable with Assembly</returns>
+		public static IEnumerable<Assembly> FindAssemblies(IEnumerable<string> assemblyNames, IEnumerable<string> extensions = null)
+		{
+			foreach(var assemblyName in assemblyNames)
+			{
+				yield return FindAssembly(assemblyName, extensions);
+			}
+		}
+
+		/// <summary>
 		///     Find the specified assembly from a manifest resource or from the file system.
 		///     It is possible to use wildcards but the first match will be loaded!
 		/// </summary>
 		/// <param name="assemblyName">string with the assembly name, e.g. from AssemblyName.Name, do not specify an extension</param>
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
 		/// <returns>Assembly or null</returns>
-		public static Assembly FindAssembly(string assemblyName)
+		public static Assembly FindAssembly(string assemblyName, IEnumerable<string> extensions = null)
 		{
 			Assembly assembly;
 			// Do not use the cache if a wildcard was used.
@@ -306,11 +322,11 @@ namespace Dapplo.Utils.Resolving
 			// Loading order depends on ResolveEmbeddedBeforeFiles
 			if (ResolveEmbeddedBeforeFiles)
 			{
-				assembly = LoadEmbeddedAssembly(assemblyName) ?? LoadAssemblyFromFileSystem(assemblyName);
+				assembly = LoadEmbeddedAssembly(assemblyName, extensions) ?? LoadAssemblyFromFileSystem(assemblyName, extensions);
 			}
 			else
 			{
-				assembly = LoadAssemblyFromFileSystem(assemblyName) ?? LoadEmbeddedAssembly(assemblyName);
+				assembly = LoadAssemblyFromFileSystem(assemblyName, extensions) ?? LoadEmbeddedAssembly(assemblyName, extensions);
 			}
 
 			return assembly;
@@ -321,15 +337,14 @@ namespace Dapplo.Utils.Resolving
 		/// </summary>
 		/// <param name="filename">
 		/// string with the filename for the assembly.
-		/// A file pattern like Dapplo.* is allowed, and would be e.g. converted to Dapplo\..*(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$
+		/// A file pattern like Dapplo.* is allowed, and would be e.g. converted to Dapplo\..*(\.dll|\.dll\.gz)$
 		/// (the . in the filename is NOT a any, this would be a ?)
 		/// </param>
 		/// <param name="ignoreCase">default is true and makes sure the case is ignored</param>
-		/// <param name="allowedExtensions">Extensions which are allowed, as this is the AssemblyResolver all known assembly extensions are used when this is omitted</param>
+		/// <param name="extensions">Extensions which are allowed, default dll and dll.gz are used when this is omitted</param>
 		/// <returns>Regex representing the filename pattern</returns>
-		public static Regex FilenameToRegex(string filename, bool ignoreCase = true, IEnumerable<string> allowedExtensions = null)
+		public static Regex FilenameToRegex(string filename, bool ignoreCase = true, IEnumerable<string> extensions = null)
 		{
-
 			if (filename == null)
 			{
 				throw new ArgumentNullException(nameof(filename));
@@ -338,12 +353,13 @@ namespace Dapplo.Utils.Resolving
 			// 2: Replace all ? with a single dot
 			// 3: Replace * for a matching on NOT the path separator, we only want the file
 			string regex = filename.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*");
-			// string extensionPattern = @"(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$"
 
+			// Add the extensions
 			var extensionPattern = new StringBuilder();
 			extensionPattern.Append('(');
-			foreach (var allowedExtension in allowedExtensions ?? DefaultExtensions)
+			foreach (var allowedExtension in extensions ?? DefaultExtensions)
 			{
+				extensionPattern.Append(@"\.");
 				extensionPattern.Append(allowedExtension.Replace(".", @"\."));
 				extensionPattern.Append('|');
 			}
@@ -356,10 +372,11 @@ namespace Dapplo.Utils.Resolving
 		///     Load the specified assembly from a manifest resource, or return null
 		/// </summary>
 		/// <param name="assemblyName">string</param>
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
 		/// <returns>Assembly</returns>
-		public static Assembly LoadEmbeddedAssembly(string assemblyName)
+		public static Assembly LoadEmbeddedAssembly(string assemblyName, IEnumerable<string> extensions = null)
 		{
-			var assemblyRegex = FilenameToRegex(assemblyName);
+			var assemblyRegex = FilenameToRegex(assemblyName, true, extensions);
 			try
 			{
 				var resourceTuple = AssemblyCache.FindEmbeddedResources(assemblyRegex).FirstOrDefault();
@@ -393,10 +410,11 @@ namespace Dapplo.Utils.Resolving
 		///     Load the specified assembly from the ResolveDirectories, or return null
 		/// </summary>
 		/// <param name="assemblyName">string with the name without path</param>
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
 		/// <returns>Assembly</returns>
-		public static Assembly LoadAssemblyFromFileSystem(string assemblyName)
+		public static Assembly LoadAssemblyFromFileSystem(string assemblyName, IEnumerable<string> extensions = null)
 		{
-			return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName);
+			return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName, extensions);
 		}
 
 		/// <summary>
@@ -404,10 +422,11 @@ namespace Dapplo.Utils.Resolving
 		/// </summary>
 		/// <param name="directories">IEnumerable with directories</param>
 		/// <param name="assemblyName">string with the name without path</param>
+		/// <param name="extensions">IEnumerable with extensions to look for, defaults will be set if null was passed</param>
 		/// <returns>Assembly</returns>
-		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName)
+		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName, IEnumerable<string> extensions = null)
 		{
-			var assemblyRegex = FilenameToRegex(assemblyName);
+			var assemblyRegex = FilenameToRegex(assemblyName, true, extensions);
 			var filepath = FileLocations.Scan(directories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
 			if (!string.IsNullOrEmpty(filepath) && File.Exists(filepath))
 			{
