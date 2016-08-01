@@ -66,6 +66,11 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
+		/// Directories which this AssemblyResolver uses to find assemblies
+		/// </summary>
+		public static IEnumerable<string> Directories => ResolveDirectories;
+
+		/// <summary>
 		/// Add the specified directory, by converting it to an absolute directory
 		/// </summary>
 		/// <param name="directory">Directory to add for resolving</param>
