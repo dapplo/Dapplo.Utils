@@ -70,14 +70,12 @@ namespace Dapplo.Utils
 		protected bool ActivateUpdateCallback { get; set; } = false;
 
 		/// <summary>
+		/// Implement this method, it should create an instance of TResult via the supplied TKey.
 		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="cancellationToken"></param>
+		/// <param name="key">TKey</param>
+		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>TResult</returns>
-		protected virtual Task<TResult> CreateAsync(TKey key, CancellationToken cancellationToken = default(CancellationToken))
-		{
-			throw new NotImplementedException();
-		}
+		protected abstract Task<TResult> CreateAsync(TKey key, CancellationToken cancellationToken = default(CancellationToken));
 
 		/// <summary>
 		///     Creates a key under which the object is stored or retrieved, default is a toString on the object.

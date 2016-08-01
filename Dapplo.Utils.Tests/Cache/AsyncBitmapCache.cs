@@ -35,9 +35,9 @@ using System.Windows.Media.Imaging;
 namespace Dapplo.Utils.Tests.Cache
 {
 	/// <summary>
-	///     Test AsyncMemoryCache which retrieves a bitmap from the supplied Uri
+	///     Test AsyncMemoryCache which retrieves a bitmap from the file system via the supplied filename
 	/// </summary>
-	public class AsyncFileCache : AsyncMemoryCache<string, BitmapSource>
+	public class AsyncBitmapCache : AsyncMemoryCache<string, BitmapSource>
 	{
 		protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
 		{

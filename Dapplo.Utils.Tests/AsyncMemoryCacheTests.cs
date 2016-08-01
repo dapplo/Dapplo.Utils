@@ -49,7 +49,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task TestMemoryCache()
 		{
-			var cache = new AsyncFileCache();
+			var cache = new AsyncBitmapCache();
 			var bitmapFile = "dapplo.png";
 			var tasks = new List<Task<BitmapSource>>();
 			for (var i = 0; i < 10; i++)
@@ -69,7 +69,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task TestMemoryCacheDelete()
 		{
-			var cache = new AsyncFileCache();
+			var cache = new AsyncBitmapCache();
 			var bitmapFile = "dapplo.png";
 			var bitmapSource = await cache.GetOrCreateAsync(bitmapFile);
 

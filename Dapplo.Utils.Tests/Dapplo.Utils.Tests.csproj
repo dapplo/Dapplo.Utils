@@ -81,7 +81,7 @@
     <Compile Include="Utils\AssemblyUtils.cs" />
     <Compile Include="AsyncMemoryCacheTests.cs" />
     <Compile Include="Cache\AsyncAwaitExceptionCache.cs" />
-    <Compile Include="Cache\AsyncFileCache.cs" />
+    <Compile Include="Cache\AsyncBitmapCache.cs" />
     <Compile Include="Cache\StreamExtensions.cs" />
     <Compile Include="DisposeTests.cs" />
     <Compile Include="EmbeddedResourcesTests.cs" />
