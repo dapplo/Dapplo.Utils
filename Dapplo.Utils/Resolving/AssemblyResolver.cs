@@ -258,19 +258,24 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
-		///     Load the specified assembly from a manifest resource or from the file system
+		///     Find the specified assembly from a manifest resource or from the file system.
+		///     It is possible to use wildcards but the first match will be loaded!
 		/// </summary>
-		/// <param name="assemblyName">string from AssemblyName.Name, do not specify an extension</param>
+		/// <param name="assemblyName">string with the assembly name, e.g. from AssemblyName.Name, do not specify an extension</param>
 		/// <returns>Assembly or null</returns>
 		public static Assembly FindAssembly(string assemblyName)
 		{
 			Assembly assembly;
-			lock (AssembliesByName)
+			// Do not use the cache if a wildcard was used.
+			if (!assemblyName.Contains("*"))
 			{
-				// Try the cache
-				if (AssembliesByName.TryGetValue(assemblyName, out assembly))
+				lock (AssembliesByName)
 				{
-					return assembly;
+					// Try the cache
+					if (AssembliesByName.TryGetValue(assemblyName, out assembly))
+					{
+						return assembly;
+					}
 				}
 			}
 
@@ -298,6 +303,10 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Regex</returns>
 		public static Regex AssemblyNameToRegex(string assemblyName, bool ignoreCase = true)
 		{
+			if (assemblyName == null)
+			{
+				throw new ArgumentNullException(nameof(assemblyName));
+			}
 			string regex = assemblyName.Replace(".", @"\.").Replace("*", ".*");
 			return new Regex($"{regex}{AssemblyEndingRegexPattern}", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
 		}
