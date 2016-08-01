@@ -57,7 +57,7 @@ namespace Dapplo.Utils.Embedded
 			{
 				throw new ArgumentNullException(nameof(filePath));
 			}
-			var filePathRegex = filePath.Replace($"{Path.DirectorySeparatorChar}", ".").Replace(".", @"\.");
+			var filePathRegex = filePath.Replace(Path.DirectorySeparatorChar, '.').Replace(".", @"\.");
 
 			var resourceName = assembly.FindEmbeddedResources(filePathRegex, ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None).FirstOrDefault();
 			if (resourceName != null)

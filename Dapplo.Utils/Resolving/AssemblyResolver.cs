@@ -28,7 +28,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -49,8 +48,9 @@ namespace Dapplo.Utils.Resolving
 	public static class AssemblyResolver
 	{
 		private static readonly LogSource Log = new LogSource();
+		private const string AssemblyEndingRegexPattern = @"(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$";
 		private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
-		private static readonly ISet<string> _resolveDirectories = new HashSet<string>();
+		private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
 		private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 		private static readonly IDictionary<string, Assembly> AssembliesByPath = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
 
@@ -71,9 +71,12 @@ namespace Dapplo.Utils.Resolving
 		/// <param name="directory">Directory to add for resolving</param>
 		public static void AddDirectory(string directory)
 		{
-			foreach (var absoluteDirectory in FileLocations.DirectoriesFor(directory))
+			lock (ResolveDirectories)
 			{
-				_resolveDirectories.Add(absoluteDirectory);
+				foreach (var absoluteDirectory in FileLocations.DirectoriesFor(directory))
+				{
+					ResolveDirectories.Add(absoluteDirectory);
+				}
 			}
 		}
 
@@ -197,7 +200,10 @@ namespace Dapplo.Utils.Resolving
 
 			if (assembly == null)
 			{
-				AssembliesByPath.TryGetValue(filepath, out assembly);
+				lock (AssembliesByPath)
+				{
+					AssembliesByPath.TryGetValue(filepath, out assembly);
+				}
 			}
 
 			if (assembly == null)
@@ -220,7 +226,14 @@ namespace Dapplo.Utils.Resolving
 				// Make sure the directory of the file is known to the resolver
 				// this takes care of dlls which are in the same directory as this assembly.
 				// It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
-				_resolveDirectories.Add(Path.GetDirectoryName(filepath));
+				var assemblyDirectory = Path.GetDirectoryName(filepath);
+				if (!string.IsNullOrEmpty(assemblyDirectory))
+				{
+					lock (ResolveDirectories)
+					{
+						ResolveDirectories.Add(assemblyDirectory);
+					}
+				}
 				// Register the assembly in the cache, by name and by path
 				Register(assembly, filepath);
 			}
@@ -277,12 +290,16 @@ namespace Dapplo.Utils.Resolving
 		/// <summary>
 		/// Create a regex to find the specified assembly
 		/// </summary>
-		/// <param name="assemblyName">string with the name of the assembly</param>
-		/// <param name="ignoreCase">default true which means the case should be ignored</param>
+		/// <param name="assemblyName">
+		/// string with the name of the assembly.
+		/// A file pattern like Dapplo.* is allowed, and would be converted to Dapplo\..*(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$
+		/// </param>
+		/// <param name="ignoreCase">default is true and makes sure the case is ignored</param>
 		/// <returns>Regex</returns>
-		private static Regex AssemblyNameToRegex(string assemblyName, bool ignoreCase = true)
+		public static Regex AssemblyNameToRegex(string assemblyName, bool ignoreCase = true)
 		{
-			return new Regex($@"{assemblyName.Replace(".", @"\.")}(\.dll|\.dll.gz|\.exe|\.exe.gz)", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
+			string regex = assemblyName.Replace(".", @"\.").Replace("*", ".*");
+			return new Regex($"{regex}{AssemblyEndingRegexPattern}", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
 		}
 
 		/// <summary>
@@ -320,7 +337,6 @@ namespace Dapplo.Utils.Resolving
 			{
 				return LoadAssemblyFromStream(stream);
 			}
-
 		}
 
 		/// <summary>
@@ -330,7 +346,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFileSystem(string assemblyName)
 		{
-			return LoadAssemblyFromFileSystem(_resolveDirectories, assemblyName);
+			return LoadAssemblyFromFileSystem(ResolveDirectories, assemblyName);
 		}
 
 		/// <summary>
@@ -342,7 +358,7 @@ namespace Dapplo.Utils.Resolving
 		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName)
 		{
 			var assemblyRegex = AssemblyNameToRegex(assemblyName);
-			var filepath = FileLocations.Scan(_resolveDirectories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
+			var filepath = FileLocations.Scan(directories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
 			if (!string.IsNullOrEmpty(filepath) && File.Exists(filepath))
 			{
 				try
