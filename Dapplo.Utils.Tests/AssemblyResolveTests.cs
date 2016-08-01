@@ -56,7 +56,8 @@ namespace Dapplo.Utils.Tests
 			// Tests don't have an entry assembly, force it with this helper
 			AssemblyUtils.SetEntryAssembly(GetType().Assembly);
 
-			var dllName = @"Dapplo.Utils.Tests.TestAssembly.dll";
+			var assemblyName = "Dapplo.Utils.Tests.TestAssembly";
+			var dllName = assemblyName + ".dll";
 			// Make sure the dll is NOT available on the file system, otherwise the test won't go into the resolver
 			if (File.Exists(dllName))
 			{
@@ -67,9 +68,11 @@ namespace Dapplo.Utils.Tests
 			// Register OUR AssemblyResolver, not the one of ILBundle.
 			using (AssemblyResolver.RegisterAssemblyResolve())
 			{
-				// Check that the DLL is there
-				var dll = GetType().FindEmbeddedResources(dllName);
-				Assert.True(dll.Any());
+				var regex = AssemblyResolver.FilenameToRegex(assemblyName);
+
+				// Check that the assembly can be found in the embedded resources
+				var assemblyFiles = GetType().FindEmbeddedResources(regex);
+				Assert.True(assemblyFiles.Any());
 
 				// Now force the usage of the other assembly, this should load it and call the method
 				ThisForcesDelayedLoadingOfAssembly();
@@ -85,9 +88,11 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void Test_AssemblyNameToRegex()
 		{
-			var file_noMatch = @"C:\LocalData\CSharpProjects\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
+			var file_noMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
+			var file_match = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
 			var regex = AssemblyResolver.FilenameToRegex("Dapplo*");
 			Assert.False(regex.IsMatch(file_noMatch));
+			Assert.True(regex.IsMatch(file_match));
 		}
 	}
 }

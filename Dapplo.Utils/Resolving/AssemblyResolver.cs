@@ -36,6 +36,7 @@ using Dapplo.Utils.Extensions;
 using Dapplo.Log.Facade;
 using System.Text.RegularExpressions;
 using System.IO.Compression;
+using System.Text;
 
 #endregion
 
@@ -48,7 +49,7 @@ namespace Dapplo.Utils.Resolving
 	public static class AssemblyResolver
 	{
 		private static readonly LogSource Log = new LogSource();
-		private const string AssemblyEndingRegexPattern = @"(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$";
+		private static readonly string[] DefaultExtensions = { ".dll", ".dll.gz", ".exe", ".exe.gz" };
 		private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
 		private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
 		private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -190,6 +191,32 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
+		/// check the caches to see if the assembly was already loaded
+		/// </summary>
+		/// <param name="filepath">string with the path where the assembly should be loaded from</param>
+		/// <returns>Assembly when it was cached, or null when it was not cached</returns>
+		private static Assembly FindCachedAssembly(string filepath)
+		{
+			var assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
+
+			if (assembly == null)
+			{
+				lock (AssembliesByPath)
+				{
+					AssembliesByPath.TryGetValue(filepath, out assembly);
+				}
+			}
+			if (assembly == null)
+			{
+				lock (AssembliesByPath)
+				{
+					assembly = AssembliesByPath.Where(x => Path.GetFileNameWithoutExtension(x.Key) == Path.GetFileNameWithoutExtension(filepath)).Select(x => x.Value).FirstOrDefault();
+				}
+			}
+			return assembly;
+		}
+
+		/// <summary>
 		///     Simple method to load an assembly from a file path (or returned a cached version).
 		///     If it was loaded new, it will be added to the cache
 		/// </summary>
@@ -201,15 +228,7 @@ namespace Dapplo.Utils.Resolving
 			{
 				throw new ArgumentNullException(nameof(filepath));
 			}
-			var assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
-
-			if (assembly == null)
-			{
-				lock (AssembliesByPath)
-				{
-					AssembliesByPath.TryGetValue(filepath, out assembly);
-				}
-			}
+			var assembly = FindCachedAssembly(filepath);
 
 			if (assembly == null)
 			{
@@ -300,23 +319,37 @@ namespace Dapplo.Utils.Resolving
 		/// <summary>
 		/// Create a regex to find the specified file with wildcards.
 		/// </summary>
-		/// <param name="assemblyName">
-		/// string with the name of the assembly.
-		/// A file pattern like Dapplo.* is allowed, and would be converted to Dapplo\..*(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$
+		/// <param name="filename">
+		/// string with the filename for the assembly.
+		/// A file pattern like Dapplo.* is allowed, and would be e.g. converted to Dapplo\..*(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$
+		/// (the . in the filename is NOT a any, this would be a ?)
 		/// </param>
 		/// <param name="ignoreCase">default is true and makes sure the case is ignored</param>
-		/// <returns>Regex</returns>
-		public static Regex FilenameToRegex(string assemblyName, bool ignoreCase = true)
+		/// <param name="allowedExtensions">Extensions which are allowed, as this is the AssemblyResolver all known assembly extensions are used when this is omitted</param>
+		/// <returns>Regex representing the filename pattern</returns>
+		public static Regex FilenameToRegex(string filename, bool ignoreCase = true, IEnumerable<string> allowedExtensions = null)
 		{
-			if (assemblyName == null)
+
+			if (filename == null)
 			{
-				throw new ArgumentNullException(nameof(assemblyName));
+				throw new ArgumentNullException(nameof(filename));
 			}
 			// 1: Escape all dots
 			// 2: Replace all ? with a single dot
 			// 3: Replace * for a matching on NOT the path separator, we only want the file
-			string regex = assemblyName.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*");
-			return new Regex($"{regex}{AssemblyEndingRegexPattern}", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
+			string regex = filename.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*");
+			// string extensionPattern = @"(\.exe|\.exe\.gz|\.dll|\.dll\.gz)$"
+
+			var extensionPattern = new StringBuilder();
+			extensionPattern.Append('(');
+			foreach (var allowedExtension in allowedExtensions ?? DefaultExtensions)
+			{
+				extensionPattern.Append(allowedExtension.Replace(".", @"\."));
+				extensionPattern.Append('|');
+			}
+			extensionPattern.Length -= 1;
+			extensionPattern.Append(")$");
+			return new Regex($"{regex}{extensionPattern}", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
 		}
 
 		/// <summary>
