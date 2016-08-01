@@ -298,7 +298,7 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
-		/// Create a regex to find the specified assembly
+		/// Create a regex to find the specified file with wildcards.
 		/// </summary>
 		/// <param name="assemblyName">
 		/// string with the name of the assembly.
@@ -306,13 +306,16 @@ namespace Dapplo.Utils.Resolving
 		/// </param>
 		/// <param name="ignoreCase">default is true and makes sure the case is ignored</param>
 		/// <returns>Regex</returns>
-		public static Regex AssemblyNameToRegex(string assemblyName, bool ignoreCase = true)
+		public static Regex FilenameToRegex(string assemblyName, bool ignoreCase = true)
 		{
 			if (assemblyName == null)
 			{
 				throw new ArgumentNullException(nameof(assemblyName));
 			}
-			string regex = assemblyName.Replace(".", @"\.").Replace("*", ".*");
+			// 1: Escape all dots
+			// 2: Replace all ? with a single dot
+			// 3: Replace * for a matching on NOT the path separator, we only want the file
+			string regex = assemblyName.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*");
 			return new Regex($"{regex}{AssemblyEndingRegexPattern}", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
 		}
 
@@ -323,7 +326,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadEmbeddedAssembly(string assemblyName)
 		{
-			var assemblyRegex = AssemblyNameToRegex(assemblyName);
+			var assemblyRegex = FilenameToRegex(assemblyName);
 			try
 			{
 				var resourceTuple = AssemblyCache.FindEmbeddedResources(assemblyRegex).FirstOrDefault();
@@ -371,7 +374,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName)
 		{
-			var assemblyRegex = AssemblyNameToRegex(assemblyName);
+			var assemblyRegex = FilenameToRegex(assemblyName);
 			var filepath = FileLocations.Scan(directories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
 			if (!string.IsNullOrEmpty(filepath) && File.Exists(filepath))
 			{

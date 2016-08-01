@@ -81,5 +81,13 @@ namespace Dapplo.Utils.Tests
 			var helloWorld = ExternalClass.HelloWord();
 			Assert.Equal(nameof(ExternalClass.HelloWord), helloWorld);
 		}
+
+		[Fact]
+		public void Test_AssemblyNameToRegex()
+		{
+			var file_noMatch = @"C:\LocalData\CSharpProjects\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
+			var regex = AssemblyResolver.FilenameToRegex("Dapplo*");
+			Assert.False(regex.IsMatch(file_noMatch));
+		}
 	}
 }
