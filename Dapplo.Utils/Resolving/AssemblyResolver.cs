@@ -290,9 +290,10 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>IEnumerable with Assembly</returns>
 		public static IEnumerable<Assembly> FindAssemblies(IEnumerable<string> assemblyNames, IEnumerable<string> extensions = null)
 		{
-			foreach(var assemblyName in assemblyNames)
+			var extensionsList = extensions?.ToList();
+			foreach (var assemblyName in assemblyNames)
 			{
-				yield return FindAssembly(assemblyName, extensions);
+				yield return FindAssembly(assemblyName, extensionsList);
 			}
 		}
 
@@ -319,14 +320,15 @@ namespace Dapplo.Utils.Resolving
 				}
 			}
 
+			var extensionsList = extensions?.ToList();
 			// Loading order depends on ResolveEmbeddedBeforeFiles
 			if (ResolveEmbeddedBeforeFiles)
 			{
-				assembly = LoadEmbeddedAssembly(assemblyName, extensions) ?? LoadAssemblyFromFileSystem(assemblyName, extensions);
+				assembly = LoadEmbeddedAssembly(assemblyName, extensionsList) ?? LoadAssemblyFromFileSystem(assemblyName, extensionsList);
 			}
 			else
 			{
-				assembly = LoadAssemblyFromFileSystem(assemblyName, extensions) ?? LoadEmbeddedAssembly(assemblyName, extensions);
+				assembly = LoadAssemblyFromFileSystem(assemblyName, extensionsList) ?? LoadEmbeddedAssembly(assemblyName, extensionsList);
 			}
 
 			return assembly;
