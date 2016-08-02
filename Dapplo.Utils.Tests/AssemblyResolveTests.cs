@@ -76,6 +76,8 @@ namespace Dapplo.Utils.Tests
 
 				// Now force the usage of the other assembly, this should load it and call the method
 				ThisForcesDelayedLoadingOfAssembly();
+
+				AssemblyResolver.LoadEmbeddedAssembly(assemblyName);
 			}
 		}
 

@@ -72,6 +72,23 @@ namespace Dapplo.Utils.Resolving
 		public static IEnumerable<string> Directories => ResolveDirectories;
 
 		/// <summary>
+		///     IEnumerable with all cached assemblies
+		/// </summary>
+		public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
+
+		/// <summary>
+		///     Defines if the resolving is first loading internal files, if nothing was found check the file system
+		///     There might be security reasons for not doing this.
+		/// </summary>
+		public static bool ResolveEmbeddedBeforeFiles { get; set; } = true;
+
+		/// <summary>
+		///     Defines if before loading an assembly from a resource, the Assembly names from the cache are checked against the resource name.
+		///     This speeds up the loading, BUT might have a problem that an assembly "x.y.z.dll" is skipped as "y.z.dll" was already loaded.
+		/// </summary>
+		public static bool CheckEmbeddedResourceNameAgainstCache { get; set; } = true;
+
+		/// <summary>
 		/// Add the specified directory, by converting it to an absolute directory
 		/// </summary>
 		/// <param name="directory">Directory to add for resolving</param>
@@ -114,17 +131,6 @@ namespace Dapplo.Utils.Resolving
 				}
 			}
 		}
-
-		/// <summary>
-		///     IEnumerable with all cached assemblies
-		/// </summary>
-		public static IEnumerable<Assembly> AssemblyCache => AssembliesByName.Values;
-
-		/// <summary>
-		///     Defines if the resolving is first loading internal files, if nothing was found check the file system
-		///     There might be security reasons for not doing this.
-		/// </summary>
-		public static bool ResolveEmbeddedBeforeFiles { get; set; } = true;
 
 		/// <summary>
 		///     Register the AssemblyResolve event for the specified AppDomain
@@ -232,6 +238,18 @@ namespace Dapplo.Utils.Resolving
 
 			if (assembly == null)
 			{
+				// check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
+				var assemblyNameFromPath = Path.GetFileName(filepath).Replace(".dll.gz", "").Replace(".dll", "");
+				assembly = AssembliesByName.Values.FirstOrDefault(a => a.GetName().Name == assemblyNameFromPath);
+				if (assembly != null)
+				{
+					Log.Verbose().WriteLine("Skipping loading assembly from {0}, as {1} was already loaded.", filepath, assembly.GetName().Name);
+				}
+			}
+
+			if (assembly == null)
+			{
+				Log.Verbose().WriteLine("Loading assembly from {0}", filepath);
 				if (filepath.EndsWith(".gz"))
 				{
 					// Gzipped file, needs to be loaded via a stream, and change to a 
@@ -265,7 +283,7 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
-		///     Simple method to load an assembly from a stream.
+		///     Simple method to load an assembly from a stream
 		/// </summary>
 		/// <param name="stream">Stream</param>
 		/// <returns>Assembly or null when the stream is null</returns>
@@ -275,9 +293,30 @@ namespace Dapplo.Utils.Resolving
 			{
 				return null;
 			}
-			// Load the assembly, unfortunately this only works via a byte array
-			var assembly = Assembly.Load(stream.ToByteArray());
-			Register(assembly);
+
+			Assembly assembly = null;
+
+			// Pre-load as ReflectionOnlyLoad, to get the name to see if it was already loaded, this will slow things down but there is no way around it
+			var byteArray = stream.ToByteArray();
+			bool wasCached;
+			try
+			{
+				var preloadedAssembly = Assembly.ReflectionOnlyLoad(byteArray);
+				lock (AssembliesByName)
+				{
+					wasCached = preloadedAssembly != null && AssembliesByName.ContainsKey(preloadedAssembly.GetName().Name);
+				}
+			}
+			catch (Exception ex)
+			{
+				wasCached = true;
+				Log.Warn().WriteLine(ex, "Couldn't pre-load assembly from stream, this is probably due to double loading and will be skipped.");
+			}
+			if (!wasCached)
+			{
+				assembly = Assembly.Load(byteArray);
+				Register(assembly);
+			}
 			return assembly;
 		}
 
@@ -371,6 +410,28 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
+		/// Remove extensions from a filename / path
+		/// </summary>
+		/// <param name="filepath">string with a filename or path</param>
+		/// <param name="extensions">IEnumerable with extensions, if not supplied the DefaultExtensions are used</param>
+		/// <returns>string</returns>
+		public static string RemoveExtensions(string filepath, IEnumerable<string> extensions = null)
+		{
+			var orderedExtensions = from extension in extensions ?? DefaultExtensions
+									orderby extension.Length
+									select extension;
+
+			foreach (var extension in orderedExtensions)
+			{
+				if (filepath.EndsWith(extension))
+				{
+					filepath = filepath.Replace($".{extension}", "");
+				}
+			}
+			return filepath;
+		}
+
+		/// <summary>
 		///     Load the specified assembly from a manifest resource, or return null
 		/// </summary>
 		/// <param name="assemblyName">string</param>
@@ -402,8 +463,22 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadEmbeddedAssembly(this Assembly assembly, string resourceName)
 		{
+			if (CheckEmbeddedResourceNameAgainstCache)
+			{
+				var possibleAssemblyName = RemoveExtensions(resourceName);
+				lock (AssembliesByName)
+				{
+					var cachedAssembly = AssembliesByName.FirstOrDefault(x => possibleAssemblyName.EndsWith(x.Key)).Value;
+					if (cachedAssembly != null)
+					{
+						Log.Warn().WriteLine("Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false", cachedAssembly.FullName, resourceName);
+						return cachedAssembly;
+					}
+				}
+			}
 			using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
 			{
+				Log.Verbose().WriteLine("Loading assembly from resource {1} in assembly {0}", assembly.FullName, resourceName);
 				return LoadAssemblyFromStream(stream);
 			}
 		}
