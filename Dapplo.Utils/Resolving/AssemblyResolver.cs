@@ -44,7 +44,7 @@ namespace Dapplo.Utils.Resolving
 {
 	/// <summary>
 	///     This is a static Assembly resolver and Assembly loader
-	///     It doesn't use a logger or other dependencies outside the Dapplo.Utils dll to make it possible to only have this DLL in the output directory
+	///     It takes care of caching and prevents that an Assembly is loaded twice (which would cause issues!)
 	/// </summary>
 	public static class AssemblyResolver
 	{
@@ -107,8 +107,8 @@ namespace Dapplo.Utils.Resolving
 		/// Extension to register an assembly to the AssemblyResolver, this is used for resolving embedded assemblies
 		/// </summary>
 		/// <param name="assembly">Assembly</param>
-		/// <param name="filePath">Path to assembly, or null if it isn't loaded from the file system</param>
-		public static void Register(this Assembly assembly, string filePath = null)
+		/// <param name="filepath">Path to assembly, or null if it isn't loaded from the file system</param>
+		public static void Register(this Assembly assembly, string filepath = null)
 		{
 			if (assembly == null)
 			{
@@ -122,12 +122,17 @@ namespace Dapplo.Utils.Resolving
 					AssembliesByName[assembly.GetName().Name] = assembly;
 				}
 			}
-			lock (AssembliesByPath)
+			filepath = filepath ?? assembly.Location;
+			if (!string.IsNullOrEmpty(filepath))
 			{
-				filePath = filePath ?? assembly.Location;
-				if (!string.IsNullOrEmpty(filePath) && !AssembliesByPath.ContainsKey(filePath))
+				lock (AssembliesByPath)
 				{
-					AssembliesByPath[filePath] = assembly;
+					// Make sure the name is always the same.
+					filepath = RemoveExtensions(Path.GetFullPath(filepath)) + ".dll";
+					if (!AssembliesByPath.ContainsKey(filepath))
+					{
+						AssembliesByPath[filepath] = assembly;
+					}
 				}
 			}
 		}
@@ -203,6 +208,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly when it was cached, or null when it was not cached</returns>
 		private static Assembly FindCachedAssembly(string filepath)
 		{
+			filepath = RemoveExtensions(Path.GetFullPath(filepath)) + ".dll";
 			var assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
 
 			if (assembly == null)
@@ -236,48 +242,45 @@ namespace Dapplo.Utils.Resolving
 			}
 			var assembly = FindCachedAssembly(filepath);
 
-			if (assembly == null)
+			if (assembly != null)
 			{
-				// check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
-				var assemblyNameFromPath = Path.GetFileName(filepath).Replace(".dll.gz", "").Replace(".dll", "");
-				assembly = AssembliesByName.Values.FirstOrDefault(a => a.GetName().Name == assemblyNameFromPath);
-				if (assembly != null)
-				{
-					Log.Verbose().WriteLine("Skipping loading assembly from {0}, as {1} was already loaded.", filepath, assembly.GetName().Name);
-				}
+				Log.Verbose().WriteLine("Returning cached assembly for {0}, as {1} was already loaded.", filepath, assembly.FullName);
+				return assembly;
+			}
+			// check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
+			var assemblyNameFromPath = Path.GetFileName(filepath).Replace(".dll.gz", "").Replace(".dll", "");
+			assembly = AssembliesByName.Values.FirstOrDefault(a => a.GetName().Name == assemblyNameFromPath);
+			if (assembly != null)
+			{
+				Log.Verbose().WriteLine("Skipping loading assembly from {0}, as {1} was already loaded.", filepath, assembly.FullName);
+				return assembly;
 			}
 
-			if (assembly == null)
+			Log.Verbose().WriteLine("Loading assembly from {0}", filepath);
+			if (filepath.EndsWith(".gz"))
 			{
-				Log.Verbose().WriteLine("Loading assembly from {0}", filepath);
-				if (filepath.EndsWith(".gz"))
+				using (var fileStream = new FileStream(filepath, FileMode.Open, FileAccess.ReadWrite))
 				{
-					// Gzipped file, needs to be loaded via a stream, and change to a 
-					byte[] assemblyBytes;
-					using (var fileStream = new FileStream(filepath, FileMode.Open, FileAccess.ReadWrite))
-					using (var stream = new GZipStream(fileStream, CompressionMode.Decompress))
-					{
-						assemblyBytes = stream.ToByteArray();
-					}
-					assembly = Assembly.Load(assemblyBytes);
+					assembly = LoadAssemblyFromStream(fileStream, true);
+					Register(assembly, filepath);
 				}
-				else
-				{
-					assembly = Assembly.LoadFile(filepath);
-				}
-				// Make sure the directory of the file is known to the resolver
-				// this takes care of dlls which are in the same directory as this assembly.
-				// It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
-				var assemblyDirectory = Path.GetDirectoryName(filepath);
-				if (!string.IsNullOrEmpty(assemblyDirectory))
-				{
-					lock (ResolveDirectories)
-					{
-						ResolveDirectories.Add(assemblyDirectory);
-					}
-				}
+			}
+			else
+			{
+				assembly = Assembly.LoadFile(filepath);
 				// Register the assembly in the cache, by name and by path
 				Register(assembly, filepath);
+			}
+			// Make sure the directory of the file is known to the resolver
+			// this takes care of dlls which are in the same directory as this assembly.
+			// It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
+			var assemblyDirectory = Path.GetDirectoryName(filepath);
+			if (!string.IsNullOrEmpty(assemblyDirectory))
+			{
+				lock (ResolveDirectories)
+				{
+					ResolveDirectories.Add(assemblyDirectory);
+				}
 			}
 			return assembly;
 		}
@@ -285,38 +288,63 @@ namespace Dapplo.Utils.Resolving
 		/// <summary>
 		///     Simple method to load an assembly from a stream
 		/// </summary>
-		/// <param name="stream">Stream</param>
+		/// <param name="assemblyStream">Stream</param>
+		/// <param name="gunzip">specify true to have the stream decompress</param>
+		/// <param name="checkCache">specify if the cache needs to be checked, this costs performance</param>
 		/// <returns>Assembly or null when the stream is null</returns>
-		public static Assembly LoadAssemblyFromStream(Stream stream)
+		public static Assembly LoadAssemblyFromStream(Stream assemblyStream, bool gunzip = false, bool checkCache = false)
 		{
-			if (stream == null)
+			if (assemblyStream == null)
 			{
 				return null;
 			}
 
-			Assembly assembly = null;
+			byte[] assemblyBytes;
 
-			// Pre-load as ReflectionOnlyLoad, to get the name to see if it was already loaded, this will slow things down but there is no way around it
-			var byteArray = stream.ToByteArray();
-			bool wasCached;
-			try
+			if (gunzip)
 			{
-				var preloadedAssembly = Assembly.ReflectionOnlyLoad(byteArray);
-				lock (AssembliesByName)
+				using (var stream = new GZipStream(assemblyStream, CompressionMode.Decompress, true))
 				{
-					wasCached = preloadedAssembly != null && AssembliesByName.ContainsKey(preloadedAssembly.GetName().Name);
+					assemblyBytes = stream.ToByteArray();
 				}
 			}
-			catch (Exception ex)
+			else
 			{
-				wasCached = true;
-				Log.Warn().WriteLine(ex, "Couldn't pre-load assembly from stream, this is probably due to double loading and will be skipped.");
+				assemblyBytes = assemblyStream.ToByteArray();
 			}
-			if (!wasCached)
+
+			if (checkCache)
 			{
-				assembly = Assembly.Load(byteArray);
-				Register(assembly);
+				// Create a temp-file to write the "stream" to, so the assembly name can be read
+				string fileName = Path.GetTempPath() + Guid.NewGuid() + ".dll";
+				try
+				{
+					using (var tmpFileStream = new FileStream(fileName, FileMode.CreateNew))
+					{
+						tmpFileStream.Write(assemblyBytes, 0, assemblyBytes.Length);
+					}
+					var assemblyName = AssemblyName.GetAssemblyName(fileName);
+					lock (AssembliesByName)
+					{
+						Assembly cachedAssembly;
+						if (AssembliesByName.TryGetValue(assemblyName.Name, out cachedAssembly))
+						{
+							Log.Verbose().WriteLine("Returning cached Assembly {0}", cachedAssembly.FullName);
+							return cachedAssembly;
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Warn().WriteLine(ex, "Couldn't get assembly name, skipping cache.");
+				}
+				finally
+				{
+					File.Delete(fileName);
+				}
 			}
+			var assembly = Assembly.Load(assemblyBytes);
+			Register(assembly);
 			return assembly;
 		}
 
@@ -479,7 +507,7 @@ namespace Dapplo.Utils.Resolving
 			using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
 			{
 				Log.Verbose().WriteLine("Loading assembly from resource {1} in assembly {0}", assembly.FullName, resourceName);
-				return LoadAssemblyFromStream(stream);
+				return LoadAssemblyFromStream(stream, false, !CheckEmbeddedResourceNameAgainstCache);
 			}
 		}
 
