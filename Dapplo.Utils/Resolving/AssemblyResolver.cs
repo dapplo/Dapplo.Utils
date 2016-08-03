@@ -155,7 +155,7 @@ namespace Dapplo.Utils.Resolving
 					AppDomainRegistrations.Add(appDomain.FriendlyName);
 					appDomain.AssemblyResolve += ResolveEventHandler;
 				}
-				return Disposable.Create(() => UnegisterAssemblyResolve(appDomain));
+				return Disposable.Create(() => UnregisterAssemblyResolve(appDomain));
 			}
 		}
 
@@ -169,10 +169,10 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
-		///     Unegister the AssemblyResolve event for the specified AppDomain
+		///     Unregister the AssemblyResolve event for the specified AppDomain
 		///     This can be called multiple times, it detect this.
 		/// </summary>
-		public static void UnegisterAssemblyResolve(this AppDomain appDomain)
+		public static void UnregisterAssemblyResolve(this AppDomain appDomain)
 		{
 			lock (AppDomainRegistrations)
 			{
@@ -187,9 +187,9 @@ namespace Dapplo.Utils.Resolving
 		/// <summary>
 		///     Unregister AssemblyResolve from the current AppDomain
 		/// </summary>
-		public static void UnegisterAssemblyResolve()
+		public static void UnregisterAssemblyResolve()
 		{
-			AppDomain.CurrentDomain.UnegisterAssemblyResolve();
+			AppDomain.CurrentDomain.UnregisterAssemblyResolve();
 		}
 
 		/// <summary>
@@ -324,6 +324,7 @@ namespace Dapplo.Utils.Resolving
 				// Register the assembly in the cache, by name and by path
 				assembly.Register(filepath);
 			}
+
 			// Make sure the directory of the file is known to the resolver
 			// this takes care of dlls which are in the same directory as this assembly.
 			// It only makes sense if this method was called directly, but as the ResolveDirectories is a set, it doesn't hurt.
@@ -332,6 +333,7 @@ namespace Dapplo.Utils.Resolving
 			{
 				lock (ResolveDirectories)
 				{
+					Log.Verbose().WriteLine("Added {0} for resolving relative to {1}", assemblyDirectory, filepath);
 					ResolveDirectories.Add(assemblyDirectory);
 				}
 			}
