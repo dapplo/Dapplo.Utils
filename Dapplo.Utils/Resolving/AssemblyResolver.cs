@@ -199,7 +199,7 @@ namespace Dapplo.Utils.Resolving
 			var assemblyName = new AssemblyName(resolveEventArgs.Name);
 			Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
 			var assembly = FindAssembly(assemblyName.Name);
-			if (assembly.FullName != assemblyName.FullName)
+			if (assembly != null && assembly.FullName != assemblyName.FullName)
 			{
 				Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName);
 			}
