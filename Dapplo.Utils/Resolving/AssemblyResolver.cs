@@ -49,7 +49,6 @@ namespace Dapplo.Utils.Resolving
 	public static class AssemblyResolver
 	{
 		private static readonly LogSource Log = new LogSource();
-		private static readonly string[] DefaultExtensions = { "dll", "dll.gz" };
 		private static readonly ISet<string> AppDomainRegistrations = new HashSet<string>();
 		private static readonly ISet<string> ResolveDirectories = new HashSet<string>();
 		private static readonly IDictionary<string, Assembly> AssembliesByName = new ConcurrentDictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
@@ -65,6 +64,12 @@ namespace Dapplo.Utils.Resolving
 			Assembly.GetExecutingAssembly().Register();
 			AddDirectory(".");
 		}
+
+		/// <summary>
+		/// The extensions used for finding assemblies, you can add your own.
+		/// Extensions can end on .gz when such a file/resource is used it will automatically be decompresed
+		/// </summary>
+		public static ISet<string> Extensions { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {"dll", "dll.gz"};
 
 		/// <summary>
 		/// Directories which this AssemblyResolver uses to find assemblies
@@ -477,7 +482,7 @@ namespace Dapplo.Utils.Resolving
 			// Add the extensions
 			var extensionPattern = new StringBuilder();
 			extensionPattern.Append('(');
-			foreach (var allowedExtension in extensions ?? DefaultExtensions)
+			foreach (var allowedExtension in extensions ?? Extensions)
 			{
 				extensionPattern.Append(@"\.");
 				extensionPattern.Append(allowedExtension.Replace(".", @"\."));
@@ -496,7 +501,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>string</returns>
 		public static string RemoveExtensions(string filepath, IEnumerable<string> extensions = null)
 		{
-			var orderedExtensions = from extension in extensions ?? DefaultExtensions
+			var orderedExtensions = from extension in extensions ?? Extensions
 									orderby extension.Length
 									select extension;
 
