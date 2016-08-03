@@ -202,15 +202,50 @@ namespace Dapplo.Utils.Resolving
 		}
 
 		/// <summary>
+		/// This goes over the know assemblies from this AssemblyResolver, but also checks the current AppDomain so assemblies are not loaded double!
+		/// </summary>
+		/// <param name="assemblyName">string with the name (not full name) of the assembly</param>
+		/// <returns>Assembly</returns>
+		private static Assembly FindCachedAssemblyByAssemblyName(string assemblyName)
+		{
+			// check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
+			Assembly assembly;
+
+			lock (AssembliesByName)
+			{
+				AssembliesByName.TryGetValue(assemblyName, out assembly);
+			}
+			if (assembly != null)
+			{
+				Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
+			}
+			if (assembly == null)
+			{
+				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == assemblyName);
+				if (assembly != null)
+				{
+					Log.Verbose().WriteLine("Using already loaded assembly {0}.", assembly.FullName);
+				}
+			}
+			return assembly;
+		}
+
+		/// <summary>
 		/// check the caches to see if the assembly was already loaded
 		/// </summary>
 		/// <param name="filepath">string with the path where the assembly should be loaded from</param>
 		/// <returns>Assembly when it was cached, or null when it was not cached</returns>
-		private static Assembly FindCachedAssembly(string filepath)
+		private static Assembly FindCachedAssemblyByFilepath(string filepath)
 		{
 			filepath = RemoveExtensions(Path.GetFullPath(filepath)) + ".dll";
-			var assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
+			Assembly assembly;
 
+			lock (AssembliesByName)
+			{
+				assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
+			}
+
+			// Check for assemblies by path
 			if (assembly == null)
 			{
 				lock (AssembliesByPath)
@@ -224,6 +259,10 @@ namespace Dapplo.Utils.Resolving
 				{
 					assembly = AssembliesByPath.Where(x => Path.GetFileNameWithoutExtension(x.Key) == Path.GetFileNameWithoutExtension(filepath)).Select(x => x.Value).FirstOrDefault();
 				}
+			}
+			if (assembly == null)
+			{
+				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.Location == filepath);
 			}
 			return assembly;
 		}
@@ -240,7 +279,7 @@ namespace Dapplo.Utils.Resolving
 			{
 				throw new ArgumentNullException(nameof(filepath));
 			}
-			var assembly = FindCachedAssembly(filepath);
+			var assembly = FindCachedAssemblyByFilepath(filepath);
 
 			if (assembly != null)
 			{
@@ -248,8 +287,8 @@ namespace Dapplo.Utils.Resolving
 				return assembly;
 			}
 			// check if the file was already loaded, this assumes that the filename (without extension) IS the assembly name
-			var assemblyNameFromPath = Path.GetFileName(filepath).Replace(".dll.gz", "").Replace(".dll", "");
-			assembly = AssembliesByName.Values.FirstOrDefault(a => a.GetName().Name == assemblyNameFromPath);
+			var assemblyNameFromPath = RemoveExtensions(Path.GetFileName(filepath));
+			assembly = FindCachedAssemblyByAssemblyName(assemblyNameFromPath);
 			if (assembly != null)
 			{
 				Log.Verbose().WriteLine("Skipping loading assembly from {0}, as {1} was already loaded.", filepath, assembly.FullName);
@@ -326,10 +365,9 @@ namespace Dapplo.Utils.Resolving
 					var assemblyName = AssemblyName.GetAssemblyName(fileName);
 					lock (AssembliesByName)
 					{
-						Assembly cachedAssembly;
-						if (AssembliesByName.TryGetValue(assemblyName.Name, out cachedAssembly))
+						Assembly cachedAssembly = FindCachedAssemblyByAssemblyName(assemblyName.Name);
+						if (cachedAssembly != null)
 						{
-							Log.Verbose().WriteLine("Returning cached Assembly {0}", cachedAssembly.FullName);
 							return cachedAssembly;
 						}
 					}
@@ -377,13 +415,10 @@ namespace Dapplo.Utils.Resolving
 			// Do not use the cache if a wildcard was used.
 			if (!assemblyName.Contains("*"))
 			{
-				lock (AssembliesByName)
+				assembly = FindCachedAssemblyByAssemblyName(assemblyName);
+				if (assembly != null)
 				{
-					// Try the cache
-					if (AssembliesByName.TryGetValue(assemblyName, out assembly))
-					{
-						return assembly;
-					}
+					return assembly;
 				}
 			}
 
@@ -494,14 +529,12 @@ namespace Dapplo.Utils.Resolving
 			if (CheckEmbeddedResourceNameAgainstCache)
 			{
 				var possibleAssemblyName = RemoveExtensions(resourceName);
-				lock (AssembliesByName)
+
+				var cachedAssembly = FindCachedAssemblyByAssemblyName(possibleAssemblyName);
+				if (cachedAssembly != null)
 				{
-					var cachedAssembly = AssembliesByName.FirstOrDefault(x => possibleAssemblyName.EndsWith(x.Key)).Value;
-					if (cachedAssembly != null)
-					{
-						Log.Warn().WriteLine("Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false", cachedAssembly.FullName, resourceName);
-						return cachedAssembly;
-					}
+					Log.Warn().WriteLine("Cached assembly {0} found for resource {1}, if this is not correct disable this by setting CheckEmbeddedResourceNameAgainstCache to false", cachedAssembly.FullName, resourceName);
+					return cachedAssembly;
 				}
 			}
 			using (var stream = assembly.GetEmbeddedResourceAsStream(resourceName))
