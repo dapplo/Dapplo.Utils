@@ -122,7 +122,11 @@ namespace Dapplo.Utils.Resolving
 					AssembliesByName[assembly.GetName().Name] = assembly;
 				}
 			}
-			filepath = filepath ?? assembly.Location;
+			// Dynamic assemblies don't have a location, it would cause a NotSupportedException
+			if (!assembly.IsDynamic)
+			{
+				filepath = filepath ?? assembly.Location;
+			}
 			if (!string.IsNullOrEmpty(filepath))
 			{
 				lock (AssembliesByPath)
@@ -250,7 +254,8 @@ namespace Dapplo.Utils.Resolving
 
 			lock (AssembliesByName)
 			{
-				assembly = AssembliesByName.Values.FirstOrDefault(x => x.Location == filepath);
+				// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
+				assembly = AssembliesByName.Values.Where(x => !x.IsDynamic).FirstOrDefault(x => x.Location == filepath);
 			}
 
 			// Check for assemblies by path
@@ -270,7 +275,8 @@ namespace Dapplo.Utils.Resolving
 			}
 			if (assembly == null)
 			{
-				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.Location == filepath);
+				// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
+				assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => x.Location == filepath);
 			}
 			return assembly;
 		}
