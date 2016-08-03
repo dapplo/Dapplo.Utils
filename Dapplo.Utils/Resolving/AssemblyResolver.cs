@@ -60,9 +60,9 @@ namespace Dapplo.Utils.Resolving
 		/// </summary>
 		static AssemblyResolver()
 		{
-			Register(Assembly.GetCallingAssembly());
-			Register(Assembly.GetEntryAssembly());
-			Register(Assembly.GetExecutingAssembly());
+			Assembly.GetCallingAssembly().Register();
+			Assembly.GetEntryAssembly().Register();
+			Assembly.GetExecutingAssembly().Register();
 			AddDirectory(".");
 		}
 
@@ -198,7 +198,12 @@ namespace Dapplo.Utils.Resolving
 		{
 			var assemblyName = new AssemblyName(resolveEventArgs.Name);
 			Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
-			return FindAssembly(assemblyName.Name);
+			var assembly = FindAssembly(assemblyName.Name);
+			if (assembly.FullName != assemblyName.FullName)
+			{
+				Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName);
+			}
+			return assembly;
 		}
 
 		/// <summary>
@@ -221,10 +226,13 @@ namespace Dapplo.Utils.Resolving
 			}
 			if (assembly == null)
 			{
+				// The assembly was not found in our own cache, find it in the current AppDomain
 				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == assemblyName);
 				if (assembly != null)
 				{
 					Log.Verbose().WriteLine("Using already loaded assembly {0}.", assembly.FullName);
+					// Register the assembly, so the Dapplo.Addons Bootstrapper knows it too
+					assembly.Register();
 				}
 			}
 			return assembly;
@@ -301,14 +309,14 @@ namespace Dapplo.Utils.Resolving
 				using (var fileStream = new FileStream(filepath, FileMode.Open, FileAccess.ReadWrite))
 				{
 					assembly = LoadAssemblyFromStream(fileStream, true);
-					Register(assembly, filepath);
+					assembly.Register(filepath);
 				}
 			}
 			else
 			{
 				assembly = Assembly.LoadFile(filepath);
 				// Register the assembly in the cache, by name and by path
-				Register(assembly, filepath);
+				assembly.Register(filepath);
 			}
 			// Make sure the directory of the file is known to the resolver
 			// this takes care of dlls which are in the same directory as this assembly.
@@ -382,7 +390,7 @@ namespace Dapplo.Utils.Resolving
 				}
 			}
 			var assembly = Assembly.Load(assemblyBytes);
-			Register(assembly);
+			assembly.Register();
 			return assembly;
 		}
 
