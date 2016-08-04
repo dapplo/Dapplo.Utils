@@ -97,9 +97,13 @@ namespace Dapplo.Utils.Tests
 		{
 			var file_noMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
 			var file_match = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
-			var regex = AssemblyResolver.FilenameToRegex("Dapplo*");
+			var regex = AssemblyResolver.FilenameToRegex("Dapplo.Something*");
 			Assert.False(regex.IsMatch(file_noMatch));
 			Assert.True(regex.IsMatch(file_match));
+
+			var regex2 = AssemblyResolver.FilenameToRegex("Something*");
+			Assert.False(regex2.IsMatch(file_noMatch));
+			Assert.False(regex2.IsMatch(file_match));
 		}
 	}
 }

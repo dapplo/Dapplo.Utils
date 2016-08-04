@@ -236,7 +236,7 @@ namespace Dapplo.Utils.Resolving
 			if (assembly == null)
 			{
 				// The assembly was not found in our own cache, find it in the current AppDomain
-				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == assemblyName);
+				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
 				if (assembly != null)
 				{
 					Log.Verbose().WriteLine("Using already loaded assembly {0}.", assembly.FullName);
@@ -260,7 +260,7 @@ namespace Dapplo.Utils.Resolving
 			lock (AssembliesByName)
 			{
 				// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-				assembly = AssembliesByName.Values.Where(x => !x.IsDynamic).FirstOrDefault(x => x.Location == filepath);
+				assembly = AssembliesByName.Values.Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
 			}
 
 			// Check for assemblies by path
@@ -275,13 +275,13 @@ namespace Dapplo.Utils.Resolving
 			{
 				lock (AssembliesByPath)
 				{
-					assembly = AssembliesByPath.Where(x => Path.GetFileNameWithoutExtension(x.Key) == Path.GetFileNameWithoutExtension(filepath)).Select(x => x.Value).FirstOrDefault();
+					assembly = AssembliesByPath.Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath), StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Value).FirstOrDefault();
 				}
 			}
 			if (assembly == null)
 			{
 				// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-				assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => x.Location == filepath);
+				assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
 			}
 			return assembly;
 		}
@@ -468,7 +468,7 @@ namespace Dapplo.Utils.Resolving
 		/// <param name="ignoreCase">default is true and makes sure the case is ignored</param>
 		/// <param name="extensions">Extensions which are allowed, default dll and dll.gz are used when this is omitted</param>
 		/// <returns>Regex representing the filename pattern</returns>
-		public static Regex FilenameToRegex(string filename, bool ignoreCase = true, IEnumerable<string> extensions = null)
+		public static Regex FilenameToRegex(string filename, bool ignoreCase = true, IEnumerable < string> extensions = null)
 		{
 			if (filename == null)
 			{
@@ -477,20 +477,20 @@ namespace Dapplo.Utils.Resolving
 			// 1: Escape all dots
 			// 2: Replace all ? with a single dot
 			// 3: Replace * for a matching on NOT the path separator, we only want the file
-			string regex = filename.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*");
 
-			// Add the extensions
-			var extensionPattern = new StringBuilder();
-			extensionPattern.Append('(');
+			var regex = new StringBuilder(@"^(.*\\)*");
+			regex.Append(filename.Replace(".", @"\.").Replace('?', '.').Replace("*", @"[^\\]*"));
+
+			regex.Append('(');
 			foreach (var allowedExtension in extensions ?? Extensions)
 			{
-				extensionPattern.Append(@"\.");
-				extensionPattern.Append(allowedExtension.Replace(".", @"\."));
-				extensionPattern.Append('|');
+				regex.Append(@"\.");
+				regex.Append(allowedExtension.Replace(".", @"\."));
+				regex.Append('|');
 			}
-			extensionPattern.Length -= 1;
-			extensionPattern.Append(")$");
-			return new Regex($"{regex}{extensionPattern}", ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
+			regex.Length -= 1;
+			regex.Append(")$");
+			return new Regex(regex.ToString(), ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
 		}
 
 		/// <summary>
@@ -523,7 +523,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadEmbeddedAssembly(string assemblyName, IEnumerable<string> extensions = null)
 		{
-			var assemblyRegex = FilenameToRegex(assemblyName, true, extensions);
+			var assemblyRegex = FilenameToRegex(assemblyName, extensions: extensions);
 			try
 			{
 				var resourceTuple = AssemblyCache.FindEmbeddedResources(assemblyRegex).FirstOrDefault();
@@ -585,7 +585,7 @@ namespace Dapplo.Utils.Resolving
 		/// <returns>Assembly</returns>
 		public static Assembly LoadAssemblyFromFileSystem(IEnumerable<string> directories, string assemblyName, IEnumerable<string> extensions = null)
 		{
-			var assemblyRegex = FilenameToRegex(assemblyName, true, extensions);
+			var assemblyRegex = FilenameToRegex(assemblyName, extensions: extensions);
 			var filepath = FileLocations.Scan(directories, assemblyRegex).Select(x => x.Item1).FirstOrDefault();
 			if (!string.IsNullOrEmpty(filepath) && File.Exists(filepath))
 			{
