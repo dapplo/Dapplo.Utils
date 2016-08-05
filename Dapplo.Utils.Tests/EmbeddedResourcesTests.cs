@@ -39,6 +39,7 @@ namespace Dapplo.Utils.Tests
 {
 	public class EmbeddedResourcesTests
 	{
+		private static readonly LogSource Log = new LogSource();
 		public EmbeddedResourcesTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -75,6 +76,10 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void Test_GetEmbeddedResourceAsStream_GZ()
 		{
+			foreach (var manifestResourceName in GetType().Assembly.GetManifestResourceNames())
+			{
+				Log.Info().WriteLine("Resource: {0}", manifestResourceName);
+			}
 
 			using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png.gz"))
 			{

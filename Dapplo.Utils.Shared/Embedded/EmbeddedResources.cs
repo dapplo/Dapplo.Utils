@@ -32,6 +32,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Dapplo.Log.Facade;
 
 #endregion
 
@@ -42,6 +43,8 @@ namespace Dapplo.Utils.Embedded
 	/// </summary>
 	public static partial class EmbeddedResources
 	{
+		private static readonly LogSource Log = new LogSource();
+
 		/// <summary>
 		/// Get the stream for a assembly manifest resource based on the filePath
 		/// It will automatically wrapped as GZipStream if the file-ending is .gz
@@ -53,22 +56,43 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>Stream for the filePath, or null if not found</returns>
 		public static Stream GetEmbeddedResourceAsStream(this Assembly assembly, string filePath, bool ignoreCase = true)
 		{
+			if (assembly == null)
+			{
+				throw new ArgumentNullException(nameof(assembly));
+			}
 			if (string.IsNullOrEmpty(filePath))
 			{
 				throw new ArgumentNullException(nameof(filePath));
 			}
-			var filePathRegex = filePath.Replace(Path.DirectorySeparatorChar, '.').Replace(".", @"\.");
+			// Resources don't have directory separators, they use ., fix this before creating a regex
+			var resourcePath = filePath.Replace(Path.DirectorySeparatorChar, '.');
+			// First get the extension to build the regex
+			// TODO: this doesn't work 100% for double extensions like .png.gz etc but I will only fix this as soon as it's really needed
+			var extensions = new[] {Path.GetExtension(resourcePath) };
+			// Than get the filename without extension
+			var filename = Path.GetFileNameWithoutExtension(resourcePath);
+			// Assembly resources CAN have a prefix with the type namespace, use this instead of the default
+			var prefix = $@"^({assembly.GetName().Name.Replace(".", @"\.")}\.)?";
+			// build the regex
+			var filePathRegex = FileTools.FilenameToRegex(filename, extensions, true, prefix);
 
-			var resourceName = assembly.FindEmbeddedResources(filePathRegex, ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None).FirstOrDefault();
+			// Find the regex
+			var resourceName = assembly.FindEmbeddedResources(filePathRegex).FirstOrDefault();
 			if (resourceName != null)
 			{
+				Log.Verbose().WriteLine("Requested stream for path {0}, using resource {1} from assembly {2}", filePath, resourceName, assembly.FullName);
 				var resultStream = assembly.GetManifestResourceStream(resourceName);
 				if (resultStream != null && resourceName.EndsWith(".gz"))
 				{
 					resultStream = new GZipStream(resultStream, CompressionMode.Decompress);
 				}
+				if (resultStream == null)
+				{
+					Log.Warn().WriteLine("Couldn't get the resource stream for {0} from assembly {1}", resourceName, assembly.FullName);
+				}
 				return resultStream;
 			}
+			Log.Warn().WriteLine("Couldn't find the resource stream for path {0}, using regex pattern {1} from assembly {2}", filePath, filePathRegex, assembly.FullName);
 			return null;
 		}
 

@@ -70,7 +70,7 @@ namespace Dapplo.Utils.Tests
 			// Register OUR AssemblyResolver, not the one of ILBundle.
 			using (AssemblyResolver.RegisterAssemblyResolve())
 			{
-				var regex = AssemblyResolver.FilenameToRegex(assemblyName);
+				var regex = FileTools.FilenameToRegex(assemblyName, AssemblyResolver.Extensions);
 
 				// Check that the assembly can be found in the embedded resources
 				var assemblyFiles = GetType().FindEmbeddedResources(regex).ToList();
@@ -103,11 +103,11 @@ namespace Dapplo.Utils.Tests
 		{
 			var file_noMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
 			var file_match = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
-			var regex = AssemblyResolver.FilenameToRegex("Dapplo.Something*");
+			var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
 			Assert.False(regex.IsMatch(file_noMatch));
 			Assert.True(regex.IsMatch(file_match));
 
-			var regex2 = AssemblyResolver.FilenameToRegex("Something*");
+			var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
 			Assert.False(regex2.IsMatch(file_noMatch));
 			Assert.False(regex2.IsMatch(file_match));
 		}
