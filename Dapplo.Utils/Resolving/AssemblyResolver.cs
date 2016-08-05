@@ -206,6 +206,14 @@ namespace Dapplo.Utils.Resolving
 		private static Assembly ResolveEventHandler(object sender, ResolveEventArgs resolveEventArgs)
 		{
 			var assemblyName = new AssemblyName(resolveEventArgs.Name);
+
+			// Check if it is an resources resolve event, see http://stackoverflow.com/questions/4368201 for more info
+			if (assemblyName.Name.EndsWith(".resources"))
+			{
+				// Ignore to prevent resolving logic which doesn't find anything anyway
+				Log.Verbose().WriteLine("Ignoring resolve event for {0}", assemblyName.FullName);
+				return null;
+			}
 			Log.Verbose().WriteLine("Resolve event for {0}", assemblyName.FullName);
 			var assembly = FindAssembly(assemblyName.Name);
 			if (assembly != null && assembly.FullName != assemblyName.FullName)
@@ -331,7 +339,8 @@ namespace Dapplo.Utils.Resolving
 			}
 			else
 			{
-				assembly = Assembly.LoadFile(filepath);
+				// Use Assembly.LoadFrom, as Assembly.LoadFile ignores the fact that an assembly was already loaded (and just loads it double).
+				assembly = Assembly.LoadFrom(filepath);
 				// Register the assembly in the cache, by name and by path
 				assembly.Register(filepath);
 			}
