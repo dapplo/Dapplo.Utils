@@ -25,6 +25,7 @@
 
 #region Usings
 
+using System;
 using System.IO;
 using System.Linq;
 using Dapplo.Log.Facade;
@@ -45,6 +46,7 @@ namespace Dapplo.Utils.Tests
 	/// </summary>
 	public class AssemblyResolveTests
 	{
+		private static readonly LogSource Log = new LogSource();
 		public AssemblyResolveTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -71,8 +73,12 @@ namespace Dapplo.Utils.Tests
 				var regex = AssemblyResolver.FilenameToRegex(assemblyName);
 
 				// Check that the assembly can be found in the embedded resources
-				var assemblyFiles = GetType().FindEmbeddedResources(regex);
+				var assemblyFiles = GetType().FindEmbeddedResources(regex).ToList();
 				Assert.True(assemblyFiles.Any());
+				foreach (var assemblyFile in assemblyFiles)
+				{
+					Log.Debug().WriteLine(assemblyFile);
+				}
 
 				// Now force the usage of the other assembly, this should load it and call the method
 				ThisForcesDelayedLoadingOfAssembly();
