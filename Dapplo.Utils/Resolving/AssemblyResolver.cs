@@ -218,7 +218,7 @@ namespace Dapplo.Utils.Resolving
 			var assembly = FindAssembly(assemblyName.Name);
 			if (assembly != null && assembly.FullName != assemblyName.FullName)
 			{
-				Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName);
+				Log.Warn().WriteLine("Requested was {0} returned was {1}, this might cause issues but loading the same assembly would be worse.", assemblyName.FullName, assembly.FullName);
 			}
 			return assembly;
 		}
