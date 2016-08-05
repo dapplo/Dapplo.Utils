@@ -280,8 +280,14 @@ namespace Dapplo.Utils.Resolving
 			}
 			if (assembly == null)
 			{
+				// The assembly wasn't found in our internal cache, now we go through the AppDomain
 				// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
 				assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
+				if (assembly != null)
+				{
+					// found something, cache it for later usage
+					assembly.Register(filepath);
+				}
 			}
 			return assembly;
 		}
