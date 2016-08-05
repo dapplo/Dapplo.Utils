@@ -83,7 +83,7 @@ namespace Dapplo.Utils.Tests
 				// Now force the usage of the other assembly, this should load it and call the method
 				ThisForcesDelayedLoadingOfAssembly();
 
-				// TODO: Test i the cache-hit works, so I don't need to check the logs :)
+				// TODO: Test if the cache-hit works, so I don't need to check the logs :)
 				// Load it again, to see if the Name-Cache kicks in and it's not loaded 2x
 				AssemblyResolver.LoadEmbeddedAssembly(assemblyName);
 				// Load it again, to see if the cache kicks in and it's not loaded 2x
