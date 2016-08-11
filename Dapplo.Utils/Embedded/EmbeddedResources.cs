@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Dapplo.Utils.Resolving;
 
 #endregion
 
@@ -40,6 +41,78 @@ namespace Dapplo.Utils.Embedded
 	/// </summary>
 	public static partial class EmbeddedResources
 	{
+		private static readonly Regex PackRegex = new Regex(@"/(?<assembly>[a-zA-Z\.]+);component/(?<path>.*)", RegexOptions.Compiled);
+
+		/// <summary>
+		/// Helper method to create a regex match for the supplied Pack uri
+		/// </summary>
+		/// <param name="packUri">Uri</param>
+		/// <returns>Match</returns>
+		private static Match MatchPackUri(this Uri packUri)
+		{
+			if (packUri == null)
+			{
+				throw new ArgumentNullException(nameof(packUri));
+			}
+			if (!"pack".Equals(packUri.Scheme))
+			{
+				throw new ArgumentException("Scheme is not pack:", nameof(packUri));
+			}
+			if (!"application:,,,".Equals(packUri.Host))
+			{
+				throw new ArgumentException("pack uri is not for application", nameof(packUri));
+			}
+			var match = PackRegex.Match(packUri.AbsolutePath);
+			if (!match.Success)
+			{
+				throw new ArgumentException("pack uri isn't correctly formed.", nameof(packUri));
+			}
+			return match;
+		}
+
+		/// <summary>
+		/// Test if there is an embedded resourcefor the Pack-Uri
+		/// </summary>
+		/// <param name="packUri">Uri</param>
+		/// <returns>Stream</returns>
+		public static bool EmbeddedResourceExists(this Uri packUri)
+		{
+			var match = packUri.MatchPackUri();
+
+			var assemblyName = match.Groups["assembly"].Value;
+			
+			var assembly = AssemblyResolver.FindAssembly(assemblyName);
+			if (assembly == null)
+			{
+				return false;
+			}
+
+			var path = match.Groups["path"].Value;
+
+			var resourceRegex = assembly.ResourceRegex(path);
+
+			return assembly.HasResource(resourceRegex);
+		}
+
+		/// <summary>
+		/// Returns the embedded resource, as specified in the Pack-Uri as a stream
+		/// </summary>
+		/// <param name="packUri">Uri</param>
+		/// <returns>Stream</returns>
+		public static Stream GetEmbeddedResourceAsStream(this Uri packUri)
+		{
+			var match = packUri.MatchPackUri();
+
+			var assemblyName = match.Groups["assembly"].Value;
+			var assembly = AssemblyResolver.FindAssembly(assemblyName);
+			if (assembly == null)
+			{
+				throw new ArgumentException($"Pack uri references unknown assembly {assemblyName}.", nameof(packUri));
+			}
+			var path = match.Groups["path"].Value;
+			return assembly.GetEmbeddedResourceAsStream(path);
+		}
+
 		/// <summary>
 		///     Get the stream for the calling assembly from the manifest resource based on the filePath
 		/// </summary>

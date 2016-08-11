@@ -46,6 +46,28 @@ namespace Dapplo.Utils.Embedded
 		private static readonly LogSource Log = new LogSource();
 
 		/// <summary>
+		/// Create a regex to find a resource in an assembly
+		/// </summary>
+		/// <param name="filePath">string with the filepath to find</param>
+		/// <param name="assembly">Assembly to look into</param>
+		/// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
+		/// <returns>Regex</returns>
+		private static Regex ResourceRegex(this Assembly assembly, string filePath, bool ignoreCase = true)
+		{
+			// Resources don't have directory separators, they use ., fix this before creating a regex
+			var resourcePath = filePath.Replace(Path.DirectorySeparatorChar, '.').Replace(Path.AltDirectorySeparatorChar, '.');
+			// First get the extension to build the regex
+			// TODO: this doesn't work 100% for double extensions like .png.gz etc but I will only fix this as soon as it's really needed
+			var extensions = new[] { Path.GetExtension(resourcePath) };
+			// Than get the filename without extension
+			var filename = Path.GetFileNameWithoutExtension(resourcePath);
+			// Assembly resources CAN have a prefix with the type namespace, use this instead of the default
+			var prefix = $@"^({assembly.GetName().Name.Replace(".", @"\.")}\.)?";
+			// build the regex
+			return FileTools.FilenameToRegex(filename, extensions, ignoreCase, prefix);
+		}
+
+		/// <summary>
 		/// Get the stream for a assembly manifest resource based on the filePath
 		/// It will automatically wrapped as GZipStream if the file-ending is .gz
 		/// Note: a GZipStream is not seekable, this might cause issues.
@@ -64,17 +86,9 @@ namespace Dapplo.Utils.Embedded
 			{
 				throw new ArgumentNullException(nameof(filePath));
 			}
-			// Resources don't have directory separators, they use ., fix this before creating a regex
-			var resourcePath = filePath.Replace(Path.DirectorySeparatorChar, '.');
-			// First get the extension to build the regex
-			// TODO: this doesn't work 100% for double extensions like .png.gz etc but I will only fix this as soon as it's really needed
-			var extensions = new[] {Path.GetExtension(resourcePath) };
-			// Than get the filename without extension
-			var filename = Path.GetFileNameWithoutExtension(resourcePath);
-			// Assembly resources CAN have a prefix with the type namespace, use this instead of the default
-			var prefix = $@"^({assembly.GetName().Name.Replace(".", @"\.")}\.)?";
+
 			// build the regex
-			var filePathRegex = FileTools.FilenameToRegex(filename, extensions, true, prefix);
+			var filePathRegex = assembly.ResourceRegex(filePath, ignoreCase);
 
 			// Find the regex
 			var resourceName = assembly.FindEmbeddedResources(filePathRegex).FirstOrDefault();
@@ -106,6 +120,17 @@ namespace Dapplo.Utils.Embedded
 		public static IEnumerable<string> FindEmbeddedResources(this Assembly assembly, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
 		{
 			return assembly.FindEmbeddedResources(new Regex(regexPattern, regexOptions));
+		}
+
+		/// <summary>
+		/// check if there is any resource in the specified assembly which matches the Regex
+		/// </summary>
+		/// <param name="assembly">Assembly</param>
+		/// <param name="regexPattern">Regex</param>
+		/// <returns>bool with true if there is a matching resource</returns>
+		public static bool HasResource(this Assembly assembly, Regex regexPattern)
+		{
+			return assembly.GetManifestResourceNames().Any(regexPattern.IsMatch);
 		}
 
 		/// <summary>

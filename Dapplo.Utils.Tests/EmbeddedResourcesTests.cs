@@ -25,6 +25,7 @@
 
 #region Usings
 
+using System;
 using System.Linq;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
@@ -43,6 +44,13 @@ namespace Dapplo.Utils.Tests
 		public EmbeddedResourcesTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+
+			// Add the pack scheme
+			if (!UriParser.IsKnownScheme("pack"))
+			{
+				// ReSharper disable once UnusedVariable
+				var packScheme = System.IO.Packaging.PackUriHelper.UriSchemePack;
+			}
 		}
 
 		/// <summary>
@@ -63,6 +71,23 @@ namespace Dapplo.Utils.Tests
 		{
 			
 			using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png"))
+			{
+				var bitmap = stream.ImageFromStream();
+				Assert.NotNull(bitmap.Width);
+				Assert.True(bitmap.Width > 0);
+			}
+		}
+
+		/// <summary>
+		/// Test if finding and loading from the manifest via pack uris work
+		/// </summary>
+		[Fact]
+		public void Test_PackUri()
+		{
+			var packUri = new Uri("pack://application:,,,/Dapplo.Utils.Tests;component/TestFiles/embedded-dapplo.png", UriKind.RelativeOrAbsolute);
+			Assert.True(packUri.EmbeddedResourceExists());
+
+			using (var stream = packUri.GetEmbeddedResourceAsStream())
 			{
 				var bitmap = stream.ImageFromStream();
 				Assert.NotNull(bitmap.Width);
