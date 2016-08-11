@@ -43,7 +43,7 @@ namespace Dapplo.Utils.Embedded
 	/// </summary>
 	public static partial class EmbeddedResources
 	{
-		private static readonly LogSource Log = new LogSource();
+		internal static readonly LogSource Log = new LogSource();
 
 		/// <summary>
 		/// Create a regex to find a resource in an assembly
@@ -51,14 +51,15 @@ namespace Dapplo.Utils.Embedded
 		/// <param name="filePath">string with the filepath to find</param>
 		/// <param name="assembly">Assembly to look into</param>
 		/// <param name="ignoreCase">true, which is default, to ignore the case when comparing</param>
+		/// <param name="alternativeExtensions">Besides the specified extension in the filePath, these are also allowed</param>
 		/// <returns>Regex</returns>
-		private static Regex ResourceRegex(this Assembly assembly, string filePath, bool ignoreCase = true)
+		private static Regex ResourceRegex(this Assembly assembly, string filePath, bool ignoreCase = true, IEnumerable<string> alternativeExtensions = null)
 		{
 			// Resources don't have directory separators, they use ., fix this before creating a regex
 			var resourcePath = filePath.Replace(Path.DirectorySeparatorChar, '.').Replace(Path.AltDirectorySeparatorChar, '.');
 			// First get the extension to build the regex
 			// TODO: this doesn't work 100% for double extensions like .png.gz etc but I will only fix this as soon as it's really needed
-			var extensions = new[] { Path.GetExtension(resourcePath) };
+			var extensions = alternativeExtensions?.Concat(new[] { Path.GetExtension(filePath) }) ?? new[] { Path.GetExtension(filePath) };
 			// Than get the filename without extension
 			var filename = Path.GetFileNameWithoutExtension(resourcePath);
 			// Assembly resources CAN have a prefix with the type namespace, use this instead of the default
@@ -130,7 +131,8 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>bool with true if there is a matching resource</returns>
 		public static bool HasResource(this Assembly assembly, Regex regexPattern)
 		{
-			return assembly.GetManifestResourceNames().Any(regexPattern.IsMatch);
+			var resourceNames = assembly.GetManifestResourceNames();
+			return resourceNames.Any(regexPattern.IsMatch);
 		}
 
 		/// <summary>

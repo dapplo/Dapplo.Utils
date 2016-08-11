@@ -26,10 +26,14 @@
 #region Usings
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Resources;
 using System.Text.RegularExpressions;
+using Dapplo.Log.Facade;
 using Dapplo.Utils.Resolving;
 
 #endregion
@@ -48,7 +52,7 @@ namespace Dapplo.Utils.Embedded
 		/// </summary>
 		/// <param name="packUri">Uri</param>
 		/// <returns>Match</returns>
-		private static Match MatchPackUri(this Uri packUri)
+		public static Match MatchPackUri(this Uri packUri)
 		{
 			if (packUri == null)
 			{
@@ -72,10 +76,12 @@ namespace Dapplo.Utils.Embedded
 
 		/// <summary>
 		/// Test if there is an embedded resourcefor the Pack-Uri
+		/// This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized when you specify a pack uri ending on .xaml
 		/// </summary>
 		/// <param name="packUri">Uri</param>
+		/// <param name="ignoreCase">true to ignore the case</param>
 		/// <returns>Stream</returns>
-		public static bool EmbeddedResourceExists(this Uri packUri)
+		public static bool EmbeddedResourceExists(this Uri packUri, bool ignoreCase = true)
 		{
 			var match = packUri.MatchPackUri();
 
@@ -89,13 +95,48 @@ namespace Dapplo.Utils.Embedded
 
 			var path = match.Groups["path"].Value;
 
-			var resourceRegex = assembly.ResourceRegex(path);
+			var resourceRegex = assembly.ResourceRegex(path, ignoreCase);
 
-			return assembly.HasResource(resourceRegex);
+			if (assembly.HasResource(resourceRegex))
+			{
+				return true;
+			}
+			return assembly.HasEmbeddedDotResourcesResource(path);
 		}
 
 		/// <summary>
-		/// Returns the embedded resource, as specified in the Pack-Uri as a stream
+		/// check if there is any resource in the specified assembly's .g.resources which matches the Regex
+		/// This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized when you specify .xaml
+		/// </summary>
+		/// <param name="assembly">Assembly</param>
+		/// <param name="filePath">filePath</param>
+		/// <param name="ignoreCase">true to ignore the case</param>
+		/// <returns>bool with true if there is a matching resource</returns>
+		public static bool HasEmbeddedDotResourcesResource(this Assembly assembly, string filePath, bool ignoreCase = true)
+		{
+			var resourceNames = assembly.GetManifestResourceNames();
+			foreach (var resourcesFile in resourceNames.Where(x => x.EndsWith(".g.resources")))
+			{
+				Log.Verbose().WriteLine("Resource not directly found, trying {0}", resourcesFile);
+				using (var resourceStream = assembly.GetEmbeddedResourceAsStream(resourcesFile))
+				{
+					if (resourceStream != null)
+					{
+
+						using (var resourceReader = new ResourceReader(resourceStream))
+						{
+							// Check if it contains the filename
+							return resourceReader.OfType<DictionaryEntry>().Select(x => x.Key as string).Any(x => string.Equals(x, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture));
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Returns the embedded resource, as specified in the Pack-Uri as a stream.
+		/// This currently doesn't go into the embedded .g.resources files, this might be added later
 		/// </summary>
 		/// <param name="packUri">Uri</param>
 		/// <returns>Stream</returns>

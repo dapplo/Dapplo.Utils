@@ -30,6 +30,7 @@ using System.Linq;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Embedded;
+using Dapplo.Utils.Resolving;
 using Dapplo.Utils.Tests.Cache;
 using Xunit;
 using Xunit.Abstractions;
@@ -85,6 +86,7 @@ namespace Dapplo.Utils.Tests
 		public void Test_PackUri()
 		{
 			var packUri = new Uri("pack://application:,,,/Dapplo.Utils.Tests;component/TestFiles/embedded-dapplo.png", UriKind.RelativeOrAbsolute);
+			
 			Assert.True(packUri.EmbeddedResourceExists());
 
 			using (var stream = packUri.GetEmbeddedResourceAsStream())
