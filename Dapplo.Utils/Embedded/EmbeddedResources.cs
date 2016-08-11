@@ -52,7 +52,7 @@ namespace Dapplo.Utils.Embedded
 		/// </summary>
 		/// <param name="packUri">Uri</param>
 		/// <returns>Match</returns>
-		public static Match MatchPackUri(this Uri packUri)
+		public static Match PackUriMatch(this Uri packUri)
 		{
 			if (packUri == null)
 			{
@@ -83,7 +83,7 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>Stream</returns>
 		public static bool EmbeddedResourceExists(this Uri packUri, bool ignoreCase = true)
 		{
-			var match = packUri.MatchPackUri();
+			var match = packUri.PackUriMatch();
 
 			var assemblyName = match.Groups["assembly"].Value;
 			
@@ -142,7 +142,7 @@ namespace Dapplo.Utils.Embedded
 		/// <returns>Stream</returns>
 		public static Stream GetEmbeddedResourceAsStream(this Uri packUri)
 		{
-			var match = packUri.MatchPackUri();
+			var match = packUri.PackUriMatch();
 
 			var assemblyName = match.Groups["assembly"].Value;
 			var assembly = AssemblyResolver.FindAssembly(assemblyName);
