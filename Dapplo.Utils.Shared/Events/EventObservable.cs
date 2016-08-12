@@ -214,7 +214,6 @@ namespace Dapplo.Utils.Events
 		internal EventObservable(object targetObject, string eventName)
 		{
 			var targetType = targetObject.GetType();
-			Log.Info().WriteLine("{0}", string.Join(",", targetType.GetMethods(EventObservable.AllBindings).Select(x => x.Name)));
 			_addMethod = targetType.GetMethod($"add_{eventName}", EventObservable.AllBindings);
 			_removeMethod = targetType.GetMethod($"remove_{eventName}", EventObservable.AllBindings);
 			_invokeMethod = targetType.GetMethod($"invoke_{eventName}", EventObservable.AllBindings);
