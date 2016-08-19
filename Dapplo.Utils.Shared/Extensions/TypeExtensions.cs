@@ -24,6 +24,7 @@
 using Dapplo.Log.Facade;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -40,7 +41,7 @@ namespace Dapplo.Utils.Extensions
 	public static class TypeExtensions
 	{
 		private static readonly LogSource Log = new LogSource();
-		private static readonly IDictionary<Type, Type> Converters = new Dictionary<Type, Type>();
+		private static readonly IDictionary<Type, Type> Converters = new ConcurrentDictionary<Type, Type>();
 
 		#region statics
 		// A map for converting interfaces to types
@@ -85,7 +86,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="typeConverter"></param>
 		public static void AddDefaultConverter(Type type, Type typeConverter)
 		{
-			Converters.AddOrOverwrite(type, typeConverter);
+			Converters[type] = typeConverter;
 		}
 
 		/// <summary>

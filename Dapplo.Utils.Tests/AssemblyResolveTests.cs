@@ -61,15 +61,15 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void Test_AssemblyNameToRegex()
 		{
-			var file_noMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
-			var file_match = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
+			var fileNoMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
+			var fileMatch = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
 			var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
-			Assert.False(regex.IsMatch(file_noMatch));
-			Assert.True(regex.IsMatch(file_match));
+			Assert.False(regex.IsMatch(fileNoMatch));
+			Assert.True(regex.IsMatch(fileMatch));
 
 			var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
-			Assert.False(regex2.IsMatch(file_noMatch));
-			Assert.False(regex2.IsMatch(file_match));
+			Assert.False(regex2.IsMatch(fileNoMatch));
+			Assert.False(regex2.IsMatch(fileMatch));
 		}
 
 		[Fact]

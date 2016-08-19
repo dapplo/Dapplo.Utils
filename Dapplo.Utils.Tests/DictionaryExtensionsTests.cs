@@ -44,9 +44,11 @@ namespace Dapplo.Utils.Tests
 		{
 			var dictionary = new Dictionary<string, string>();
 
-			dictionary.AddOrOverwrite("Name", "Dapplo");
-			dictionary.AddOrOverwrite("Name", "Dapplo");
+			dictionary.AddWhenNew("Name", "Dapplo");
+			dictionary.AddWhenNew("Name", "Dapplo2");
 			Assert.True(dictionary.Count == 1);
+			Assert.True(dictionary.ContainsKey("Name"));
+			Assert.Equal("Dapplo", dictionary["Name"]);
 		}
 	}
 }

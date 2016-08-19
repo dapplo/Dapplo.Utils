@@ -23,13 +23,14 @@
 
 #endregion
 
+using System;
+
 namespace Dapplo.Utils.Events
 {
 	/// <summary>
-	///     Interface for the event data
+	///     Base interface for the event data
 	/// </summary>
-	/// <typeparam name="TEvent"></typeparam>
-	public interface IEventData<out TEvent>
+	public interface IEventData
 	{
 		/// <summary>
 		///     Who sent the event
@@ -39,12 +40,25 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Name of the event
 		/// </summary>
-		string Name { get; }
+		string Name { get; set; }
 
+		/// <summary>
+		/// The event arguments
+		/// </summary>
+		EventArgs Args { get; }
+	}
+
+	/// <summary>
+	///     Interface for the event data
+	/// </summary>
+	/// <typeparam name="TEventArgs"></typeparam>
+	public interface IEventData<out TEventArgs> : IEventData
+		where TEventArgs : class
+	{
 		/// <summary>
 		///     Arguments of the event
 		/// </summary>
-		TEvent Args { get; }
+		new TEventArgs Args { get; }
 	}
 
 	/// <summary>
@@ -55,22 +69,34 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     Factory method
 		/// </summary>
-		/// <typeparam name="TArgs"></typeparam>
+		/// <typeparam name="TEventArgs">Type for the event data</typeparam>
 		/// <param name="sender"></param>
 		/// <param name="args"></param>
 		/// <param name="name"></param>
-		/// <returns></returns>
-		public static IEventData<TArgs> Create<TArgs>(object sender, TArgs args, string name = null)
+		/// <returns>IEventData</returns>
+		public static IEventData<TEventArgs> Create<TEventArgs>(object sender, TEventArgs args, string name = null)
+			where TEventArgs : class
 		{
-			return new EventData<TArgs>(sender, args, name);
+			return new EventData<TEventArgs>(sender, args, name);
+		}
+
+		/// <summary>
+		///     Factory method for an empty argument
+		/// </summary>
+		/// <typeparam name="TEventArgs">Type for the event data</typeparam>
+		/// <returns>IEventData</returns>
+		public static IEventData<TEventArgs> Create<TEventArgs>(object sender = null, string name = null) where TEventArgs : class, new()
+		{
+			return new EventData<TEventArgs>(sender, new TEventArgs(), name);
 		}
 	}
 
 	/// <summary>
 	///     Non mutable container for the event values
 	/// </summary>
-	/// <typeparam name="TEvent">The underlying event type</typeparam>
-	public class EventData<TEvent> : IEventData<TEvent>
+	/// <typeparam name="TEventArgs">The underlying event type</typeparam>
+	public class EventData<TEventArgs> : IEventData<TEventArgs>
+		where TEventArgs : class
 	{
 		/// <summary>
 		///     Constructor
@@ -78,7 +104,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="sender">Who initiated the event</param>
 		/// <param name="name">Name of the event, if available</param>
 		/// <param name="args">TEventArgs</param>
-		public EventData(object sender, TEvent args, string name = null)
+		public EventData(object sender, TEventArgs args, string name = null)
 		{
 			Sender = sender;
 			Args = args;
@@ -91,13 +117,15 @@ namespace Dapplo.Utils.Events
 		public object Sender { get; }
 
 		/// <summary>
-		///     Name of the event
+		///     Name of the event, will be automatically filled if this was null and is used in Trigger
 		/// </summary>
-		public string Name { get; }
+		public string Name { get; set; }
+
+		EventArgs IEventData.Args => Args as EventArgs;
 
 		/// <summary>
 		///     Arguments of the event
 		/// </summary>
-		public TEvent Args { get; }
+		public TEventArgs Args { get; }
 	}
 }

@@ -34,6 +34,7 @@ using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Enumerable;
 using Dapplo.Utils.Events;
+using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tasks;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;
@@ -58,7 +59,7 @@ namespace Dapplo.Utils.Tests
 		public void Dispose()
 		{
 			// Dispose all IEventObservable that were created by passing the _enumerableEvents list
-			EventObservable.DisposeAll(_enumerableEvents);
+			_enumerableEvents.DisposeAll();
 		}
 
 		private static readonly LogSource Log = new LogSource();
@@ -93,7 +94,7 @@ namespace Dapplo.Utils.Tests
 			var events = eventObservable.Subscribe();
 
 			// Create the event
-			Assert.True(eventObservable.Trigger(new EventData<SimpleTestEventArgs>(this, new SimpleTestEventArgs {TestValue = "Dapplo"})));
+			Assert.True(eventObservable.Trigger(new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
 			// Test if the event was processed correctly
 			Assert.Equal("Dapplo", events.Flatten().Select(e => e.TestValue).First());
@@ -111,7 +112,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<SimpleTestEventArgs>(this, nameof(TestStringEvent)))
 			{
 				eventObservable.OnEach(e => { testValue = e.Args.TestValue; });
-				Assert.True(eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"})));
+				Assert.True(eventObservable.Trigger(new SimpleTestEventArgs {TestValue = "Dapplo"}));
 			}
 			Assert.Equal("Dapplo", testValue);
 			// All event handlers should have unsubscribed
@@ -135,7 +136,7 @@ namespace Dapplo.Utils.Tests
 
 			var eventHandleTask = eventObservable.Subscribe().Flatten().ToTask(e => testValue = e.First().TestValue);
 
-			Assert.True(eventObservable.Trigger(EventData.Create(this, new SimpleTestEventArgs {TestValue = "Dapplo"})));
+			Assert.True(eventObservable.Trigger(new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
 			// Dispose makes sure no events are handled via the EventObservable, it also makes the ForEach stop!
 			eventObservable.Dispose();

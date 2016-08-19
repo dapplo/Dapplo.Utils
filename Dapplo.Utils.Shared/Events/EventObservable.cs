@@ -48,21 +48,6 @@ namespace Dapplo.Utils.Events
 		public const BindingFlags AllBindings = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
 		/// <summary>
-		///     Dispose all IEventObservable in the list
-		/// </summary>
-		/// <param name="eventObservables">IList with IEventObservable</param>
-		public static void DisposeAll(IEnumerable<IEventObservable> eventObservables)
-		{
-			if (eventObservables != null)
-			{
-				foreach (var eventObservable in eventObservables)
-				{
-					eventObservable.Dispose();
-				}
-			}
-		}
-
-		/// <summary>
 		///     Removes all the event handlers from the defined events in an object
 		///     This is usefull to do internally, after a MemberwiseClone is made, to prevent memory leaks
 		/// </summary>
@@ -111,6 +96,7 @@ namespace Dapplo.Utils.Events
 		/// <param name="targetObject"></param>
 		/// <returns>IList of IEventObservable which can be dispose with DisposeAll</returns>
 		public static IEnumerable<IEventObservable<TEventArgs>> EventsIn<TEventArgs>(object targetObject)
+			where TEventArgs : class
 		{
 			foreach (var eventInfo in targetObject.GetType().GetEvents(AllBindings))
 			{
@@ -180,6 +166,7 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	/// <typeparam name="TEventArgs">the underlying type for the EventHandler</typeparam>
 	public class EventObservable<TEventArgs> : IEventObservable<TEventArgs>
+		where TEventArgs : class
 	{
 		// ReSharper disable once StaticMemberInGenericType
 		private static readonly LogSource Log = new LogSource();
@@ -263,11 +250,18 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		/// <param name="eventData">IEventData</param>
 		/// <returns>true if the trigger call actually did something</returns>
-		public bool Trigger(IEventData<EventArgs> eventData)
+		public bool Trigger(IEventData eventData)
 		{
 			if (_disposedValue)
 			{
-				throw new ObjectDisposedException(nameof(EventObservable), $"Can't trigger {EventName} after dispose.");
+				throw new ObjectDisposedException(nameof(EventObservable), $"Can't trigger {EventName} after being disposed.");
+			}
+
+			// Set the event name, if not done already
+			if (eventData.Name == null)
+			{
+				eventData = EventData.Create(eventData.Sender, eventData.Args as TEventArgs, EventName);
+				eventData.Name = EventName;
 			}
 
 			try
@@ -317,17 +311,6 @@ namespace Dapplo.Utils.Events
 				Log.Error().WriteLine(ex, $"An exception occured while trying to trigger {EventName}");
 			}
 			return false;
-		}
-
-		/// <summary>
-		///     Call the supplied action on each event.
-		/// </summary>
-		/// <param name="action">Action to call</param>
-		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
-		/// <returns>IEventHandler</returns>
-		public IDisposable OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null)
-		{
-			return new DirectObserver<IEventData<TEventArgs>>(this, action, predicate);
 		}
 
 		/// <summary>
@@ -391,16 +374,6 @@ namespace Dapplo.Utils.Events
 				}
 			}
 			return Disposable.Create(() => Unsubscribe(observer));
-		}
-
-		/// <summary>
-		///     This subscribes an EnumerableObserver (which implements IEnumerable) and returns this
-		/// </summary>
-		/// <returns>IEnumerator for IEventData of TEventArgs</returns>
-		public IEnumerable<IEventData<TEventArgs>> Subscribe()
-		{
-			var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
-			return handler;
 		}
 
 		/// <summary>

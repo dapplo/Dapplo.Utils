@@ -39,28 +39,6 @@ namespace Dapplo.Utils.Extensions
 	public static class DictionaryExtensions
 	{
 		/// <summary>
-		///     Add or overwrite the value with the key
-		/// </summary>
-		/// <typeparam name="TKey">type for the Key</typeparam>
-		/// <typeparam name="TValue">type for the value</typeparam>
-		/// <param name="dictionary">IDictionary</param>
-		/// <param name="key">new or existing key of type TKey</param>
-		/// <param name="newValue">value of type TValue</param>
-		/// <returns>IDictionary so fluent calls are possible</returns>
-		public static IDictionary<TKey, TValue> AddOrOverwrite<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue newValue)
-		{
-			if (dictionary.ContainsKey(key))
-			{
-				dictionary[key] = newValue;
-			}
-			else
-			{
-				dictionary.Add(key, newValue);
-			}
-			return dictionary;
-		}
-
-		/// <summary>
 		///     Only add when the key isn't in the dictionary yet
 		/// </summary>
 		/// <typeparam name="TKey">type for the Key</typeparam>

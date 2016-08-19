@@ -44,6 +44,7 @@ namespace Dapplo.Utils.Events
 		/// <typeparam name="TEventArgs">Type of the event arguments</typeparam>
 		/// <returns>IEnumerable with TEventArgs</returns>
 		public static IEnumerable<TEventArgs> Flatten<TEventArgs>(this IEnumerable<IEventData<TEventArgs>> eventEnumerable)
+			where TEventArgs : class
 		{
 			return eventEnumerable.Select(x => x.Args);
 		}

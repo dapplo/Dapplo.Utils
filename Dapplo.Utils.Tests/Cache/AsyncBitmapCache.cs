@@ -43,6 +43,7 @@ namespace Dapplo.Utils.Tests.Cache
 		{
 			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
+				// ReSharper disable once AccessToDisposedClosure
 				return await Task.Run(() => stream.BitmapImageFromStream(), cancellationToken).ConfigureAwait(false);
 			}
 		}

@@ -26,7 +26,6 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
 
 #endregion
 
@@ -43,7 +42,8 @@ namespace Dapplo.Utils.Events
 		string EventName { get; }
 
 		/// <summary>
-		///     The object which contains the event, could be null depending on how the event was registered
+		///     The object which contains the event, could be null depending on how the event was registered.
+		///     The backing type is a Weak-Reference, so it COULD be garbage collected and than return null
 		/// </summary>
 		object Source { get; }
 
@@ -58,26 +58,12 @@ namespace Dapplo.Utils.Events
 	/// </summary>
 	/// <typeparam name="TEventArgs">type for the underlying EventHandler</typeparam>
 	public interface IEventObservable<out TEventArgs> : IEventObservable, IObservable<IEventData<TEventArgs>>
+		where TEventArgs : class
 	{
 		/// <summary>
 		///     Trigger the underlying event
 		/// </summary>
 		/// <param name="eventData">IEventData with all the data about the event, use EventData.Create for this.</param>
-		bool Trigger(IEventData<EventArgs> eventData);
-
-		/// <summary>
-		///     This subscribes to the event and returns a IEnumerable
-		///     The IEnumerable can be used for queries which return a limited amount or make a task out of it.
-		/// </summary>
-		/// <returns>IEnumerable with IEventData</returns>
-		IEnumerable<IEventData<TEventArgs>> Subscribe();
-
-		/// <summary>
-		///     This allows non blocking processing of the events, the supplied action is directly on event arrival
-		/// </summary>
-		/// <param name="action">Action to call</param>
-		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>
-		/// <returns>IDisposable</returns>
-		IDisposable OnEach(Action<IEventData<TEventArgs>> action, Func<IEventData<TEventArgs>, bool> predicate = null);
+		bool Trigger(IEventData eventData);
 	}
 }
