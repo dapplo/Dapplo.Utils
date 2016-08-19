@@ -1,25 +1,29 @@
-﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
-// 
-//  For more information see: http://dapplo.net/
-//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
-// 
-//  This file is part of Dapplo.Utils
-// 
-//  Dapplo.Utils is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-// 
-//  Dapplo.Utils is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-// 
-//  You should have a copy of the GNU Lesser General Public License
-//  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+﻿#region Dapplo 2016 - GNU Lesser General Public License
 
-#region using
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.Utils
+// 
+// Dapplo.Utils is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.Utils is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections.Generic;
@@ -57,17 +61,20 @@ namespace Dapplo.Utils
 		/// </summary>
 		/// <param name="directories"></param>
 		/// <param name="filePattern">Regular expression for the filename</param>
-		/// <param name="searchOption">Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is default, use SearchOption.TopDirectoryOnly for non recursive</param>
+		/// <param name="searchOption">
+		///     Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is
+		///     default, use SearchOption.TopDirectoryOnly for non recursive
+		/// </param>
 		/// <returns>IEnumerable with paths</returns>
 		public static IEnumerable<Tuple<string, Match>> Scan(IEnumerable<string> directories, Regex filePattern, SearchOption searchOption = SearchOption.AllDirectories)
 		{
 			return from directory in directories
-				    from path in DirectoriesFor(directory)
-				    where Directory.Exists(path)
-					from file in Directory.EnumerateFiles(path, "*", searchOption)
-					let match = filePattern.Match(file)
-					where match.Success
-					select Tuple.Create(file, match);
+				from path in DirectoriesFor(directory)
+				where Directory.Exists(path)
+				from file in Directory.EnumerateFiles(path, "*", searchOption)
+				let match = filePattern.Match(file)
+				where match.Success
+				select Tuple.Create(file, match);
 		}
 
 		/// <summary>
@@ -75,20 +82,23 @@ namespace Dapplo.Utils
 		/// </summary>
 		/// <param name="directories"></param>
 		/// <param name="simplePattern"></param>
-		/// <param name="searchOption">Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is default, use SearchOption.TopDirectoryOnly for non recursive</param>
+		/// <param name="searchOption">
+		///     Makes it possible to specify if the search is recursive, SearchOption.AllDirectories is
+		///     default, use SearchOption.TopDirectoryOnly for non recursive
+		/// </param>
 		/// <returns>IEnumerable with paths</returns>
 		public static IEnumerable<string> Scan(IEnumerable<string> directories, string simplePattern, SearchOption searchOption = SearchOption.AllDirectories)
 		{
 			return from directory in directories
-				    from path in DirectoriesFor(directory)
-					where Directory.Exists(path)
-					from file in Directory.EnumerateFiles(path, simplePattern, searchOption)
-					select file;
+				from path in DirectoriesFor(directory)
+				where Directory.Exists(path)
+				from file in Directory.EnumerateFiles(path, simplePattern, searchOption)
+				select file;
 		}
 
 		/// <summary>
-		/// For the given directory this will return possible location.
-		/// It might be that multiple are returned, also normalization is made
+		///     For the given directory this will return possible location.
+		///     It might be that multiple are returned, also normalization is made
 		/// </summary>
 		/// <param name="directory">A absolute or relative directory</param>
 		/// <param name="allowCurrentDirectory">true to allow relative to current working directory</param>
@@ -128,7 +138,7 @@ namespace Dapplo.Utils
 					if (!string.IsNullOrEmpty(assemblyLocation) && File.Exists(assemblyLocation))
 					{
 						var exeDirectory = Path.GetDirectoryName(assemblyLocation);
-						if (!string.IsNullOrEmpty(exeDirectory) && exeDirectory != Environment.CurrentDirectory)
+						if (!string.IsNullOrEmpty(exeDirectory) && (exeDirectory != Environment.CurrentDirectory))
 						{
 							var relativeToExe = Path.GetFullPath(Path.Combine(exeDirectory, directory))
 								.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
@@ -150,7 +160,7 @@ namespace Dapplo.Utils
 					if (allowCurrentDirectory)
 					{
 						var relativetoCurrent = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, directory))
-								.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+							.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
 						if (Directory.Exists(relativetoCurrent))
 						{

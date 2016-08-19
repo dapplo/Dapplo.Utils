@@ -1,25 +1,29 @@
-﻿//  Dapplo - building blocks for desktop applications
-//  Copyright (C) 2015-2016 Dapplo
-// 
-//  For more information see: http://dapplo.net/
-//  Dapplo repositories are hosted on GitHub: https://github.com/dapplo
-// 
-//  This file is part of Dapplo.Utils
-// 
-//  Dapplo.Utils is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Lesser General Public License as published by
-//  the Free Software Foundation, either version 3 of the License, or
-//  (at your option) any later version.
-// 
-//  Dapplo.Utils is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Lesser General Public License for more details.
-// 
-//  You should have a copy of the GNU Lesser General Public License
-//  along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+﻿#region Dapplo 2016 - GNU Lesser General Public License
 
-#region using
+// Dapplo - building blocks for .NET applications
+// Copyright (C) 2016 Dapplo
+// 
+// For more information see: http://dapplo.net/
+// Dapplo repositories are hosted on GitHub: https://github.com/dapplo
+// 
+// This file is part of Dapplo.Utils
+// 
+// Dapplo.Utils is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Dapplo.Utils is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have a copy of the GNU Lesser General Public License
+// along with Dapplo.Utils. If not, see <http://www.gnu.org/licenses/lgpl.txt>.
+
+#endregion
+
+#region Usings
 
 using System;
 using System.Collections;
@@ -38,16 +42,18 @@ using Microsoft.VisualBasic.FileIO;
 namespace Dapplo.Utils.Extensions
 {
 	/// <summary>
-	/// This class contains extensions for strings
+	///     This class contains extensions for strings
 	/// </summary>
 	public static class StringExtensions
 	{
 		private static readonly Regex CleanupRegex = new Regex(@"[^a-z0-9]+", RegexOptions.Compiled);
-		private static readonly Regex PropertyRegex = new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+		private static readonly Regex PropertyRegex = new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
+			RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
 		/// <summary>
 		///     Helper method for converting a string to a non strict value.
-		///     This means, ToLowerInvariant and remove all non alpha/digits 
+		///     This means, ToLowerInvariant and remove all non alpha/digits
 		/// </summary>
 		/// <param name="value">string</param>
 		/// <returns>string which is tolower an only has alpha and digits</returns>
@@ -136,7 +142,7 @@ namespace Dapplo.Utils.Extensions
 				return;
 			}
 			var sourceType = source.GetType();
-			if (sourceType.GetTypeInfo().IsPrimitive || sourceType == typeof (string))
+			if (sourceType.GetTypeInfo().IsPrimitive || (sourceType == typeof(string)))
 			{
 				properties.AddWhenNew(index.ToString(), source);
 				return;
@@ -250,10 +256,10 @@ namespace Dapplo.Utils.Extensions
 		public static IDictionary<string, string> SplitDictionary(this string input)
 		{
 			return (from valuePair in
-				(from pair in input.SplitCsv()
-					select pair.Split('='))
-				where valuePair.Length == 2
-				select valuePair
+					(from pair in input.SplitCsv()
+						select pair.Split('='))
+					where valuePair.Length == 2
+					select valuePair
 				).ToLookup(e => e[0], StringComparer.OrdinalIgnoreCase)
 				.ToDictionary(x => x.Key, x => x.First()[1]);
 		}

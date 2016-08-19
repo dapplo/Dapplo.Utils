@@ -46,7 +46,7 @@ namespace Dapplo.Utils.Embedded
 		internal static readonly LogSource Log = new LogSource();
 
 		/// <summary>
-		/// Create a regex to find a resource in an assembly
+		///     Create a regex to find a resource in an assembly
 		/// </summary>
 		/// <param name="filePath">string with the filepath to find</param>
 		/// <param name="assembly">Assembly to look into</param>
@@ -59,7 +59,7 @@ namespace Dapplo.Utils.Embedded
 			var resourcePath = filePath.Replace(Path.DirectorySeparatorChar, '.').Replace(Path.AltDirectorySeparatorChar, '.');
 			// First get the extension to build the regex
 			// TODO: this doesn't work 100% for double extensions like .png.gz etc but I will only fix this as soon as it's really needed
-			var extensions = alternativeExtensions?.Concat(new[] { Path.GetExtension(filePath) }) ?? new[] { Path.GetExtension(filePath) };
+			var extensions = alternativeExtensions?.Concat(new[] {Path.GetExtension(filePath)}) ?? new[] {Path.GetExtension(filePath)};
 			// Than get the filename without extension
 			var filename = Path.GetFileNameWithoutExtension(resourcePath);
 			// Assembly resources CAN have a prefix with the type namespace, use this instead of the default
@@ -69,9 +69,9 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// Get the stream for a assembly manifest resource based on the filePath
-		/// It will automatically wrapped as GZipStream if the file-ending is .gz
-		/// Note: a GZipStream is not seekable, this might cause issues.
+		///     Get the stream for a assembly manifest resource based on the filePath
+		///     It will automatically wrapped as GZipStream if the file-ending is .gz
+		///     Note: a GZipStream is not seekable, this might cause issues.
 		/// </summary>
 		/// <param name="filePath">string with the filepath to find</param>
 		/// <param name="assembly">Assembly to look into</param>
@@ -97,7 +97,7 @@ namespace Dapplo.Utils.Embedded
 			{
 				Log.Verbose().WriteLine("Requested stream for path {0}, using resource {1} from assembly {2}", filePath, resourceName, assembly.FullName);
 				var resultStream = assembly.GetManifestResourceStream(resourceName);
-				if (resultStream != null && resourceName.EndsWith(".gz"))
+				if ((resultStream != null) && resourceName.EndsWith(".gz"))
 				{
 					resultStream = new GZipStream(resultStream, CompressionMode.Decompress);
 				}
@@ -124,7 +124,7 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// check if there is any resource in the specified assembly which matches the Regex
+		///     check if there is any resource in the specified assembly which matches the Regex
 		/// </summary>
 		/// <param name="assembly">Assembly</param>
 		/// <param name="regexPattern">Regex</param>
@@ -144,8 +144,8 @@ namespace Dapplo.Utils.Embedded
 		public static IEnumerable<string> FindEmbeddedResources(this Assembly assembly, Regex regexPattern)
 		{
 			return from resourceName in assembly.GetManifestResourceNames()
-				   where regexPattern.IsMatch(resourceName)
-				   select resourceName;
+				where regexPattern.IsMatch(resourceName)
+				select resourceName;
 		}
 
 		/// <summary>
@@ -155,7 +155,8 @@ namespace Dapplo.Utils.Embedded
 		/// <param name="regexPattern">Regex pattern to scan for</param>
 		/// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
 		/// <returns>IEnumerable with matching resource names</returns>
-		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this IEnumerable<Assembly> assemblies, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
+		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this IEnumerable<Assembly> assemblies, string regexPattern,
+			RegexOptions regexOptions = RegexOptions.IgnoreCase)
 		{
 			return assemblies.FindEmbeddedResources(new Regex(regexPattern, regexOptions));
 		}
@@ -169,9 +170,9 @@ namespace Dapplo.Utils.Embedded
 		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this IEnumerable<Assembly> assemblies, Regex regex)
 		{
 			return from assembly in assemblies
-				   from resourceName in assembly.GetManifestResourceNames()
-				   where regex.IsMatch(resourceName)
-				   select new Tuple<Assembly, string>(assembly, resourceName);
+				from resourceName in assembly.GetManifestResourceNames()
+				where regex.IsMatch(resourceName)
+				select new Tuple<Assembly, string>(assembly, resourceName);
 		}
 	}
 }

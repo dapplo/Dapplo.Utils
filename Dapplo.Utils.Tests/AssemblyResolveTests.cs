@@ -25,7 +25,6 @@
 
 #region Usings
 
-using System;
 using System.IO;
 using System.Linq;
 using Dapplo.Log.Facade;
@@ -42,14 +41,35 @@ using Xunit.Abstractions;
 namespace Dapplo.Utils.Tests
 {
 	/// <summary>
-	/// This tests the Assembly resolve functionality.
+	///     This tests the Assembly resolve functionality.
 	/// </summary>
 	public class AssemblyResolveTests
 	{
-		private static readonly LogSource Log = new LogSource();
 		public AssemblyResolveTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+		}
+
+		private static readonly LogSource Log = new LogSource();
+
+		private void ThisForcesDelayedLoadingOfAssembly()
+		{
+			var helloWorld = ExternalClass.HelloWord();
+			Assert.Equal(nameof(ExternalClass.HelloWord), helloWorld);
+		}
+
+		[Fact]
+		public void Test_AssemblyNameToRegex()
+		{
+			var file_noMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
+			var file_match = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
+			var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
+			Assert.False(regex.IsMatch(file_noMatch));
+			Assert.True(regex.IsMatch(file_match));
+
+			var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
+			Assert.False(regex2.IsMatch(file_noMatch));
+			Assert.False(regex2.IsMatch(file_match));
 		}
 
 		[Fact]
@@ -90,26 +110,6 @@ namespace Dapplo.Utils.Tests
 				AssemblyResolver.CheckEmbeddedResourceNameAgainstCache = false;
 				AssemblyResolver.LoadEmbeddedAssembly(assemblyName);
 			}
-		}
-
-		private void ThisForcesDelayedLoadingOfAssembly()
-		{
-			var helloWorld = ExternalClass.HelloWord();
-			Assert.Equal(nameof(ExternalClass.HelloWord), helloWorld);
-		}
-
-		[Fact]
-		public void Test_AssemblyNameToRegex()
-		{
-			var file_noMatch = @"C:\Project\Dapplo.Addons\Dapplo.Addons.Tests\bin\Debug\xunit.execution.desktop.dll";
-			var file_match = @"C:\Project\blub\bin\Debug\Dapplo.something.dll";
-			var regex = FileTools.FilenameToRegex("Dapplo.Something*", AssemblyResolver.Extensions);
-			Assert.False(regex.IsMatch(file_noMatch));
-			Assert.True(regex.IsMatch(file_match));
-
-			var regex2 = FileTools.FilenameToRegex("Something*", AssemblyResolver.Extensions);
-			Assert.False(regex2.IsMatch(file_noMatch));
-			Assert.False(regex2.IsMatch(file_match));
 		}
 	}
 }

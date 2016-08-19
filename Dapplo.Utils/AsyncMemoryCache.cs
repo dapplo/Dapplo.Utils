@@ -43,9 +43,9 @@ namespace Dapplo.Utils
 	public abstract class AsyncMemoryCache<TKey, TResult> where TResult : class
 	{
 		private static readonly Task<TResult> EmptyValueTask = Task.FromResult<TResult>(null);
-		private readonly AsyncLock _asyncLock = new AsyncLock();
 		private readonly MemoryCache _cache = new MemoryCache(Guid.NewGuid().ToString());
 		private readonly LogSource _log = new LogSource();
+		private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
 		/// <summary>
 		///     Set the timespan for items to expire.
@@ -70,7 +70,7 @@ namespace Dapplo.Utils
 		protected bool ActivateUpdateCallback { get; set; } = false;
 
 		/// <summary>
-		/// Implement this method, it should create an instance of TResult via the supplied TKey.
+		///     Implement this method, it should create an instance of TResult via the supplied TKey.
 		/// </summary>
 		/// <param name="key">TKey</param>
 		/// <param name="cancellationToken">CancellationToken</param>
@@ -96,9 +96,14 @@ namespace Dapplo.Utils
 		public async Task DeleteAsync(TKey keyObject, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			var key = CreateKey(keyObject);
-			using (await _asyncLock.LockAsync(cancellationToken).ConfigureAwait(false))
+			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
+			try
 			{
 				_cache.Remove(key);
+			}
+			finally
+			{
+				_semaphoreSlim.Release();
 			}
 		}
 
@@ -146,7 +151,8 @@ namespace Dapplo.Utils
 		/// <param name="cacheItemPolicy">CacheItemPolicy for when you want more control over the item</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>TResult</returns>
-		private async Task<TResult> GetOrCreateInternalAsync(TKey keyObject, CacheItemPolicy cacheItemPolicy = null, CancellationToken cancellationToken = default(CancellationToken))
+		private async Task<TResult> GetOrCreateInternalAsync(TKey keyObject, CacheItemPolicy cacheItemPolicy = null,
+			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			var key = CreateKey(keyObject);
 			var completionSource = new TaskCompletionSource<TResult>();
@@ -170,15 +176,16 @@ namespace Dapplo.Utils
 
 			var result = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
 			// Test if we got an existing object or our own
-			if (result != null && !completionSource.Task.Equals(result))
+			if ((result != null) && !completionSource.Task.Equals(result))
 			{
 				return await result.ConfigureAwait(false);
 			}
 
-			using (await _asyncLock.LockAsync(cancellationToken).ConfigureAwait(false))
+			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
+			try
 			{
 				result = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
-				if (result != null && !completionSource.Task.Equals(result))
+				if ((result != null) && !completionSource.Task.Equals(result))
 				{
 					return await result.ConfigureAwait(false);
 				}
@@ -203,6 +210,11 @@ namespace Dapplo.Utils
 					}
 				});
 			}
+			finally
+			{
+				_semaphoreSlim.Release();
+			}
+
 			return await completionSource.Task.ConfigureAwait(false);
 		}
 

@@ -48,7 +48,7 @@ namespace Dapplo.Utils.Embedded
 		private static readonly Regex PackRegex = new Regex(@"/(?<assembly>[a-zA-Z\.]+);component/(?<path>.*)", RegexOptions.Compiled);
 
 		/// <summary>
-		/// Helper method to create a regex match for the supplied Pack uri
+		///     Helper method to create a regex match for the supplied Pack uri
 		/// </summary>
 		/// <param name="packUri">Uri</param>
 		/// <returns>Match</returns>
@@ -75,8 +75,9 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// Test if there is an embedded resourcefor the Pack-Uri
-		/// This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized when you specify a pack uri ending on .xaml
+		///     Test if there is an embedded resourcefor the Pack-Uri
+		///     This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized
+		///     when you specify a pack uri ending on .xaml
 		/// </summary>
 		/// <param name="packUri">Uri</param>
 		/// <param name="ignoreCase">true to ignore the case</param>
@@ -86,7 +87,7 @@ namespace Dapplo.Utils.Embedded
 			var match = packUri.PackUriMatch();
 
 			var assemblyName = match.Groups["assembly"].Value;
-			
+
 			var assembly = AssemblyResolver.FindAssembly(assemblyName);
 			if (assembly == null)
 			{
@@ -105,8 +106,9 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// check if there is any resource in the specified assembly's .g.resources which matches the Regex
-		/// This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized when you specify .xaml
+		///     check if there is any resource in the specified assembly's .g.resources which matches the Regex
+		///     This is work in progress, as most of the times the files are compiled from xaml to baml, and won't be recognized
+		///     when you specify .xaml
 		/// </summary>
 		/// <param name="assembly">Assembly</param>
 		/// <param name="filePath">filePath</param>
@@ -122,11 +124,13 @@ namespace Dapplo.Utils.Embedded
 				{
 					if (resourceStream != null)
 					{
-
 						using (var resourceReader = new ResourceReader(resourceStream))
 						{
 							// Check if it contains the filename
-							return resourceReader.OfType<DictionaryEntry>().Select(x => x.Key as string).Any(x => string.Equals(x, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture));
+							return
+								resourceReader.OfType<DictionaryEntry>()
+									.Select(x => x.Key as string)
+									.Any(x => string.Equals(x, filePath, ignoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture));
 						}
 					}
 				}
@@ -135,8 +139,8 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// Returns the embedded resource, as specified in the Pack-Uri as a stream.
-		/// This currently doesn't go into the embedded .g.resources files, this might be added later
+		///     Returns the embedded resource, as specified in the Pack-Uri as a stream.
+		///     This currently doesn't go into the embedded .g.resources files, this might be added later
 		/// </summary>
 		/// <param name="packUri">Uri</param>
 		/// <returns>Stream</returns>
@@ -166,7 +170,7 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// Scan the manifest of the calling Assembly with a regex pattern for embedded resources
+		///     Scan the manifest of the calling Assembly with a regex pattern for embedded resources
 		/// </summary>
 		/// <param name="regexPattern">Regex pattern to scan for</param>
 		/// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
@@ -178,14 +182,15 @@ namespace Dapplo.Utils.Embedded
 		}
 
 		/// <summary>
-		/// Scan the manifest of all assemblies in the AppDomain with a regex pattern for embedded resources
-		/// Usually this would be used with AppDomain.Current
+		///     Scan the manifest of all assemblies in the AppDomain with a regex pattern for embedded resources
+		///     Usually this would be used with AppDomain.Current
 		/// </summary>
 		/// <param name="appDomain">AppDomain to scan</param>
 		/// <param name="regexPattern">Regex pattern to scan for</param>
 		/// <param name="regexOptions">RegexOptions.IgnoreCase as default</param>
 		/// <returns>IEnumerable with matching assembly resource name tuples</returns>
-		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this AppDomain appDomain, string regexPattern, RegexOptions regexOptions = RegexOptions.IgnoreCase)
+		public static IEnumerable<Tuple<Assembly, string>> FindEmbeddedResources(this AppDomain appDomain, string regexPattern,
+			RegexOptions regexOptions = RegexOptions.IgnoreCase)
 		{
 			return appDomain.GetAssemblies().FindEmbeddedResources(regexPattern, regexOptions);
 		}

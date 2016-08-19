@@ -43,9 +43,14 @@ namespace Dapplo.Utils.Events
 		string EventName { get; }
 
 		/// <summary>
-		/// The object which contains the event, could be null depending on how the event was registered
+		///     The object which contains the event, could be null depending on how the event was registered
 		/// </summary>
 		object Source { get; }
+
+		/// <summary>
+		///     The type for the Argument
+		/// </summary>
+		Type EventArgumentType { get; }
 	}
 
 	/// <summary>
@@ -61,14 +66,14 @@ namespace Dapplo.Utils.Events
 		bool Trigger(IEventData<EventArgs> eventData);
 
 		/// <summary>
-		/// This subscribes to the event and returns a IEnumerable
-		/// The IEnumerable can be used for queries which return a limited amount or make a task out of it.
+		///     This subscribes to the event and returns a IEnumerable
+		///     The IEnumerable can be used for queries which return a limited amount or make a task out of it.
 		/// </summary>
 		/// <returns>IEnumerable with IEventData</returns>
 		IEnumerable<IEventData<TEventArgs>> Subscribe();
 
 		/// <summary>
-		/// This allows non blocking processing of the events, the supplied action is directly on event arrival
+		///     This allows non blocking processing of the events, the supplied action is directly on event arrival
 		/// </summary>
 		/// <param name="action">Action to call</param>
 		/// <param name="predicate">Predicate, deciding on if the action needs to be called</param>

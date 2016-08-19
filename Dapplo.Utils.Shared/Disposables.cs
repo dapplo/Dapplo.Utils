@@ -34,24 +34,13 @@ using Dapplo.Log.Facade;
 namespace Dapplo.Utils
 {
 	/// <summary>
-	/// This can store IDisposable items, and dispose all of them when dispose is called.
-	/// The internal storage is thread-safe, and you can continue to use it (call Add) after calling Dispose!
+	///     This can store IDisposable items, and dispose all of them when dispose is called.
+	///     The internal storage is thread-safe, and you can continue to use it (call Add) after calling Dispose!
 	/// </summary>
 	public class Disposables : IDisposable
 	{
 		private static readonly LogSource Log = new LogSource();
 		private readonly IProducerConsumerCollection<IDisposable> _disposables;
-
-		/// <summary>
-		/// Factory method
-		/// </summary>
-		/// <param name="disposable">optional IDisposable</param>
-		/// <param name="reverseDisposal">Specify true (default) if the disposal needs to be done in reverse order (last in, first out)</param>
-		/// <returns>Disposables</returns>
-		public static Disposables Create(IDisposable disposable = null, bool reverseDisposal = true)
-		{
-			return new Disposables(disposable, reverseDisposal);
-		}
 
 		/// <summary>
 		///     Create a Disposables
@@ -74,12 +63,12 @@ namespace Dapplo.Utils
 		}
 
 		/// <summary>
-		/// Specifies if exceptions from calling Dispose need to be logged
+		///     Specifies if exceptions from calling Dispose need to be logged
 		/// </summary>
 		public bool LogExceptions { get; set; } = true;
 
 		/// <summary>
-		/// Specifies if exceptions from calling Dispose on an added IDisposable should be thrown.
+		///     Specifies if exceptions from calling Dispose on an added IDisposable should be thrown.
 		/// </summary>
 		public bool IgnoreExceptions { get; set; } = true;
 
@@ -110,6 +99,20 @@ namespace Dapplo.Utils
 		}
 
 		/// <summary>
+		///     Factory method
+		/// </summary>
+		/// <param name="disposable">optional IDisposable</param>
+		/// <param name="reverseDisposal">
+		///     Specify true (default) if the disposal needs to be done in reverse order (last in, first
+		///     out)
+		/// </param>
+		/// <returns>Disposables</returns>
+		public static Disposables Create(IDisposable disposable = null, bool reverseDisposal = true)
+		{
+			return new Disposables(disposable, reverseDisposal);
+		}
+
+		/// <summary>
 		///     Add a Disposable to dispose of
 		/// </summary>
 		/// <param name="disposable">IDisposable</param>
@@ -121,7 +124,7 @@ namespace Dapplo.Utils
 		}
 
 		/// <summary>
-		/// Simplify the adding of a disposable to the Disposables, just add it.
+		///     Simplify the adding of a disposable to the Disposables, just add it.
 		/// </summary>
 		/// <param name="disposables">Disposables</param>
 		/// <param name="disposable">IDisposable</param>

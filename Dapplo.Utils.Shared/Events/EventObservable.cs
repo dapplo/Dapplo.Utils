@@ -75,7 +75,7 @@ namespace Dapplo.Utils.Events
 			{
 				throw new ArgumentNullException(nameof(instance));
 			}
-			int count = 0;
+			var count = 0;
 			Regex regex = null;
 			if (!string.IsNullOrEmpty(regExPattern))
 			{
@@ -84,7 +84,7 @@ namespace Dapplo.Utils.Events
 			var typeWithEvents = instance.GetType();
 			foreach (var eventInfo in typeWithEvents.GetEvents(AllBindings))
 			{
-				if (regex != null && !regex.IsMatch(eventInfo.Name))
+				if ((regex != null) && !regex.IsMatch(eventInfo.Name))
 				{
 					continue;
 				}
@@ -95,10 +95,10 @@ namespace Dapplo.Utils.Events
 				}
 				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
 				var removeMethod = eventInfo.GetRemoveMethod(true);
-				if (eventDelegate != null && removeMethod != null)
+				if ((eventDelegate != null) && (removeMethod != null))
 				{
 					count += eventDelegate.GetInvocationList().Length;
-					removeMethod.Invoke(instance, new object[] { eventDelegate });
+					removeMethod.Invoke(instance, new object[] {eventDelegate});
 				}
 			}
 			return count;
@@ -119,8 +119,8 @@ namespace Dapplo.Utils.Events
 				if (typeof(TEventArgs).IsAssignableFrom(eventType))
 				{
 					var constructedType = typeof(EventObservable<>).MakeGenericType(eventType);
-					var args = new[] { targetObject, eventInfo.Name };
-					var eventObservable = (IEventObservable<TEventArgs>)Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
+					var args = new[] {targetObject, eventInfo.Name};
+					var eventObservable = (IEventObservable<TEventArgs>) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
 					yield return eventObservable;
 				}
 			}
@@ -183,28 +183,18 @@ namespace Dapplo.Utils.Events
 	{
 		// ReSharper disable once StaticMemberInGenericType
 		private static readonly LogSource Log = new LogSource();
+		private readonly MethodInfo _addMethod;
 		private readonly EventInfo _eventInfo;
 		private readonly Delegate _handleEventDelegate;
+		private readonly MethodInfo _invokeMethod;
 
 		private readonly IList<IObserver<IEventData<TEventArgs>>> _observers = new List<IObserver<IEventData<TEventArgs>>>();
+		private readonly MethodInfo _removeMethod;
 		private readonly WeakReference _targetObject;
 		private readonly bool _useEventHandler;
 		private bool _disposedValue; // To detect redundant calls
 		private EventHandler<TEventArgs> _eventHandler;
 		private bool _subscribedToEvents;
-		private readonly MethodInfo _addMethod;
-		private readonly MethodInfo _removeMethod;
-		private readonly MethodInfo _invokeMethod;
-
-		/// <summary>
-		///     The name of the underlying event, might be null if not supplied
-		/// </summary>
-		public string EventName { get; }
-
-		/// <summary>
-		/// The object which contains the event, could be null depending on how the event was registered
-		/// </summary>
-		public object Source => _targetObject.Target;
 
 		/// <summary>
 		///     Constructor for the FieldInfo
@@ -219,13 +209,14 @@ namespace Dapplo.Utils.Events
 			_invokeMethod = targetType.GetMethod($"invoke_{eventName}", EventObservable.AllBindings);
 			_eventInfo = targetType.GetEvent(eventName, EventObservable.AllBindings);
 			EventName = eventName;
+			EventArgumentType = typeof(TEventArgs);
 
 			_targetObject = new WeakReference(targetObject);
 			_useEventHandler = false;
 
 			// Sometimes the event handler only uses a single argument, for this check the parameter count of the delegate
 			var useWithSender = true;
-			Type eventHandlerType = _eventInfo?.EventHandlerType ?? _addMethod?.GetParameters()[0].ParameterType;
+			var eventHandlerType = _eventInfo?.EventHandlerType ?? _addMethod?.GetParameters()[0].ParameterType;
 			var eventHandlerInvokeDelegate = eventHandlerType?.GetMethod("Invoke", EventObservable.AllBindings);
 			if (eventHandlerInvokeDelegate != null)
 			{
@@ -245,9 +236,27 @@ namespace Dapplo.Utils.Events
 		internal EventObservable(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
 		{
 			EventName = eventName;
+			EventArgumentType = typeof(TEventArgs);
 			_eventHandler = eventHandler;
 			_useEventHandler = true;
 		}
+
+		/// <summary>
+		///     The name of the underlying event, might be null if not supplied.
+		///     Can be used to find an event using LINQ on EventObservable.EventsIn
+		/// </summary>
+		public string EventName { get; }
+
+		/// <summary>
+		///     The object which contains the event, could be null depending on how the event was registered
+		/// </summary>
+		public object Source => _targetObject.Target;
+
+		/// <summary>
+		///     The type for the Argument
+		///     Can be used to find an event using LINQ on EventObservable.EventsIn
+		/// </summary>
+		public Type EventArgumentType { get; }
 
 		/// <summary>
 		///     Triggers an event, this will try different techniques
@@ -267,7 +276,7 @@ namespace Dapplo.Utils.Events
 				{
 					if (_eventHandler != null)
 					{
-						_eventHandler.Invoke(eventData.Sender, (TEventArgs)(object)eventData.Args);
+						_eventHandler.Invoke(eventData.Sender, (TEventArgs) (object) eventData.Args);
 						return true;
 					}
 				}
@@ -283,14 +292,14 @@ namespace Dapplo.Utils.Events
 				var raiseMethodInfo = _eventInfo?.RaiseMethod;
 				if (raiseMethodInfo != null)
 				{
-					raiseMethodInfo.Invoke(targetObject, new[] { eventData.Sender, eventData.Args });
+					raiseMethodInfo.Invoke(targetObject, new[] {eventData.Sender, eventData.Args});
 					return true;
 				}
 				// Invoke by retrieving the delegate of the field
 				var fieldInfo = targetObject.GetType().GetField(EventName, EventObservable.AllBindings);
 				if (fieldInfo != null)
 				{
-					var eventDelegate = (Delegate)fieldInfo.GetValue(targetObject);
+					var eventDelegate = (Delegate) fieldInfo.GetValue(targetObject);
 					eventDelegate?.DynamicInvoke(eventData.Sender, eventData.Args);
 					// Return, even if eventDelegate was null.. it might have been empty!!
 					return eventDelegate != null;
@@ -373,15 +382,25 @@ namespace Dapplo.Utils.Events
 					}
 					if (_eventInfo != null)
 					{
-						_eventInfo.AddMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+						_eventInfo.AddMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 					}
 					else
 					{
-						_addMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+						_addMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 					}
 				}
 			}
 			return Disposable.Create(() => Unsubscribe(observer));
+		}
+
+		/// <summary>
+		///     This subscribes an EnumerableObserver (which implements IEnumerable) and returns this
+		/// </summary>
+		/// <returns>IEnumerator for IEventData of TEventArgs</returns>
+		public IEnumerable<IEventData<TEventArgs>> Subscribe()
+		{
+			var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
+			return handler;
 		}
 
 		/// <summary>
@@ -400,11 +419,11 @@ namespace Dapplo.Utils.Events
 				if (_observers.Remove(observer))
 				{
 					// Unsubscribe the HandleEvent from the event as no-one is interested
-					if (_observers.Count == 0 && _subscribedToEvents)
+					if ((_observers.Count == 0) && _subscribedToEvents)
 					{
 						_subscribedToEvents = false;
 						// We finished adding events, so the processing can stop
-						if (_useEventHandler && _eventHandler != null)
+						if (_useEventHandler && (_eventHandler != null))
 						{
 							// ReSharper disable once DelegateSubtraction
 							_eventHandler -= HandleEvent;
@@ -414,14 +433,13 @@ namespace Dapplo.Utils.Events
 						var targetObject = _targetObject.Target;
 						if (targetObject != null)
 						{
-							if (!_useEventHandler && _eventInfo != null)
+							if (!_useEventHandler && (_eventInfo != null))
 							{
-								// Unsubscribe the _handleEventDelegate via reflection
-								_eventInfo.RemoveMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+								_eventInfo.RemoveMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 							}
 							else
 							{
-								_removeMethod.Invoke(targetObject, new object[] { _handleEventDelegate });
+								_removeMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 							}
 						}
 					}
@@ -488,16 +506,6 @@ namespace Dapplo.Utils.Events
 			{
 				Unsubscribe(eventHandler);
 			}
-		}
-
-		/// <summary>
-		/// This subscribes an EnumerableObserver (which implements IEnumerable) and returns this
-		/// </summary>
-		/// <returns>IEnumerator for IEventData of TEventArgs</returns>
-		public IEnumerable<IEventData<TEventArgs>> Subscribe()
-		{
-			var handler = new EnumerableObserver<IEventData<TEventArgs>>(this);
-			return handler;
 		}
 	}
 }

@@ -26,11 +26,11 @@
 #region Usings
 
 using System;
+using System.IO.Packaging;
 using System.Linq;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Embedded;
-using Dapplo.Utils.Resolving;
 using Dapplo.Utils.Tests.Cache;
 using Xunit;
 using Xunit.Abstractions;
@@ -41,7 +41,6 @@ namespace Dapplo.Utils.Tests
 {
 	public class EmbeddedResourcesTests
 	{
-		private static readonly LogSource Log = new LogSource();
 		public EmbeddedResourcesTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -50,12 +49,14 @@ namespace Dapplo.Utils.Tests
 			if (!UriParser.IsKnownScheme("pack"))
 			{
 				// ReSharper disable once UnusedVariable
-				var packScheme = System.IO.Packaging.PackUriHelper.UriSchemePack;
+				var packScheme = PackUriHelper.UriSchemePack;
 			}
 		}
 
+		private static readonly LogSource Log = new LogSource();
+
 		/// <summary>
-		/// Test if resources can be found
+		///     Test if resources can be found
 		/// </summary>
 		[Fact]
 		public void Test_FindEmbeddedResources()
@@ -65,12 +66,11 @@ namespace Dapplo.Utils.Tests
 		}
 
 		/// <summary>
-		/// Test if finding and loading from the manifest works
+		///     Test if finding and loading from the manifest works
 		/// </summary>
 		[Fact]
 		public void Test_GetEmbeddedResourceAsStream()
 		{
-			
 			using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png"))
 			{
 				var bitmap = stream.ImageFromStream();
@@ -80,25 +80,7 @@ namespace Dapplo.Utils.Tests
 		}
 
 		/// <summary>
-		/// Test if finding and loading from the manifest via pack uris work
-		/// </summary>
-		[Fact]
-		public void Test_PackUri()
-		{
-			var packUri = new Uri("pack://application:,,,/Dapplo.Utils.Tests;component/TestFiles/embedded-dapplo.png", UriKind.RelativeOrAbsolute);
-			
-			Assert.True(packUri.EmbeddedResourceExists());
-
-			using (var stream = packUri.GetEmbeddedResourceAsStream())
-			{
-				var bitmap = stream.ImageFromStream();
-				Assert.NotNull(bitmap.Width);
-				Assert.True(bitmap.Width > 0);
-			}
-		}
-
-		/// <summary>
-		/// Test if gunzip works
+		///     Test if gunzip works
 		/// </summary>
 		[Fact]
 		public void Test_GetEmbeddedResourceAsStream_GZ()
@@ -109,6 +91,24 @@ namespace Dapplo.Utils.Tests
 			}
 
 			using (var stream = GetType().Assembly.GetEmbeddedResourceAsStream(@"TestFiles\embedded-dapplo.png.gz"))
+			{
+				var bitmap = stream.ImageFromStream();
+				Assert.NotNull(bitmap.Width);
+				Assert.True(bitmap.Width > 0);
+			}
+		}
+
+		/// <summary>
+		///     Test if finding and loading from the manifest via pack uris work
+		/// </summary>
+		[Fact]
+		public void Test_PackUri()
+		{
+			var packUri = new Uri("pack://application:,,,/Dapplo.Utils.Tests;component/TestFiles/embedded-dapplo.png", UriKind.RelativeOrAbsolute);
+
+			Assert.True(packUri.EmbeddedResourceExists());
+
+			using (var stream = packUri.GetEmbeddedResourceAsStream())
 			{
 				var bitmap = stream.ImageFromStream();
 				Assert.NotNull(bitmap.Width);
