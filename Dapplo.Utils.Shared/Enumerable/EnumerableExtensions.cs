@@ -52,16 +52,17 @@ namespace Dapplo.Utils.Enumerable
 			return await Task.Run(() =>
 			{
 				var results = new List<TResult>();
-				if (!cancellationToken.IsCancellationRequested)
+				if (cancellationToken.IsCancellationRequested)
 				{
-					foreach (var item in source)
+					return results;
+				}
+				foreach (var item in source)
+				{
+					if (cancellationToken.IsCancellationRequested)
 					{
-						if (cancellationToken.IsCancellationRequested)
-						{
-							break;
-						}
-						results.Add(item);
+						break;
 					}
+					results.Add(item);
 				}
 				return results;
 			}, cancellationToken).ConfigureAwait(false);
@@ -105,16 +106,17 @@ namespace Dapplo.Utils.Enumerable
 			// Process inside the task
 			await Task.Run(() =>
 			{
-				if (!cancellationToken.IsCancellationRequested)
+				if (cancellationToken.IsCancellationRequested)
 				{
-					foreach (var item in source)
+					return;
+				}
+				foreach (var item in source)
+				{
+					if (cancellationToken.IsCancellationRequested)
 					{
-						if (cancellationToken.IsCancellationRequested)
-						{
-							break;
-						}
-						action(item);
+						break;
 					}
+					action(item);
 				}
 			}, cancellationToken).ConfigureAwait(false);
 		}
@@ -163,13 +165,14 @@ namespace Dapplo.Utils.Enumerable
 				do
 				{
 					hasRemainingItems = enumerator.MoveNext();
-					if (hasRemainingItems)
+					if (!hasRemainingItems)
 					{
-						cache.Enqueue(enumerator.Current);
-						if (cache.Count > skipN)
-						{
-							yield return cache.Dequeue();
-						}
+						continue;
+					}
+					cache.Enqueue(enumerator.Current);
+					if (cache.Count > skipN)
+					{
+						yield return cache.Dequeue();
 					}
 				} while (hasRemainingItems);
 			}

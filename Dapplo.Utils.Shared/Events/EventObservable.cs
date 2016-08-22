@@ -102,28 +102,15 @@ namespace Dapplo.Utils.Events
 			{
 				var eventHandlerInvokeDelegate = eventInfo.EventHandlerType.GetMethod("Invoke");
 				var eventType = eventHandlerInvokeDelegate.GetParameters().Last().ParameterType;
-				if (typeof(TEventArgs).IsAssignableFrom(eventType))
+				if (!typeof(TEventArgs).IsAssignableFrom(eventType))
 				{
-					var constructedType = typeof(EventObservable<>).MakeGenericType(eventType);
-					var args = new[] {targetObject, eventInfo.Name};
-					var eventObservable = (IEventObservable<TEventArgs>) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
-					yield return eventObservable;
+					continue;
 				}
+				var constructedType = typeof(EventObservable<>).MakeGenericType(eventType);
+				var args = new[] {targetObject, eventInfo.Name};
+				var eventObservable = (IEventObservable<TEventArgs>) Activator.CreateInstance(constructedType, AllBindings, null, args, null, null);
+				yield return eventObservable;
 			}
-		}
-
-		/// <summary>
-		///     Create a EventObservable for the referenced EventHandler
-		/// </summary>
-		/// <typeparam name="TEventArgs">Type for the event</typeparam>
-		/// <param name="eventHandler">EventHandler</param>
-		/// <param name="eventName">
-		///     The name of the event, e.g. via nameof(object.event), used for logging and finding the IEventObservable
-		/// </param>
-		public static IEventObservable<TEventArgs> From<TEventArgs>(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
-			where TEventArgs : EventArgs
-		{
-			return new EventObservable<TEventArgs>(ref eventHandler, eventName);
 		}
 
 		/// <summary>
@@ -178,9 +165,7 @@ namespace Dapplo.Utils.Events
 		private readonly IList<IObserver<IEventData<TEventArgs>>> _observers = new List<IObserver<IEventData<TEventArgs>>>();
 		private readonly MethodInfo _removeMethod;
 		private readonly WeakReference _targetObject;
-		private readonly bool _useEventHandler;
 		private bool _disposedValue; // To detect redundant calls
-		private EventHandler<TEventArgs> _eventHandler;
 		private bool _subscribedToEvents;
 
 		/// <summary>
@@ -199,7 +184,6 @@ namespace Dapplo.Utils.Events
 			EventArgumentType = typeof(TEventArgs);
 
 			_targetObject = new WeakReference(targetObject);
-			_useEventHandler = false;
 
 			// Sometimes the event handler only uses a single argument, for this check the parameter count of the delegate
 			var useWithSender = true;
@@ -216,19 +200,6 @@ namespace Dapplo.Utils.Events
 		}
 
 		/// <summary>
-		///     Constructor for the EventHandler ref
-		/// </summary>
-		/// <param name="eventHandler"></param>
-		/// <param name="eventName">Name of the event, can be used to find EventObservable's in a list and logging</param>
-		internal EventObservable(ref EventHandler<TEventArgs> eventHandler, string eventName = null)
-		{
-			EventName = eventName;
-			EventArgumentType = typeof(TEventArgs);
-			_eventHandler = eventHandler;
-			_useEventHandler = true;
-		}
-
-		/// <summary>
 		///     The name of the underlying event, might be null if not supplied.
 		///     Can be used to find an event using LINQ on EventObservable.EventsIn
 		/// </summary>
@@ -237,7 +208,7 @@ namespace Dapplo.Utils.Events
 		/// <summary>
 		///     The object which contains the event, could be null depending on how the event was registered
 		/// </summary>
-		public object Source => _targetObject.Target;
+		public object Source => _targetObject?.Target;
 
 		/// <summary>
 		///     The type for the Argument
@@ -266,16 +237,7 @@ namespace Dapplo.Utils.Events
 
 			try
 			{
-				if (_useEventHandler)
-				{
-					if (_eventHandler != null)
-					{
-						_eventHandler.Invoke(eventData.Sender, (TEventArgs) (object) eventData.Args);
-						return true;
-					}
-				}
-
-				var targetObject = _targetObject.Target;
+				var targetObject = _targetObject?.Target;
 				// Do nothing if the target object was garbage collected
 				if (targetObject == null)
 				{
@@ -349,28 +311,21 @@ namespace Dapplo.Utils.Events
 			{
 				_subscribedToEvents = true;
 				// Start the processing in the background by registering the event
-				if (_useEventHandler)
+				// Check weak reference, throw exception (as the called SHOULD know this)
+				var targetObject = _targetObject?.Target;
+				if (targetObject == null)
 				{
-					_eventHandler += HandleEvent;
+					var message = $"Target object with containing {EventName} event was garbage collected.";
+					Log.Error().WriteLine(message);
+					throw new ObjectDisposedException(EventName, message);
+				}
+				if (_eventInfo != null)
+				{
+					_eventInfo.AddMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 				}
 				else
 				{
-					// Check weak reference, throw exception (as the called SHOULD know this)
-					var targetObject = _targetObject.Target;
-					if (targetObject == null)
-					{
-						var message = $"Target object with containing {EventName} event was garbage collected.";
-						Log.Error().WriteLine(message);
-						throw new ObjectDisposedException(EventName, message);
-					}
-					if (_eventInfo != null)
-					{
-						_eventInfo.AddMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
-					}
-					else
-					{
-						_addMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
-					}
+					_addMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 				}
 			}
 			return Disposable.Create(() => Unsubscribe(observer));
@@ -395,18 +350,12 @@ namespace Dapplo.Utils.Events
 					if ((_observers.Count == 0) && _subscribedToEvents)
 					{
 						_subscribedToEvents = false;
-						// We finished adding events, so the processing can stop
-						if (_useEventHandler && (_eventHandler != null))
-						{
-							// ReSharper disable once DelegateSubtraction
-							_eventHandler -= HandleEvent;
-							return;
-						}
+						// There are no more subscriptions, so the event registration can be removed.
 						// Check weak reference, do nothing if the object is garbage collected
-						var targetObject = _targetObject.Target;
+						var targetObject = _targetObject?.Target;
 						if (targetObject != null)
 						{
-							if (!_useEventHandler && (_eventInfo != null))
+							if (_eventInfo != null)
 							{
 								_eventInfo.RemoveMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 							}
@@ -430,12 +379,12 @@ namespace Dapplo.Utils.Events
 		private void HandleEventWithoutSender(TEventArgs eventArgs)
 		{
 			// Check weak reference, if the target was disposed null will be passed
-			var targetObject = _targetObject.Target;
+			var targetObject = _targetObject?.Target;
 			HandleEvent(targetObject, eventArgs);
 		}
 
 		/// <summary>
-		///     This handles the actual event bye placing it into the BlockingCollection
+		///     This handles the actual event by placing it into the BlockingCollection
 		/// </summary>
 		/// <param name="sender">object</param>
 		/// <param name="eventArgs">TEventArgs</param>

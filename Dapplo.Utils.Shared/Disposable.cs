@@ -50,11 +50,12 @@ namespace Dapplo.Utils
 		/// </summary>
 		public void Dispose()
 		{
-			if (!_disposed)
+			if (_disposed)
 			{
-				_disposed = true;
-				_action();
+				return;
 			}
+			_disposed = true;
+			_action();
 		}
 
 		/// <summary>

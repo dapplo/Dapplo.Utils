@@ -130,7 +130,7 @@ namespace Dapplo.Utils.Tests
 			EventHandler<SimpleTestEventArgs> action = (sender, eventArgs) => testValue2 = eventArgs.TestValue;
 			TestStringEvent += action;
 
-			var eventObservable = EventObservable.From(ref TestStringEvent, nameof(TestStringEvent));
+			var eventObservable = EventObservable.From<SimpleTestEventArgs>(this, nameof(TestStringEvent));
 			// For later disposing
 			_enumerableEvents.Add(eventObservable);
 
@@ -141,7 +141,8 @@ namespace Dapplo.Utils.Tests
 			// Dispose makes sure no events are handled via the EventObservable, it also makes the ForEach stop!
 			eventObservable.Dispose();
 
-			// The following event should only be handled by the normal event handler
+			// The following event should only be handled by the initial event handler
+			// ReSharper disable once PossibleNullReferenceException
 			TestStringEvent(this, new SimpleTestEventArgs {TestValue = "Robin"});
 			await eventHandleTask;
 			// Make sure both values are what they are supposed to!

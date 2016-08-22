@@ -92,12 +92,13 @@ namespace Dapplo.Utils
 		/// </summary>
 		private void DisposeInternal()
 		{
-			if (!_disposedValue)
+			if (_disposedValue)
 			{
-				_semaphoreSlim.Dispose();
-
-				_disposedValue = true;
+				return;
 			}
+			_semaphoreSlim.Dispose();
+
+			_disposedValue = true;
 		}
 
 		/// <summary>
