@@ -28,11 +28,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Dapplo.Utils.Events;
+using Dapplo.Utils.Extensions;
 
 #endregion
 
-namespace Dapplo.Utils.Extensions
+namespace Dapplo.Utils.Events
 {
 	/// <summary>
 	///     Extensions for IHasEvents and IEventObservable
@@ -142,14 +145,70 @@ namespace Dapplo.Utils.Extensions
 		///     This subscribes an EnumerableObserver (which implements IEnumerable) and returns this
 		/// </summary>
 		/// <returns>IEnumerator for IEventData of TEventArgs</returns>
-		public static IEnumerable<IEventData<TEventArgs>> Subscribe<TEventArgs>(this IObservable<IEventData<TEventArgs>> eventObservable)
+		public static IEnumerable<IEventData<TEventArgs>> Subscribe<TEventArgs>(this IObservable<IEventData<TEventArgs>> eventObservable, CancellationToken cancellationToken = default(CancellationToken))
 			where TEventArgs : class
 		{
 			if (eventObservable == null)
 			{
 				throw new ArgumentNullException(nameof(eventObservable));
 			}
-			return new EnumerableObserver<IEventData<TEventArgs>>(eventObservable);
+			return new EnumerableObserver<IEventData<TEventArgs>>(eventObservable, cancellationToken);
+		}
+
+		/// <summary>
+		///     This subscribes an IObservable and waits until the predicate returns true
+		/// </summary>
+		/// <returns>true if there was a value</returns>
+		public static Task<bool> AnyAsync<TEventArgs>(this IObservable<IEventData<TEventArgs>> eventObservable, Func<IEventData<TEventArgs>, bool> predicate, CancellationToken cancellationToken = default(CancellationToken))
+			where TEventArgs : class
+		{
+			if (eventObservable == null)
+			{
+				throw new ArgumentNullException(nameof(eventObservable));
+			}
+			return eventObservable.Subscribe(cancellationToken).AnyAsync(predicate, cancellationToken);
+		}
+
+		/// <summary>
+		///     This subscribes an IObservable and waits until an event matches the predicate
+		/// </summary>
+		/// <returns>true if there was a value</returns>
+		public static Task<bool> AnyAsync<TEventArgs>(this IObservable<IEventData<TEventArgs>> eventObservable, Func<TEventArgs, bool> predicate, CancellationToken cancellationToken = default(CancellationToken))
+			where TEventArgs : class
+		{
+			if (eventObservable == null)
+			{
+				throw new ArgumentNullException(nameof(eventObservable));
+			}
+			return eventObservable.Subscribe(cancellationToken).Flatten().AnyAsync(predicate, cancellationToken);
+		}
+
+		/// <summary>
+		///     This subscribes an IObservable and waits until an event matches the predicate, this expects a match
+		/// </summary>
+		/// <returns>IEventData</returns>
+		public static Task<IEventData<TEventArgs>> WhenAsync<TEventArgs>(this IObservable<IEventData<TEventArgs>> eventObservable, Func<IEventData<TEventArgs>, bool> predicate, CancellationToken cancellationToken = default(CancellationToken))
+			where TEventArgs : class
+		{
+			if (eventObservable == null)
+			{
+				throw new ArgumentNullException(nameof(eventObservable));
+			}
+			return eventObservable.Subscribe(cancellationToken).FirstAsync(predicate, cancellationToken);
+		}
+
+		/// <summary>
+		///     This subscribes an IObservable and waits until an event matches the predicate, this expects a match
+		/// </summary>
+		/// <returns>TEventArgs</returns>
+		public static Task<TEventArgs> WhenAsync<TEventArgs>(this IObservable<IEventData<TEventArgs>> eventObservable, Func<TEventArgs, bool> predicate, CancellationToken cancellationToken = default(CancellationToken))
+			where TEventArgs : class
+		{
+			if (eventObservable == null)
+			{
+				throw new ArgumentNullException(nameof(eventObservable));
+			}
+			return eventObservable.Subscribe(cancellationToken).Flatten().FirstAsync(predicate, cancellationToken);
 		}
 
 		/// <summary>

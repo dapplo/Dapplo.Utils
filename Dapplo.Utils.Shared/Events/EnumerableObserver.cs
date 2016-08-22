@@ -29,6 +29,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 #endregion
 
@@ -41,10 +42,13 @@ namespace Dapplo.Utils.Events
 	{
 		private readonly BlockingCollection<TValue> _values = new BlockingCollection<TValue>();
 		private readonly IDisposable _subscription;
+		private readonly CancellationToken _cancellationToken;
+		private const int TimeoutMs = 300;
 
-		public EnumerableObserver(IObservable<TValue> parent)
+		public EnumerableObserver(IObservable<TValue> parent, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			_subscription = parent.Subscribe(this);
+			_cancellationToken = cancellationToken;
 		}
 
 		/// <summary>
@@ -57,12 +61,12 @@ namespace Dapplo.Utils.Events
 			{
 				try
 				{
-					// Check if the Observable is ready with suplying values
-					while (!_values.IsCompleted)
+					// Check if the Observable is ready with suplying values, or cancel was requested
+					while (!_values.IsCompleted || _cancellationToken.IsCancellationRequested)
 					{
 						TValue item;
-						// Try getting a value, this blocks for one second unless a value is available.
-						while (_values.TryTake(out item, TimeSpan.FromSeconds(1)))
+						// Try getting a value, this blocks for some time  unless a value is available and also monitors the CancellationToken
+						while (_values.TryTake(out item, TimeoutMs, _cancellationToken))
 						{
 							// Just yield the value
 							yield return item;

@@ -22,12 +22,12 @@
 #region using
 
 using Dapplo.Log.Facade;
-using Dapplo.Utils.Extensions;
 using Xunit;
 using Xunit.Abstractions;
 using System;
 using Dapplo.Utils.Tests.TestEntities;
 using Dapplo.Log.XUnit;
+using Dapplo.Utils.Events;
 
 #endregion
 

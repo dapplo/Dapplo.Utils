@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 
 #endregion
 
-namespace Dapplo.Utils.Enumerable
+namespace Dapplo.Utils.Extensions
 {
 	/// <summary>
 	///     Simple IEnumerable extensions.
@@ -47,7 +47,7 @@ namespace Dapplo.Utils.Enumerable
 		/// <param name="cancellationToken">optional CancellationToken</param>
 		/// <typeparam name="TResult">The type for the result</typeparam>
 		/// <returns>Task with an IEnumerable of type TResult</returns>
-		public static async Task<IEnumerable<TResult>> ToTask<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task<IList<TResult>> ToListAsync<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return await Task.Run(() =>
 			{
@@ -78,31 +78,29 @@ namespace Dapplo.Utils.Enumerable
 		/// <typeparam name="TResult">The type for the result</typeparam>
 		/// <typeparam name="TSource">The type of the IEnumerable</typeparam>
 		/// <returns>Task with TResult</returns>
-		public static async Task<TResult> ToTask<TSource, TResult>(this IEnumerable<TSource> source, Func<IEnumerable<TSource>, TResult> resultFunc, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task<TResult> ToResultAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<IEnumerable<TSource>, TResult> resultFunc, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			return await Task.Run(() => resultFunc(source), cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
-		///     As the BCL doesn't include a ForEach on the IEnumerable, this extension was added to help a few border cases
+		///     An async version of the ForEach extension
 		/// </summary>
 		/// <typeparam name="T">Type of the IEnumerable</typeparam>
 		/// <param name="source">The IEnumerable</param>
 		/// <param name="action">Action to call for each item</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task to await for</returns>
-		public static async Task ToTask<T>(this IEnumerable<T> source, Action<T> action, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task ForeachAsync<T>(this IEnumerable<T> source, Action<T> action, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (source == null)
 			{
 				throw new ArgumentNullException(nameof(source));
 			}
-
 			if (action == null)
 			{
 				throw new ArgumentNullException(nameof(action));
 			}
-
 			// Process inside the task
 			await Task.Run(() =>
 			{
@@ -118,6 +116,106 @@ namespace Dapplo.Utils.Enumerable
 					}
 					action(item);
 				}
+			}, cancellationToken).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		///     A simple foreach
+		/// </summary>
+		/// <typeparam name="T">Type of the IEnumerable</typeparam>
+		/// <param name="source">The IEnumerable</param>
+		/// <param name="action">Action to call for each item</param>
+		/// <param name="cancellationToken">CancellationToken, which breaks the enumeration</param>
+		public static void Foreach<T>(this IEnumerable<T> source, Action<T> action, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+			if (action == null)
+			{
+				throw new ArgumentNullException(nameof(action));
+			}
+			if (cancellationToken.IsCancellationRequested)
+			{
+				return;
+			}
+			foreach (var item in source)
+			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					break;
+				}
+				action(item);
+			}
+		}
+
+
+		/// <summary>
+		/// Returns if there is any (matching) value in the source
+		/// </summary>
+		/// <typeparam name="T">Type for the IEnumerable</typeparam>
+		/// <param name="source">IEnumerable of T</param>
+		/// <param name="predicate">Func which takes a T and returns a bool, can be null</param>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>true if there was a value, false if not</returns>
+		public static async Task<bool> AnyAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+
+			return await Task.Run(() =>
+			{
+				if (cancellationToken.IsCancellationRequested)
+				{
+					return false;
+				}
+				foreach (var item in source)
+				{
+					if (cancellationToken.IsCancellationRequested)
+					{
+						return false;
+					}
+					if (predicate != null && !predicate(item))
+					{
+						continue;
+					}
+					return true;
+				}
+				return false;
+			}, cancellationToken).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Returns the first, blocks until there is something, throws an InvalidOperationException when cancelled or when there are no items left
+		/// </summary>
+		/// <typeparam name="T">Type for the IEnumerable</typeparam>
+		/// <param name="source">IEnumerable of T</param>
+		/// <param name="predicate">Func which takes a T and returns a bool</param>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>first T in the IEnumerable</returns>
+		public static async Task<T> FirstAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+
+			return await Task.Run(() =>
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				foreach (var item in source)
+				{
+					cancellationToken.ThrowIfCancellationRequested();
+					if (predicate != null && !predicate(item))
+					{
+						continue;
+					}
+					return item;
+				}
+				throw new InvalidOperationException("No elements found.");
 			}, cancellationToken).ConfigureAwait(false);
 		}
 

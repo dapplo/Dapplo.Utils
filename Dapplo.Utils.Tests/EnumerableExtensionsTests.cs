@@ -22,12 +22,12 @@
 #region using
 
 using System;
+using System.Linq;
 using Dapplo.Log.Facade;
 using Xunit;
 using Xunit.Abstractions;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils.Enumerable;
-using System.Linq;
+using Dapplo.Utils.Extensions;
 
 #endregion
 

@@ -14,27 +14,27 @@
     <Compile Include="$(MSBuildThisFileDirectory)Disposable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Disposables.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Embedded\EmbeddedResources.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Enumerable\EnumerableExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventDataExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Events\EventExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EventObservable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\DirectObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\EnumerableObserver.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Events\IEventObservable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\DictionaryExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Extensions\EventExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\EnumerableExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\EnumExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\ExpressionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\NotifyPropertyExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\PropertyInfoExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StreamExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\TaskExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FileTools.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IHasEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IShallowCloneable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NoSynchronizationContextScope.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Tasks\TaskExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UiContext.cs" />
   </ItemGroup>
 </Project>

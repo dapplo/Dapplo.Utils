@@ -31,7 +31,7 @@ using System.Threading.Tasks;
 
 #endregion
 
-namespace Dapplo.Utils.Tasks
+namespace Dapplo.Utils.Extensions
 {
 	/// <summary>
 	///     A few simple task helpers.

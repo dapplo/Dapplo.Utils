@@ -28,14 +28,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils.Enumerable;
 using Dapplo.Utils.Events;
 using Dapplo.Utils.Extensions;
-using Dapplo.Utils.Tasks;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;
 using Xunit.Abstractions;
@@ -78,7 +77,7 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
-				await eventObservable.Subscribe().Take(1).ToTask();
+				await eventObservable.Subscribe().Take(1).ToListAsync();
 			}
 		}
 
@@ -134,7 +133,7 @@ namespace Dapplo.Utils.Tests
 			// For later disposing
 			_enumerableEvents.Add(eventObservable);
 
-			var eventHandleTask = eventObservable.Subscribe().Flatten().ToTask(e => testValue = e.First().TestValue);
+			var eventHandleTask = eventObservable.Subscribe().Flatten().ToResultAsync(e => testValue = e.First().TestValue);
 
 			Assert.True(eventObservable.Trigger(new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
@@ -198,8 +197,27 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().ToTask(x => x.First()).WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().FirstAsync().WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
+			}
+		}
+
+		/// <summary>
+		///     Create a timer, register a EventObservable to it.
+		///     Expect that there is an event with a signaltime which is greater than now + 400
+		/// </summary>
+		[Fact]
+		public async Task EventObservable_AnyAsync_Test()
+		{
+			var timer = new Timer(TimeSpan.FromMilliseconds(200).TotalMilliseconds);
+
+			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				timer.Start();
+				var waitUntil = DateTime.Now.AddMilliseconds(400);
+				var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+
+				Assert.True(await eventObservable.AnyAsync(args => args.SignalTime > waitUntil, cts.Token));
 			}
 		}
 
@@ -211,9 +229,8 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
-
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().ToTask(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().ForeachAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -233,7 +250,7 @@ namespace Dapplo.Utils.Tests
 				timer.Start();
 
 				// Await with a timeout bigger than the timer tick
-				await eventObservable.Subscribe().Take(1).ToTask().WithTimeout(TimeSpan.FromSeconds(3));
+				await eventObservable.Subscribe().Take(1).ToListAsync().WithTimeout(TimeSpan.FromSeconds(3));
 			}
 		}
 	}

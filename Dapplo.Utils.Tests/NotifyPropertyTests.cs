@@ -31,7 +31,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapplo.Log.Facade;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils.Enumerable;
 using Dapplo.Utils.Events;
 using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tests.TestEntities;
@@ -56,7 +55,7 @@ namespace Dapplo.Utils.Tests
 			var npc = new NotifyPropertyChangedImpl();
 			using (var eventObservable = EventObservable.From(npc))
 			{
-				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToTask(x => x.Count());
+				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToResultAsync(x => x.Count());
 				npc.Name = "Dapplo";
 				await Task.Delay(1000);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -118,7 +117,7 @@ namespace Dapplo.Utils.Tests
 				// Register ProcessAsync which throws an exception if there is a "2" in the PropertyName
 				var task = eventObservable.Subscribe().Flatten().
 					Where(e => e.PropertyName.Contains("2")).
-					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).ToTask(x => x.First());
+					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).ToResultAsync(x => x.First());
 				npc.Name = "Dapplo";
 				await Task.Delay(1000);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -136,7 +135,7 @@ namespace Dapplo.Utils.Tests
 			{
 				// Register a do which throws an exception
 				var task =
-					eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToTask(x => { return x.First(); });
+					eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToResultAsync(x => { return x.First(); });
 				npc.Name = "Dapplo";
 				await Task.Delay(1000);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
