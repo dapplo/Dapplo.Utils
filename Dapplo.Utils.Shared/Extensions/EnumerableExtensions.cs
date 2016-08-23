@@ -49,6 +49,8 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Task with an IEnumerable of type TResult</returns>
 		public static async Task<IList<TResult>> ToListAsync<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			// Do not pass the CancellationToken, as this would case an OperationCanceledException
+			// ReSharper disable once MethodSupportsCancellation
 			return await Task.Run(() =>
 			{
 				var results = new List<TResult>();
@@ -65,33 +67,19 @@ namespace Dapplo.Utils.Extensions
 					results.Add(item);
 				}
 				return results;
-			}, cancellationToken).ConfigureAwait(false);
+			}).ConfigureAwait(false);
 		}
 
 		/// <summary>
-		/// Convert a linq query to an task which can be awaited.
-		/// The function will process the source IEnumeration and returns a result (which could be an enumeration itself).
-		/// </summary>
-		/// <param name="source">IEnumerable of type TSource</param>
-		/// <param name="resultFunc">Func to process the IEnumerable and returns a TResult</param>
-		/// <param name="cancellationToken">optional CancellationToken</param>
-		/// <typeparam name="TResult">The type for the result</typeparam>
-		/// <typeparam name="TSource">The type of the IEnumerable</typeparam>
-		/// <returns>Task with TResult</returns>
-		public static async Task<TResult> ToResultAsync<TSource, TResult>(this IEnumerable<TSource> source, Func<IEnumerable<TSource>, TResult> resultFunc, CancellationToken cancellationToken = default(CancellationToken))
-		{
-			return await Task.Run(() => resultFunc(source), cancellationToken).ConfigureAwait(false);
-		}
-
-		/// <summary>
-		///     An async version of the ForEach extension
+		///     An async version of the ForEach extension, with an optional predicate
 		/// </summary>
 		/// <typeparam name="T">Type of the IEnumerable</typeparam>
 		/// <param name="source">The IEnumerable</param>
 		/// <param name="action">Action to call for each item</param>
+		/// <param name="predicate">Predicate func</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task to await for</returns>
-		public static async Task ForeachAsync<T>(this IEnumerable<T> source, Action<T> action, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> action, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (source == null)
 			{
@@ -102,31 +90,23 @@ namespace Dapplo.Utils.Extensions
 				throw new ArgumentNullException(nameof(action));
 			}
 			// Process inside the task
+			// Do not pass the CancellationToken, as this would case an OperationCanceledException
+			// ReSharper disable once MethodSupportsCancellation
 			await Task.Run(() =>
 			{
-				if (cancellationToken.IsCancellationRequested)
-				{
-					return;
-				}
-				foreach (var item in source)
-				{
-					if (cancellationToken.IsCancellationRequested)
-					{
-						break;
-					}
-					action(item);
-				}
-			}, cancellationToken).ConfigureAwait(false);
+				source.ForEach(action, predicate, cancellationToken);
+			}).ConfigureAwait(false);
 		}
 
 		/// <summary>
-		///     A simple foreach
+		///     A simple foreach, with an optional predicate
 		/// </summary>
 		/// <typeparam name="T">Type of the IEnumerable</typeparam>
 		/// <param name="source">The IEnumerable</param>
 		/// <param name="action">Action to call for each item</param>
+		/// <param name="predicate">Predicate func</param>
 		/// <param name="cancellationToken">CancellationToken, which breaks the enumeration</param>
-		public static void Foreach<T>(this IEnumerable<T> source, Action<T> action, CancellationToken cancellationToken = default(CancellationToken))
+		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (source == null)
 			{
@@ -145,6 +125,10 @@ namespace Dapplo.Utils.Extensions
 				if (cancellationToken.IsCancellationRequested)
 				{
 					break;
+				}
+				if (predicate != null && !predicate(item))
+				{
+					continue;
 				}
 				action(item);
 			}
@@ -166,6 +150,8 @@ namespace Dapplo.Utils.Extensions
 				throw new ArgumentNullException(nameof(source));
 			}
 
+			// Do not pass the CancellationToken, as this would case an OperationCanceledException
+			// ReSharper disable once MethodSupportsCancellation
 			return await Task.Run(() =>
 			{
 				if (cancellationToken.IsCancellationRequested)
@@ -185,7 +171,7 @@ namespace Dapplo.Utils.Extensions
 					return true;
 				}
 				return false;
-			}, cancellationToken).ConfigureAwait(false);
+			}).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -217,6 +203,44 @@ namespace Dapplo.Utils.Extensions
 				}
 				throw new InvalidOperationException("No elements found.");
 			}, cancellationToken).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Returns the count of the items in the source
+		/// </summary>
+		/// <param name="source">IEnumerable of T</param>
+		/// <param name="predicate">Func which takes a T and returns a bool</param>
+		/// <param name="cancellationToken">CancellationToken</param>
+		/// <returns>first T in the IEnumerable</returns>
+		public static async Task<int> CountAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+
+			// Do not pass the CancellationToken, as this would case an OperationCanceledException
+			// ReSharper disable once MethodSupportsCancellation
+			return await Task.Run(() =>
+			{
+				int count = 0;
+				if (!cancellationToken.IsCancellationRequested)
+				{
+					foreach (var item in source)
+					{
+						if (cancellationToken.IsCancellationRequested)
+						{
+							break;
+						}
+						if (predicate != null && !predicate(item))
+						{
+							continue;
+						}
+						count++;
+					}
+				}
+				return count;
+			}).ConfigureAwait(false);
 		}
 
 		/// <summary>

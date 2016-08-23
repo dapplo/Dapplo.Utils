@@ -26,6 +26,7 @@
 #region Usings
 
 using System;
+using System.Threading;
 
 #endregion
 
@@ -41,7 +42,14 @@ namespace Dapplo.Utils.Events
 		private readonly Func<TValue, bool> _predicate = e => true;
 		private readonly IDisposable _subscription;
 
-		public DirectObserver(IObservable<TValue> observable, Action<TValue> action, Func<TValue, bool> predicate)
+		/// <summary>
+		/// Create an DirectObserver which subscribes to the parent, and than calls the action (if the optional predicate returns true) when an event occurs.
+		/// </summary>
+		/// <param name="observable">IObservable</param>
+		/// <param name="action">Action</param>
+		/// <param name="predicate">Func predicate</param>
+		/// <param name="cancellationToken">CancellationToken used to cancel the subscription</param>
+		public DirectObserver(IObservable<TValue> observable, Action<TValue> action, Func<TValue, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (observable == null)
 			{
@@ -57,6 +65,11 @@ namespace Dapplo.Utils.Events
 				_predicate = predicate;
 			}
 			_subscription = observable.Subscribe(this);
+			if (cancellationToken != CancellationToken.None)
+			{
+				// If the cancellationToken is cancelled, unsubscribe
+				cancellationToken.Register(() => _subscription.Dispose());
+			}
 		}
 
 		/// <summary>

@@ -55,24 +55,24 @@ namespace Dapplo.Utils.Tests
 			var npc = new NotifyPropertyChangedImpl();
 			using (var eventObservable = EventObservable.From(npc))
 			{
-				var task = eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Take(1).ToResultAsync(x => x.Count());
+				var task = eventObservable.Flatten().FirstAsync(e => e.PropertyName.Contains("2"));
 				npc.Name = "Dapplo";
-				await Task.Delay(1000);
+				await Task.Delay(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
 				npc.Name2 = "Dapplo";
-				await Task.Delay(1000);
+				await Task.Delay(100);
 				Assert.True(task.IsCompleted);
 			}
 		}
 
 		[Fact]
-		public void EventObservable_OnEach()
+		public void EventObservable_ForEach()
 		{
 			string testValue = null;
 			var npc = new NotifyPropertyChangedImpl();
 			using (var eventObservable = EventObservable.From(npc))
 			{
-				var handler = eventObservable.OnEach(e => testValue = e.Args.PropertyName);
+				var handler = eventObservable.ForEach(e => testValue = e.Args.PropertyName);
 				npc.Name = "Dapplo";
 				Assert.Equal(nameof(npc.Name), testValue);
 				testValue = null;
@@ -84,12 +84,12 @@ namespace Dapplo.Utils.Tests
 		}
 
 		[Fact]
-		public void EventObservable_OnEach_GC()
+		public void EventObservable_ForEach_GC()
 		{
 			// ReSharper disable once NotAccessedVariable
 			string testValue = null;
 			var eventObservable = EventObservable.From(new NotifyPropertyChangedImpl());
-			var handler = eventObservable.OnEach(e => testValue = e.Args.PropertyName);
+			var handler = eventObservable.ForEach(e => testValue = e.Args.PropertyName);
 			// Make sure the instance of NotifyPropertyChangedImpl is garbage collected!
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
@@ -115,14 +115,13 @@ namespace Dapplo.Utils.Tests
 			using (var eventObservable = EventObservable.From<PropertyChangedEventArgs>(npc, nameof(npc.PropertyChanged)))
 			{
 				// Register ProcessAsync which throws an exception if there is a "2" in the PropertyName
-				var task = eventObservable.Subscribe().Flatten().
-					Where(e => e.PropertyName.Contains("2")).
-					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).ToResultAsync(x => x.First());
+				var task = eventObservable.Flatten().Where(e => e.PropertyName.Contains("2")).
+					Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).FirstAsync();
 				npc.Name = "Dapplo";
-				await Task.Delay(1000);
+				await Task.Delay(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
 				npc.Name2 = "Dapplo";
-				await Task.Delay(1000);
+				await Task.Delay(100);
 				Assert.True(task.IsFaulted);
 			}
 		}
@@ -133,14 +132,13 @@ namespace Dapplo.Utils.Tests
 			var npc = new NotifyPropertyChangedImpl();
 			using (var eventObservable = EventObservable.From(npc))
 			{
-				// Register a do which throws an exception
-				var task =
-					eventObservable.Subscribe().Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).ToResultAsync(x => { return x.First(); });
+				// create a task which waits for the first event where the property name contains 2 and return the property name 
+				var task = eventObservable.Flatten().Where(e => e.PropertyName.Contains("2")).Select(e => e.PropertyName).FirstAsync();
 				npc.Name = "Dapplo";
-				await Task.Delay(1000);
+				await Task.Delay(100);
 				Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
 				npc.Name2 = "Dapplo";
-				await Task.Delay(1000);
+				await Task.Delay(100);
 				Assert.True(task.IsCompleted);
 				Assert.Equal("Name2", await task);
 			}

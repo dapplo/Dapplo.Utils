@@ -47,7 +47,7 @@ namespace Dapplo.Utils.Tests
 	/// <summary>
 	///     Test IEventObservable
 	/// </summary>
-	public class EventObservableTests : IDisposable
+	public class EventObservableTests : IDisposable, IHaveEvents
 	{
 		public EventObservableTests(ITestOutputHelper testOutputHelper)
 		{
@@ -105,12 +105,12 @@ namespace Dapplo.Utils.Tests
 		///     Test the basic functionality for setting up an event handler via reflection
 		/// </summary>
 		[Fact]
-		public void EventObservable_OnEach_Test()
+		public void EventObservable_ForEach_Test()
 		{
 			string testValue = null;
 			using (var eventObservable = EventObservable.From<SimpleTestEventArgs>(this, nameof(TestStringEvent)))
 			{
-				eventObservable.OnEach(e => { testValue = e.Args.TestValue; });
+				eventObservable.ForEach(e => { testValue = e.Args.TestValue; });
 				Assert.True(eventObservable.Trigger(new SimpleTestEventArgs {TestValue = "Dapplo"}));
 			}
 			Assert.Equal("Dapplo", testValue);
@@ -133,7 +133,10 @@ namespace Dapplo.Utils.Tests
 			// For later disposing
 			_enumerableEvents.Add(eventObservable);
 
-			var eventHandleTask = eventObservable.Subscribe().Flatten().ToResultAsync(e => testValue = e.First().TestValue);
+			var eventHandleTask = eventObservable.Flatten().FirstAsync().ContinueWith(task =>
+			{
+				testValue = task.Result.TestValue;
+			});
 
 			Assert.True(eventObservable.Trigger(new SimpleTestEventArgs {TestValue = "Dapplo"}));
 
@@ -164,7 +167,7 @@ namespace Dapplo.Utils.Tests
 			IDisposable subscription = null;
 			foreach (var eventObservable in EventObservable.EventsIn<EventArgs>(this))
 			{
-				subscription = eventObservable.OnEach(x => receivedValue = x.Args);
+				subscription = eventObservable.ForEach(x => receivedValue = x.Args);
 				break;
 			}
 			// Test for subscriptions.
@@ -175,7 +178,7 @@ namespace Dapplo.Utils.Tests
 			// Make sure it arrived
 			Assert.Equal(testValue, receivedValue);
 
-			// Remove OnEach
+			// Remove ForEach
 			subscription?.Dispose();
 
 			// All event handlers should have unsubscribed
@@ -190,16 +193,94 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task EventObservable_Timer_TimeoutFunctionTest()
 		{
-			var timer = new Timer(TimeSpan.FromSeconds(2).TotalMilliseconds);
+			var timer = new Timer(TimeSpan.FromMilliseconds(400).TotalMilliseconds);
 
 			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().FirstAsync().WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.FirstAsync().WithTimeout(TimeSpan.FromMilliseconds(300)));
 				Log.Info().WriteLine(ex.Message);
 			}
+		}
+
+		/// <summary>
+		///     Create a timer, register a EventObservable to it.
+		///     Start the timer and count the ticks.
+		/// </summary>
+		[Fact]
+		public async Task EventObservable_CountAsync_Test()
+		{
+			// 1000 / 100 would be 10, but make it tick a bit less than 100 ms, as it would just not fit due to the "starup overhead"
+			var timer = new Timer(TimeSpan.FromMilliseconds(80).TotalMilliseconds);
+
+			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				var cancellationTokenSource = new CancellationTokenSource();
+				cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(300));
+				timer.Start();
+				Assert.Equal(3, await eventObservable.CountAsync(cancellationToken: cancellationTokenSource.Token));
+			}
+		}
+
+		/// <summary>
+		///     Create a timer, register a EventObservable to it.
+		///     Start the timer and count the ticks.
+		/// </summary>
+		[Fact]
+		public void EventObservable_ForEach_Cancel_Test()
+		{
+			// 1000 / 100 would be 10, but make it tick a bit less than 100 ms, as it would just not fit due to the "starup overhead"
+			var timer = new Timer(TimeSpan.FromMilliseconds(85).TotalMilliseconds);
+
+			int count = 0;
+			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				var cancellationTokenSource = new CancellationTokenSource();
+				cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(400));
+				timer.Start();
+				eventObservable.ForEach(data => count++, cancellationToken: cancellationTokenSource.Token);
+				// Sleep longer, to make sure it was the cancellationTokenSource which cancelled
+				Thread.Sleep(500);
+			}
+			Assert.Equal(4, count);
+		}
+
+
+		/// <summary>
+		///     Create a timer, register a EventObservable to it.
+		///     Start the timer, cancel after a certain time and count the ticks.
+		/// </summary>
+		[Fact]
+		public async Task EventObservable_ForEachAsync_Cancel_Test()
+		{
+			// 1000 / 100 would be 10, but make it tick a bit less than 100 ms, as it would just not fit due to the "starup overhead"
+			var timer = new Timer(TimeSpan.FromMilliseconds(85).TotalMilliseconds);
+
+			int count = 0;
+			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				var cancellationTokenSource = new CancellationTokenSource();
+				cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(400));
+				timer.Start();
+				await eventObservable.ForEachSync(data => count++, cancellationToken: cancellationTokenSource.Token);
+			}
+			Assert.Equal(4, count);
+		}
+
+		[Fact]
+		public void EventObservable_OfType()
+		{
+			var eventObservables = EventObservable.EventsIn<EventArgs>(this);
+			Assert.Equal(1, eventObservables.OfType<SimpleTestEventArgs>().Count());
+		}
+
+		[Fact]
+		public void EventObservable_This_EventsIn_OfType()
+		{
+			var eventObservables = this.EventsIn<EventArgs>();
+			Assert.Equal(1, eventObservables.OfType<SimpleTestEventArgs>().Count());
 		}
 
 		/// <summary>
@@ -217,20 +298,20 @@ namespace Dapplo.Utils.Tests
 				var waitUntil = DateTime.Now.AddMilliseconds(400);
 				var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
 
-				Assert.True(await eventObservable.AnyAsync(args => args.SignalTime > waitUntil, cts.Token));
+				Assert.True(await eventObservable.AnyAsync(args => args.Args.SignalTime > waitUntil, cts.Token));
 			}
 		}
 
 		[Fact]
 		public async Task EventObservable_Timer_TimeoutActionTest()
 		{
-			var timer = new Timer(TimeSpan.FromSeconds(2).TotalMilliseconds);
+			var timer = new Timer(TimeSpan.FromMilliseconds(300).TotalMilliseconds);
 
 			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 				// Await with a timeout smaller than the timer tick
-				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Subscribe().Flatten().ForeachAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromSeconds(1)));
+				var ex = await Assert.ThrowsAsync<TimeoutException>(async () => await eventObservable.Flatten().ForEachAsync(x => Log.Verbose().WriteLine("Elapsed at {0}", x.SignalTime)).WithTimeout(TimeSpan.FromMilliseconds(200)));
 				Log.Info().WriteLine(ex.Message);
 			}
 		}
@@ -243,14 +324,14 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public async Task EventObservable_Timer_OkTest()
 		{
-			var timer = new Timer(TimeSpan.FromSeconds(1).TotalMilliseconds);
+			var timer = new Timer(TimeSpan.FromMilliseconds(300).TotalMilliseconds);
 
 			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
 			{
 				timer.Start();
 
 				// Await with a timeout bigger than the timer tick
-				await eventObservable.Subscribe().Take(1).ToListAsync().WithTimeout(TimeSpan.FromSeconds(3));
+				await eventObservable.Subscribe().Take(1).ToListAsync().WithTimeout(TimeSpan.FromSeconds(400));
 			}
 		}
 	}

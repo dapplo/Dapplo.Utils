@@ -43,15 +43,15 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void TestRemoveAllEventHandlers()
 		{
-			var hasEvents = new HasEvents();
+			var haveEvents = new HaveEvents();
 			// Should throw exception
-			Assert.Throws<Exception>(() => hasEvents.Invoke());
+			Assert.Throws<Exception>(() => haveEvents.Invoke());
 
 			// Remove the event handlers
-			hasEvents.RemoveEventHandlers();
+			haveEvents.RemoveEventHandlers();
 
 			// Should not throw exception
-			hasEvents.Invoke();
+			haveEvents.Invoke();
 		}
 	}
 }

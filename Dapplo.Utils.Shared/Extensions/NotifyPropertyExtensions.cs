@@ -103,7 +103,7 @@ namespace Dapplo.Utils.Extensions
 				};
 			}
 
-			return notifyPropertyChangedEventObservable.OnEach(pce => notifyAction(pce.Args.PropertyName), predicate);
+			return notifyPropertyChangedEventObservable.ForEach(pce => notifyAction(pce.Args.PropertyName), predicate);
 		}
 
 		/// <summary>
@@ -181,7 +181,7 @@ namespace Dapplo.Utils.Extensions
 					return false;
 				};
 			}
-			return notifyPropertyChangedEventObservable.OnEach(pce => notifyAction(pce.Args.PropertyName), predicate);
+			return notifyPropertyChangedEventObservable.ForEach(pce => notifyAction(pce.Args.PropertyName), predicate);
 		}
 
 		/// <summary>

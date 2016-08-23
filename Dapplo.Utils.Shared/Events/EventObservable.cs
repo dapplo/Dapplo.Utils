@@ -328,6 +328,7 @@ namespace Dapplo.Utils.Events
 					_addMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 				}
 			}
+			// TODO: Check if we need to return a Disposable when the subscribe didn't do anything (e.g. when it was already subscribed)
 			return Disposable.Create(() => Unsubscribe(observer));
 		}
 

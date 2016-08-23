@@ -32,7 +32,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TaskExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\TypeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FileTools.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IHasEvents.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IHaveEvents.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IShallowCloneable.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NoSynchronizationContextScope.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UiContext.cs" />

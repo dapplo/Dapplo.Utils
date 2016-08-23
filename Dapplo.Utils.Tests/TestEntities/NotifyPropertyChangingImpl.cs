@@ -30,7 +30,7 @@ namespace Dapplo.Utils.Tests.TestEntities
 	/// <summary>
 	/// Class used for testing the EventObservable with INotifyPropertyChanging
 	/// </summary>
-	public class NotifyPropertyChangingImpl : INotifyPropertyChanging, IHasEvents
+	public class NotifyPropertyChangingImpl : INotifyPropertyChanging, IHaveEvents
 	{
 		public event PropertyChangingEventHandler PropertyChanging;
 		private string _name;

@@ -27,12 +27,12 @@ using System;
 
 namespace Dapplo.Utils.Tests.TestEntities
 {
-	public class HasEvents : IHasEvents
+	public class HaveEvents : IHaveEvents
 	{
 		public event EventHandler Blub;
 		private event EventHandler _blub;
 
-		public HasEvents()
+		public HaveEvents()
 		{
 			_blub += (s, e) => {
 				throw new Exception();

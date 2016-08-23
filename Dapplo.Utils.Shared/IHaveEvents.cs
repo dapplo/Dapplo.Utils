@@ -25,7 +25,7 @@ namespace Dapplo.Utils
 	/// <summary>
 	/// Marker interface for objects which contain events, this enables event extension methods.
 	/// </summary>
-	public interface IHasEvents
+	public interface IHaveEvents
 	{
 	}
 }

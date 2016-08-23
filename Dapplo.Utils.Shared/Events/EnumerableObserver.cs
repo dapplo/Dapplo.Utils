@@ -45,10 +45,20 @@ namespace Dapplo.Utils.Events
 		private readonly CancellationToken _cancellationToken;
 		private const int TimeoutMs = 300;
 
+		/// <summary>
+		/// Create an EnumerableObserver and subscribe it to the parent, this can be used to get a IEnumerable for events
+		/// </summary>
+		/// <param name="parent">IObservable</param>
+		/// <param name="cancellationToken">CancellationToken when cancel requested this subscription is stopped</param>
 		public EnumerableObserver(IObservable<TValue> parent, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			_subscription = parent.Subscribe(this);
 			_cancellationToken = cancellationToken;
+			if (cancellationToken != CancellationToken.None)
+			{
+				// Make complete adding when the cancellationToken is cancelled
+				cancellationToken.Register(() => _values.CompleteAdding());
+			}
 		}
 
 		/// <summary>
@@ -62,11 +72,11 @@ namespace Dapplo.Utils.Events
 				try
 				{
 					// Check if the Observable is ready with suplying values, or cancel was requested
-					while (!_values.IsCompleted || _cancellationToken.IsCancellationRequested)
+					while (!_values.IsCompleted && !_cancellationToken.IsCancellationRequested)
 					{
 						TValue item;
 						// Try getting a value, this blocks for some time  unless a value is available and also monitors the CancellationToken
-						while (_values.TryTake(out item, TimeoutMs, _cancellationToken))
+						if (_values.TryTake(out item, TimeoutMs))
 						{
 							// Just yield the value
 							yield return item;
@@ -94,7 +104,10 @@ namespace Dapplo.Utils.Events
 		/// <param name="value">TValue</param>
 		public void OnNext(TValue value)
 		{
-			_values.Add(value);
+			if (!_cancellationToken.IsCancellationRequested)
+			{
+				_values.Add(value);
+			}
 		}
 
 		/// <summary>

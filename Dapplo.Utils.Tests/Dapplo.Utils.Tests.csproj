@@ -89,7 +89,7 @@
     <Compile Include="EventObservableTests.cs" />
     <Compile Include="EventExtensionsTests.cs" />
     <Compile Include="NotifyPropertyTests.cs" />
-    <Compile Include="TestEntities\HasEvents.cs" />
+    <Compile Include="TestEntities\HaveEvents.cs" />
     <Compile Include="TestEntities\NotifyPropertyChangingImpl.cs" />
     <Compile Include="TestEntities\NotifyPropertyChangedImpl.cs" />
     <Compile Include="TestEntities\SimpleTestEventArgs.cs" />
