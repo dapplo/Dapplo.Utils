@@ -43,6 +43,8 @@ namespace Dapplo.Utils.Events
 		private readonly BlockingCollection<TValue> _values = new BlockingCollection<TValue>();
 		private readonly IDisposable _subscription;
 		private readonly CancellationToken _cancellationToken;
+		private bool _disposed;
+		private readonly object _lock = new object();
 		private const int TimeoutMs = 300;
 
 		/// <summary>
@@ -56,8 +58,8 @@ namespace Dapplo.Utils.Events
 			_cancellationToken = cancellationToken;
 			if (cancellationToken != CancellationToken.None)
 			{
-				// Make complete adding when the cancellationToken is cancelled
-				cancellationToken.Register(() => _values.CompleteAdding());
+				// Dispose when the cancellationToken is cancelled
+				cancellationToken.Register(Dispose);
 			}
 		}
 
@@ -87,6 +89,7 @@ namespace Dapplo.Utils.Events
 				{
 					// "Caller" finished, unregister
 					_subscription.Dispose();
+					// We no longer access the values, so safely dispose them
 					_values.Dispose();
 				}
 			}
@@ -94,8 +97,15 @@ namespace Dapplo.Utils.Events
 
 		public void Dispose()
 		{
-			_values.CompleteAdding();
-			_subscription.Dispose();
+			lock (_lock)
+			{
+				if (_disposed)
+				{
+					return;
+				}
+				_disposed = true;
+				_subscription.Dispose();
+			}
 		}
 
 		/// <summary>
@@ -104,8 +114,9 @@ namespace Dapplo.Utils.Events
 		/// <param name="value">TValue</param>
 		public void OnNext(TValue value)
 		{
-			if (!_cancellationToken.IsCancellationRequested)
+			if (!_cancellationToken.IsCancellationRequested && !_values.IsAddingCompleted)
 			{
+				// ReSharper disable once MethodSupportsCancellation
 				_values.Add(value);
 			}
 		}
@@ -123,7 +134,10 @@ namespace Dapplo.Utils.Events
 		/// </summary>
 		public void OnCompleted()
 		{
-			_values.CompleteAdding();
+			if (!_values.IsAddingCompleted)
+			{
+				_values.CompleteAdding();
+			}
 		}
 
 		/// <summary>

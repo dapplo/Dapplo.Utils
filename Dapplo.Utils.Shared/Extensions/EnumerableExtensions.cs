@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,14 +59,7 @@ namespace Dapplo.Utils.Extensions
 				{
 					return results;
 				}
-				foreach (var item in source)
-				{
-					if (cancellationToken.IsCancellationRequested)
-					{
-						break;
-					}
-					results.Add(item);
-				}
+				results.AddRange(source.TakeWhile(item => !cancellationToken.IsCancellationRequested));
 				return results;
 			}).ConfigureAwait(false);
 		}
@@ -223,23 +217,11 @@ namespace Dapplo.Utils.Extensions
 			// ReSharper disable once MethodSupportsCancellation
 			return await Task.Run(() =>
 			{
-				int count = 0;
-				if (!cancellationToken.IsCancellationRequested)
+				if (cancellationToken.IsCancellationRequested)
 				{
-					foreach (var item in source)
-					{
-						if (cancellationToken.IsCancellationRequested)
-						{
-							break;
-						}
-						if (predicate != null && !predicate(item))
-						{
-							continue;
-						}
-						count++;
-					}
+					return 0;
 				}
-				return count;
+				return source.TakeWhile(item => !cancellationToken.IsCancellationRequested).Count(item => predicate == null || predicate(item));
 			}).ConfigureAwait(false);
 		}
 
@@ -262,12 +244,9 @@ namespace Dapplo.Utils.Extensions
 				throw new ArgumentException("Cannot be less than 0", nameof(skipN));
 			}
 			// Do not add logic when skipN == 0, just return the source
-			if (skipN == 0)
-			{
-				return source;
-			}
-			// No do the real skip last
-			return InternalSkipLast(source, skipN);
+			// Else, do the real skip last
+			return skipN == 0 ? source : InternalSkipLast(source, skipN);
+
 		}
 
 		/// <summary>

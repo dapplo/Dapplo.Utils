@@ -80,11 +80,12 @@ namespace Dapplo.Utils.Events
 				}
 				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
 				var removeMethod = eventInfo.GetRemoveMethod(true);
-				if ((eventDelegate != null) && (removeMethod != null))
+				if ((eventDelegate == null) || (removeMethod == null))
 				{
-					count += eventDelegate.GetInvocationList().Length;
-					removeMethod.Invoke(instance, new object[] {eventDelegate});
+					continue;
 				}
+				count += eventDelegate.GetInvocationList().Length;
+				removeMethod.Invoke(instance, new object[] {eventDelegate});
 			}
 			return count;
 		}
@@ -345,30 +346,31 @@ namespace Dapplo.Utils.Events
 
 			lock (_observers)
 			{
-				if (_observers.Remove(observer))
+				if (!_observers.Remove(observer))
 				{
-					// Unsubscribe the HandleEvent from the event as no-one is interested
-					if ((_observers.Count == 0) && _subscribedToEvents)
+					return;
+				}
+				// Unsubscribe the HandleEvent from the event as no-one is interested
+				if ((_observers.Count == 0) && _subscribedToEvents)
+				{
+					_subscribedToEvents = false;
+					// There are no more subscriptions, so the event registration can be removed.
+					// Check weak reference, do nothing if the object is garbage collected
+					var targetObject = _targetObject?.Target;
+					if (targetObject != null)
 					{
-						_subscribedToEvents = false;
-						// There are no more subscriptions, so the event registration can be removed.
-						// Check weak reference, do nothing if the object is garbage collected
-						var targetObject = _targetObject?.Target;
-						if (targetObject != null)
+						if (_eventInfo != null)
 						{
-							if (_eventInfo != null)
-							{
-								_eventInfo.RemoveMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
-							}
-							else
-							{
-								_removeMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
-							}
+							_eventInfo.RemoveMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
+						}
+						else
+						{
+							_removeMethod.Invoke(targetObject, new object[] {_handleEventDelegate});
 						}
 					}
-					// signal that it was removed by telling that there will be no more data
-					observer.OnCompleted();
 				}
+				// signal that it was removed by telling that there will be no more data
+				observer.OnCompleted();
 			}
 		}
 

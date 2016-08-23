@@ -70,14 +70,15 @@ namespace Dapplo.Utils.Extensions
 			}
 
 			var dictionaryType = dictionary.GetType().GetTypeInfo();
-			if (dictionaryType.IsGenericType && (dictionaryType.GenericTypeArguments[0] == typeof(TKey)))
+			if (!dictionaryType.IsGenericType || (dictionaryType.GenericTypeArguments[0] != typeof(TKey)))
 			{
-				foreach (DictionaryEntry item in dictionary)
-				{
-					var key = (TKey) item.Key;
-					var value = (TValue) item.Value;
-					properties.AddWhenNew(key, value);
-				}
+				return true;
+			}
+			foreach (DictionaryEntry item in dictionary)
+			{
+				var key = (TKey) item.Key;
+				var value = (TValue) item.Value;
+				properties.AddWhenNew(key, value);
 			}
 			// Also return true if the dictionary didn't have keys of type string, as we don't know what to do with it.
 			return true;

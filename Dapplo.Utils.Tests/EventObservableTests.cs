@@ -334,5 +334,30 @@ namespace Dapplo.Utils.Tests
 				await eventObservable.Subscribe().Take(1).ToListAsync().WithTimeout(TimeSpan.FromSeconds(400));
 			}
 		}
+
+		/// <summary>
+		/// Test if cancel works, without throwing an ObjectDisposedException
+		/// </summary>
+		/// <returns></returns>
+		[Fact]
+		public async Task EventObservable_Cancel_Test()
+		{
+			var timer = new Timer(TimeSpan.FromMilliseconds(300).TotalMilliseconds);
+			using (var eventObservable = EventObservable.From<ElapsedEventArgs>(timer, nameof(timer.Elapsed)))
+			{
+				timer.Start();
+				var cancellationTokenSource = new CancellationTokenSource();
+
+				var waitForTickTask = eventObservable.FirstAsync(e => e.Name == nameof(timer.Elapsed), cancellationTokenSource.Token);
+
+				await Task.WhenAny(Task.Delay(400), waitForTickTask).ConfigureAwait(false);
+
+				// Make sure the waitForTick2Task no longer waits, and this should NOT throw an ObjectDisposedException
+				cancellationTokenSource.Cancel();
+
+				await waitForTickTask;
+
+			}
+		}
 	}
 }
