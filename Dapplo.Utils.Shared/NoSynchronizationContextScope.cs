@@ -32,6 +32,7 @@ using System.Threading;
 
 namespace Dapplo.Utils
 {
+#if NET45
 	/// <summary>
 	///     Create a scope in which code doesn't have a SynchronizationContext, dispose this to leave the scope
 	///     From answer to StackOverflow question:
@@ -58,4 +59,5 @@ namespace Dapplo.Utils
 			SynchronizationContext.SetSynchronizationContext(_synchronizationContext);
 		}
 	}
+#endif
 }

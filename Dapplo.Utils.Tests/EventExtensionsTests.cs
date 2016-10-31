@@ -27,7 +27,7 @@ using Xunit.Abstractions;
 using System;
 using Dapplo.Utils.Tests.TestEntities;
 using Dapplo.Log.XUnit;
-using Dapplo.Utils.Events;
+using Dapplo.Utils.Extensions;
 
 #endregion
 

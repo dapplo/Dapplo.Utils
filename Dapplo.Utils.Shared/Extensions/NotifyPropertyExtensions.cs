@@ -27,9 +27,9 @@
 
 using System;
 using System.ComponentModel;
+using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using Dapplo.Log.Facade;
-using Dapplo.Utils.Events;
 
 #endregion
 
@@ -43,17 +43,17 @@ namespace Dapplo.Utils.Extensions
 		private static readonly LogSource Log = new LogSource();
 
 		/// <summary>
-		/// Shortcut to create an EventObservable for a INotifyPropertyChanged
+		/// Shortcut to create an IObservable for a INotifyPropertyChanged
 		/// </summary>
 		/// <param name="notifyPropertyChanged">INotifyPropertyChanged</param>
-		/// <returns>IEventObservable for PropertyChangedEventArgs</returns>
-		public static IEventObservable<PropertyChangedEventArgs> ToObservable(this INotifyPropertyChanged notifyPropertyChanged)
+		/// <returns>IObservable for PropertyChangedEventArgs</returns>
+		public static IObservable<PropertyChangedEventArgs> ToObservable(this INotifyPropertyChanged notifyPropertyChanged)
 		{
 			if (notifyPropertyChanged == null)
 			{
 				throw new ArgumentNullException(nameof(notifyPropertyChanged));
 			}
-			return EventObservable.From(notifyPropertyChanged);
+			return EventObservable.FromEvent<PropertyChangedEventArgs>(notifyPropertyChanged, nameof(INotifyPropertyChanged.PropertyChanged));
 		}
 
 		/// <summary>
@@ -61,12 +61,12 @@ namespace Dapplo.Utils.Extensions
 		///     If the is called on a DI object, make sure it's available.
 		///     When using MEF, it would be best to call this from IPartImportsSatisfiedNotification.OnImportsSatisfied
 		/// </summary>
-		/// <param name="notifyPropertyChangedEventObservable">EventObservable for PropertyChangedEventArgs</param>
+		/// <param name="notifyPropertyChangedEventObservable">IObservable of PropertyChangedEventArgs</param>
 		/// <param name="notifyAction">Action to call on active and update, the argument is the property name</param>
 		/// <param name="pattern">Optional Regex pattern to match the property name in the event against, null matches everything</param>
 		/// <param name="run">specify if the action also needs to be run, true is the default, this might be needed to make sure the property or properties are updated</param>
 		/// <returns>an IDisposable, calling Dispose on this will stop everything</returns>
-		public static IDisposable OnPropertyChanged(this IEventObservable<PropertyChangedEventArgs> notifyPropertyChangedEventObservable, Action<string> notifyAction, string pattern = null, bool run = true)
+		public static IDisposable OnPropertyChanged(this IObservable<PropertyChangedEventArgs> notifyPropertyChangedEventObservable, Action<string> notifyAction, string pattern = null, bool run = true)
 		{
 			if (notifyPropertyChangedEventObservable == null)
 			{
@@ -85,14 +85,14 @@ namespace Dapplo.Utils.Extensions
 			}
 
 			// Create predicate
-			Func<IEventData<PropertyChangedEventArgs>, bool> predicate = null;
+			Func<PropertyChangedEventArgs, bool> predicate = null;
 			if (!string.IsNullOrEmpty(pattern))
 			{
 				predicate = propertyChangedEventArgs =>
 				{
 					try
 					{
-						var propertyName = propertyChangedEventArgs.Args.PropertyName;
+						var propertyName = propertyChangedEventArgs.PropertyName;
 						return string.IsNullOrEmpty(propertyName) || propertyName == "*" || string.IsNullOrEmpty(pattern) || Regex.IsMatch(propertyName, pattern);
 					}
 					catch (Exception ex)
@@ -103,7 +103,7 @@ namespace Dapplo.Utils.Extensions
 				};
 			}
 
-			return notifyPropertyChangedEventObservable.ForEach(pce => notifyAction(pce.Args.PropertyName), predicate);
+			return notifyPropertyChangedEventObservable.Where(predicate).Subscribe(pce => notifyAction(pce.PropertyName));
 		}
 
 		/// <summary>
@@ -122,17 +122,17 @@ namespace Dapplo.Utils.Extensions
 		}
 
 		/// <summary>
-		/// Shortcut to create an EventObservable for a INotifyPropertyChanging
+		/// Shortcut to create an IObservable for a INotifyPropertyChanging
 		/// </summary>
 		/// <param name="notifyPropertyChanging">INotifyPropertyChanging</param>
-		/// <returns>IEventObservable for PropertyChangingEventArgs</returns>
-		public static IEventObservable<PropertyChangingEventArgs> ToObservable(this INotifyPropertyChanging notifyPropertyChanging)
+		/// <returns>IObservable for PropertyChangingEventArgs</returns>
+		public static IObservable<PropertyChangingEventArgs> ToObservable(this INotifyPropertyChanging notifyPropertyChanging)
 		{
 			if (notifyPropertyChanging == null)
 			{
 				throw new ArgumentNullException(nameof(notifyPropertyChanging));
 			}
-			return EventObservable.From(notifyPropertyChanging);
+			return EventObservable.FromEvent<PropertyChangingEventArgs>(notifyPropertyChanging, nameof(INotifyPropertyChanging.PropertyChanging));
 		}
 
 		/// <summary>
@@ -140,16 +140,16 @@ namespace Dapplo.Utils.Extensions
 		///     If the is called on a DI object, make sure it's available.
 		///     When using MEF, it would be best to call this from IPartImportsSatisfiedNotification.OnImportsSatisfied
 		/// </summary>
-		/// <param name="notifyPropertyChangedEventObservable">IEventObservable for PropertyChangingEventArgs</param>
+		/// <param name="notifyPropertyChangingEventObservable">IObservable for PropertyChangingEventArgs</param>
 		/// <param name="notifyAction">Action to call on active and update, the argument is the property name</param>
 		/// <param name="pattern">Optional Regex pattern to match the property name in the event against, null matches everything</param>
 		/// <param name="run">specify if the action also needs to be run, true is the default, this might be needed to make sure the property or properties are updated</param>
 		/// <returns>an IDisposable, calling Dispose on this will unsubscribe the event handler</returns>
-		public static IDisposable OnPropertyChanging(this IEventObservable<PropertyChangingEventArgs> notifyPropertyChangedEventObservable, Action<string> notifyAction, string pattern = null, bool run = true)
+		public static IDisposable OnPropertyChanging(this IObservable<PropertyChangingEventArgs> notifyPropertyChangingEventObservable, Action<string> notifyAction, string pattern = null, bool run = true)
 		{
-			if (notifyPropertyChangedEventObservable == null)
+			if (notifyPropertyChangingEventObservable == null)
 			{
-				throw new ArgumentNullException(nameof(notifyPropertyChangedEventObservable));
+				throw new ArgumentNullException(nameof(notifyPropertyChangingEventObservable));
 			}
 			if (notifyAction == null)
 			{
@@ -164,14 +164,14 @@ namespace Dapplo.Utils.Extensions
 			}
 
 			// Create predicate
-			Func<IEventData<PropertyChangingEventArgs>, bool> predicate = null;
+			Func<PropertyChangingEventArgs, bool> predicate = null;
 			if (!string.IsNullOrEmpty(pattern))
 			{
 				predicate = propertyChangingEventArgs =>
 				{
 					try
 					{
-						var propertyName = propertyChangingEventArgs.Args.PropertyName;
+						var propertyName = propertyChangingEventArgs.PropertyName;
 						return string.IsNullOrEmpty(propertyName) || propertyName == "*" || string.IsNullOrEmpty(pattern) || Regex.IsMatch(propertyName, pattern);
 					}
 					catch (Exception ex)
@@ -181,7 +181,7 @@ namespace Dapplo.Utils.Extensions
 					return false;
 				};
 			}
-			return notifyPropertyChangedEventObservable.ForEach(pce => notifyAction(pce.Args.PropertyName), predicate);
+			return notifyPropertyChangingEventObservable.Where(predicate).Subscribe(pce => notifyAction(pce.PropertyName));
 		}
 
 		/// <summary>

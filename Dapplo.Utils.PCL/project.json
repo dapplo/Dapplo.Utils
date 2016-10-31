@@ -1,24 +1,22 @@
 ﻿{
-  "supports": {
-    "net46.app": {},
-    "uwp.10.0.app": {},
-    "dnxcore50.app": {}
-  },
+  "supports": {},
   "dependencies": {
-    "Dapplo.Log.Facade": "0.5.4",
-    "Microsoft.NETCore": "5.0.0",
-    "Microsoft.NETCore.Portable.Compatibility": "1.0.0",
-    "System.ComponentModel": "4.0.0",
-    "System.ComponentModel.Annotations": "4.0.10",
-    "System.ComponentModel.Primitives": "4.0.0",
-    "System.ComponentModel.TypeConverter": "4.0.0",
-    "System.ObjectModel": "4.0.10",
-    "System.Reflection": "4.0.10",
-    "System.Runtime.Serialization.Primitives": "4.0.10"
+    "System.Collections.Concurrent": "4.0.12",
+    "System.ComponentModel": "4.0.1",
+    "System.ComponentModel.Annotations": "4.1.0",
+    "System.ComponentModel.Primitives": "4.1.0",
+    "System.ComponentModel.TypeConverter": "4.1.0",
+    "System.IO.Compression": "4.1.0",
+    "System.Linq": "4.1.0",
+    "System.ObjectModel": "4.0.12",
+    "System.Reactive.Linq": "3.0.0",
+    "System.Reflection": "4.1.0",
+    "System.Reflection.TypeExtensions": "4.1.0",
+    "System.Runtime.Extensions": "4.1.0",
+    "System.Runtime.Serialization.Primitives": "4.1.1",
+    "System.Text.RegularExpressions": "4.1.0"
   },
   "frameworks": {
-    "dotnet": {
-      "imports": "portable-net452+win81"
-    }
+    "netstandard1.6": {}
   }
 }
