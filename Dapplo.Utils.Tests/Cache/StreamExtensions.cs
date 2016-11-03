@@ -27,7 +27,7 @@
 
 using System.IO;
 using System.Windows.Media.Imaging;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using System.Drawing;
 
 #endregion

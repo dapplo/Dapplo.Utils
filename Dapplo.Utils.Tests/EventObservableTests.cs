@@ -28,7 +28,7 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tests.TestEntities;

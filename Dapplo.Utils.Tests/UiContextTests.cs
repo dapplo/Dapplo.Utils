@@ -21,7 +21,7 @@
 
 #region using
 
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Xunit;
 using Xunit.Abstractions;
 using System;

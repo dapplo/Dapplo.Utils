@@ -27,7 +27,7 @@
 
 using System;
 using System.Collections.Concurrent;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 
 #endregion
 

@@ -29,7 +29,7 @@ using System;
 using System.ComponentModel;
 using System.Reactive.Linq;
 using System.Text.RegularExpressions;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 
 #endregion
 

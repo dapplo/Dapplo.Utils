@@ -21,9 +21,9 @@
 
 #region using
 
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Xunit;
-using Xunit.Abstractions;
+using Xunit.Abstractions;S
 using System;
 using Dapplo.Utils.Tests.TestEntities;
 using Dapplo.Log.XUnit;

@@ -31,7 +31,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-#if !_PCL_
+#if NET45
 using System.IO;
 using Microsoft.VisualBasic.FileIO;
 
@@ -221,7 +221,7 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>IEnumerable with value</returns>
 		public static IEnumerable<string> SplitCsv(this string input, char delimiter = ',', bool trimWhiteSpace = true)
 		{
-#if !_PCL_
+#if NET45
 			using (var parser = new TextFieldParser(new StringReader(input))
 			{
 				HasFieldsEnclosedInQuotes = true,

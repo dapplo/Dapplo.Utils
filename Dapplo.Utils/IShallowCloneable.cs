@@ -39,11 +39,11 @@ namespace Dapplo.Utils
 	/// </summary>
 	/// <typeparam name="T">Type of the copy which is returned</typeparam>
 	public interface IShallowCloneable<out T> where T : class
-    {
+	{
 		/// <summary>
 		/// Make a memberwise clone of the object, this is "shallow".
 		/// </summary>
 		/// <returns>"Shallow" Cloned instance of type T</returns>
 		T ShallowClone();
-    }
+	}
 }

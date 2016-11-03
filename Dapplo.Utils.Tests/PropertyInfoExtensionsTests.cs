@@ -21,12 +21,12 @@
 
 #region using
 
-using Dapplo.Log.Facade;
 using Dapplo.Utils.Extensions;
 using Xunit;
 using Xunit.Abstractions;
 using System.ComponentModel;
 using System.Reflection;
+using Dapplo.Log;
 using Dapplo.Utils.Tests.TestEntities;
 using Dapplo.Log.XUnit;
 

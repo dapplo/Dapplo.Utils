@@ -23,6 +23,7 @@
 
 #endregion
 
+#if NET45
 #region Usings
 
 using System;
@@ -33,8 +34,8 @@ using System.Linq;
 using System.Reflection;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Extensions;
-using Dapplo.Log.Facade;
 using System.IO.Compression;
+using Dapplo.Log;
 
 #endregion
 
@@ -558,3 +559,4 @@ namespace Dapplo.Utils.Resolving
 		}
 	}
 }
+#endif

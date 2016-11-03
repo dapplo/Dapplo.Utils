@@ -23,7 +23,7 @@
 
 using System;
 using System.Linq;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Xunit;
 using Xunit.Abstractions;
 using Dapplo.Log.XUnit;

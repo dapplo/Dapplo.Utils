@@ -23,6 +23,7 @@
 
 #endregion
 
+#if NET45
 #region Usings
 
 using System;
@@ -177,3 +178,4 @@ namespace Dapplo.Utils
 		}
 	}
 }
+#endif

@@ -28,7 +28,7 @@
 using System;
 using System.IO.Packaging;
 using System.Linq;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Tests.Cache;

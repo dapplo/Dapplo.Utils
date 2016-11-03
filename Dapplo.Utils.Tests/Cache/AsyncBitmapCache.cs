@@ -39,6 +39,7 @@ namespace Dapplo.Utils.Tests.Cache
 	/// </summary>
 	public class AsyncBitmapCache : AsyncMemoryCache<string, BitmapSource>
 	{
+		/// <inheritdoc />
 		protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
 		{
 			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))

@@ -21,7 +21,6 @@
 
 #region using
 
-using Dapplo.Log.Facade;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -30,6 +29,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using Dapplo.Log;
 
 #endregion
 
@@ -321,7 +321,7 @@ namespace Dapplo.Utils.Extensions
 				{
 					try
 					{
-#if _PCL_
+#if !NET45
 						outValue = typeConverter.ConvertFromInvariantString(stringValue);
 #else
 						outValue = typeConverter.ConvertFromInvariantString(typeDescriptorContext, stringValue);
@@ -359,7 +359,7 @@ namespace Dapplo.Utils.Extensions
 				{
 					try
 					{
-#if _PCL_
+#if !NET45
 						outValue = typeConverter.ConvertToInvariantString(value);
 #else
 						outValue = typeConverter.ConvertToInvariantString(typeDescriptorContext, value);

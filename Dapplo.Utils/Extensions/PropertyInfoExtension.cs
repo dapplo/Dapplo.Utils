@@ -36,7 +36,7 @@ namespace Dapplo.Utils.Extensions
 	/// </summary>
 	public static class PropertyInfoExtension
 	{
-#if !_PCL_
+#if NET45
 		/// <summary>
 		///     Retrieve the Category from the CategoryAttribute for the supplied PropertyInfo
 		/// </summary>
@@ -103,7 +103,7 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Description</returns>
 		public static string GetDescription(this PropertyInfo propertyInfo)
 		{
-#if !_PCL_
+#if !NET45
 			var descriptionAttribute = propertyInfo.GetCustomAttribute<DescriptionAttribute>(true);
 			if (descriptionAttribute != null)
 			{
@@ -129,7 +129,7 @@ namespace Dapplo.Utils.Extensions
 			return false;
 		}
 
-#if !_PCL_
+#if !NET45
 		/// <summary>
 		///     Retrieve the IsReadOnly from the ReadOnlyAttribute for the supplied PropertyInfo
 		/// </summary>

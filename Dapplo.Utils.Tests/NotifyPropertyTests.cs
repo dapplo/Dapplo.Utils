@@ -30,7 +30,7 @@ using System.ComponentModel;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Threading.Tasks;
-using Dapplo.Log.Facade;
+using Dapplo.Log;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tests.TestEntities;
