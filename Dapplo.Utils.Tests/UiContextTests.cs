@@ -41,11 +41,16 @@ namespace Dapplo.Utils.Tests
 	{
 		private static readonly LogSource Log = new LogSource();
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="testOutputHelper"></param>
 		public UiContextTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
+		/// <inheritdoc />
 		public void Dispose()
 		{
 			Dispatcher.CurrentDispatcher.InvokeShutdown();

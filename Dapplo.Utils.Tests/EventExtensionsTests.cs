@@ -23,7 +23,7 @@
 
 using Dapplo.Log;
 using Xunit;
-using Xunit.Abstractions;S
+using Xunit.Abstractions;
 using System;
 using Dapplo.Utils.Tests.TestEntities;
 using Dapplo.Log.XUnit;
@@ -33,13 +33,23 @@ using Dapplo.Utils.Extensions;
 
 namespace Dapplo.Utils.Tests
 {
+	/// <summary>
+	/// 
+	/// </summary>
 	public class EventExtensionsTests
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="testOutputHelper"></param>
 		public EventExtensionsTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		[Fact]
 		public void TestRemoveAllEventHandlers()
 		{

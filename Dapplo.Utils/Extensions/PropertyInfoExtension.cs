@@ -36,7 +36,6 @@ namespace Dapplo.Utils.Extensions
 	/// </summary>
 	public static class PropertyInfoExtension
 	{
-#if NET45
 		/// <summary>
 		///     Retrieve the Category from the CategoryAttribute for the supplied PropertyInfo
 		/// </summary>
@@ -47,7 +46,7 @@ namespace Dapplo.Utils.Extensions
 			var categoryAttribute = propertyInfo.GetCustomAttribute<CategoryAttribute>(true);
 			return categoryAttribute?.Category;
 		}
-#endif
+
 
 		/// <summary>
 		///     Retrieve the Name from the DataMemberAttribute for the supplied PropertyInfo
@@ -103,13 +102,11 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Description</returns>
 		public static string GetDescription(this PropertyInfo propertyInfo)
 		{
-#if !NET45
 			var descriptionAttribute = propertyInfo.GetCustomAttribute<DescriptionAttribute>(true);
 			if (descriptionAttribute != null)
 			{
 				return descriptionAttribute.Description;
 			}
-#endif
 			var displayAttribute = propertyInfo.GetCustomAttribute<DisplayAttribute>(true);
 			return displayAttribute?.Description;
 		}
@@ -129,7 +126,6 @@ namespace Dapplo.Utils.Extensions
 			return false;
 		}
 
-#if !NET45
 		/// <summary>
 		///     Retrieve the IsReadOnly from the ReadOnlyAttribute for the supplied PropertyInfo
 		/// </summary>
@@ -140,7 +136,6 @@ namespace Dapplo.Utils.Extensions
 			var readOnlyAttribute = propertyInfo.GetCustomAttribute<ReadOnlyAttribute>(true);
 			return readOnlyAttribute != null && readOnlyAttribute.IsReadOnly;
 		}
-#endif
 
 		/// <summary>
 		///     Retrieve the TypeConverter from the TypeConverterAttribute for the supplied PropertyInfo

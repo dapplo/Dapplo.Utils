@@ -45,6 +45,10 @@ namespace Dapplo.Utils.Tests
 	/// </summary>
 	public class AssemblyResolveTests
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="testOutputHelper"></param>
 		public AssemblyResolveTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -58,6 +62,9 @@ namespace Dapplo.Utils.Tests
 			Assert.Equal(nameof(ExternalClass.HelloWord), helloWorld);
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		[Fact]
 		public void Test_AssemblyNameToRegex()
 		{
@@ -72,6 +79,9 @@ namespace Dapplo.Utils.Tests
 			Assert.False(regex2.IsMatch(fileMatch));
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		[Fact]
 		public void TestResolving()
 		{
