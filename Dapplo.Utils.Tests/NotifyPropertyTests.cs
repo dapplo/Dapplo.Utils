@@ -54,7 +54,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var npc = new NotifyPropertyChangedImpl();
 			
-			var task = npc.ToObservable().FirstAsync(e => e.PropertyName.Contains("2")).ToTask();
+			var task = npc.OnPropertyChanged().FirstAsync(e => e.PropertyName.Contains("2")).ToTask();
 			npc.Name = "Dapplo";
 			await Task.Delay(100);
 			Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -68,7 +68,7 @@ namespace Dapplo.Utils.Tests
 		{
 			string testValue = null;
 			var npc = new NotifyPropertyChangedImpl();
-			var handler = npc.ToObservable().Subscribe(e => testValue = e.PropertyName);
+			var handler = npc.OnPropertyChanged().Subscribe(e => testValue = e.PropertyName);
 			npc.Name = "Dapplo";
 			Assert.Equal(nameof(npc.Name), testValue);
 			testValue = null;
@@ -83,7 +83,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var npc = new NotifyPropertyChangedImpl();
 
-			var task = npc.ToObservable().FirstAsync(e => e.PropertyName.Contains("2")).Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).FirstAsync().ToTask();
+			var task = npc.OnPropertyChanged().FirstAsync(e => e.PropertyName.Contains("2")).Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).FirstAsync().ToTask();
 			npc.Name = "Dapplo";
 			await Task.Delay(100);
 			Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);
@@ -97,7 +97,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var npc = new NotifyPropertyChangedImpl();
 			string changedPropertyName = null;
-			using (npc.OnPropertyChanged(propertyName => changedPropertyName = propertyName))
+			using (npc.OnPropertyChanged().Subscribe(propertyChangedEventArgs => changedPropertyName = propertyChangedEventArgs.PropertyName))
 			{
 				npc.Name = "Dapplo";
 				Assert.Equal(nameof(npc.Name), changedPropertyName);
@@ -111,7 +111,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var npc = new NotifyPropertyChangingImpl();
 			string changingPropertyName = null;
-			using (npc.OnPropertyChanging(propertyName => changingPropertyName = propertyName))
+			using (npc.OnPropertyChanging().Subscribe(propertyChangingEventArgs => changingPropertyName = propertyChangingEventArgs.PropertyName))
 			{
 				npc.Name = "Dapplo";
 				Assert.Equal(nameof(npc.Name), changingPropertyName);

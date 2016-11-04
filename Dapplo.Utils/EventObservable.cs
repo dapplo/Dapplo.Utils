@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -87,53 +88,9 @@ namespace Dapplo.Utils
 		/// </summary>
 		/// <param name="targetObject">object</param>
 		/// <returns>IList of IObservable which can be dispose with DisposeAll</returns>
-		public static IEnumerable<IObservable<TEventArgs>> EventsIn<TEventArgs>(object targetObject) where TEventArgs : class
+		public static IEnumerable<IObservable<EventPattern<TEventArgs>>> EventsIn<TEventArgs>(object targetObject) where TEventArgs : class
 		{
-			return targetObject.GetType().GetEvents(AllBindings).Select(eventInfo => FromEvent<TEventArgs>(targetObject, eventInfo.Name));
-		}
-
-		/// <summary>
-		/// A workaround for Observable.FromEvent not working with standard events
-		/// </summary>
-		/// <typeparam name="TEventArgs">Type of the event</typeparam>
-		/// <param name="targetObject">object</param>
-		/// <param name="eventName">string with the name of the event</param>
-		/// <returns>IObservable of TEventArgs</returns>
-		public static IObservable<TEventArgs> FromEvent<TEventArgs>(object targetObject, string eventName) where TEventArgs : class
-		{
-			if (targetObject == null)
-			{
-				throw new ArgumentNullException(nameof(targetObject));
-			}
-			// If the event is standard conform, throw exception
-			if (targetObject.GetType().GetEvent(eventName, AllBindings)?.EventHandlerType.GetMethod("Invoke", AllBindings)?.GetParameters().Length != 1)
-			{
-				throw new ArgumentException($"Event {eventName} doesn't exist or is not standard conform (use Observable.FromEvent)", nameof(eventName));
-			}
-
-			// Used to make sure the remove handler uses the same value as the add
-			var delegateStore = new object[1];
-
-			return Observable.FromEvent<TEventArgs>(
-				// Add handler action
-				handler =>
-				{
-					var addMethod = targetObject.GetType().GetMethod($"add_{eventName}", AllBindings);
-					// ReSharper disable once PossibleNullReferenceException (this was already checked above!)
-					var eventHandlerType = targetObject.GetType().GetEvent(eventName, AllBindings).EventHandlerType;
-//#if NET45
-//					delegateStore[0] = Delegate.CreateDelegate(eventHandlerType, handler.Target, handler.Method);
-//#else
-					var methodInfo = handler.GetMethodInfo();
-					delegateStore[0] = methodInfo.CreateDelegate(eventHandlerType, handler.Target);
-//#endif
-					addMethod.Invoke(targetObject, new[] { delegateStore[0] });
-				},
-				// Remove handler action
-				handler =>
-				{
-					targetObject.GetType().GetMethod($"remove_{eventName}", AllBindings).Invoke(targetObject, new[] { delegateStore[0] });
-				});
+			return targetObject.GetType().GetEvents(AllBindings).Select(eventInfo => Observable.FromEventPattern<TEventArgs>(targetObject, eventInfo.Name));
 		}
 	}
 }

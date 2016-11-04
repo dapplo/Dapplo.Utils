@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using Dapplo.Log;
 
@@ -87,6 +88,22 @@ namespace Dapplo.Utils.Extensions
 		public static void AddDefaultConverter(Type type, Type typeConverter)
 		{
 			Converters[type] = typeConverter;
+		}
+
+		/// <summary>
+		/// Cast the supplied object to a certain type
+		/// </summary>
+		/// <param name="type">Type to cast to</param>
+		/// <param name="data">object to cast</param>
+		/// <returns>object</returns>
+		public static object Cast(this Type type, object data)
+		{
+			var dataParam = Expression.Parameter(typeof(object), "data");
+			var body = Expression.Block(Expression.Convert(Expression.Convert(dataParam, data.GetType()), type));
+
+			var run = Expression.Lambda(body, dataParam).Compile();
+			var ret = run.DynamicInvoke(data);
+			return ret;
 		}
 
 		/// <summary>

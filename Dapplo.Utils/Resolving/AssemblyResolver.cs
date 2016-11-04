@@ -35,6 +35,7 @@ using System.Reflection;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Extensions;
 using System.IO.Compression;
+using System.Reactive.Disposables;
 using Dapplo.Log;
 
 #endregion

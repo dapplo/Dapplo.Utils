@@ -10,28 +10,32 @@
 		"Dapplo.Log.XUnit": "1.0.21",
 		"Dapplo.Utils": "1.0.0-*",
 		"Dapplo.Utils.Tests.TestAssembly": "1.0.0-*",
+		"ILBundle": "1.0.0.14",
 		"xunit.runner.visualstudio": "2.1.0",
 		"Xunit.StaFact": "0.1.36-beta"
 	},
 	"frameworks": {
-			"net46": {
-				"System.Runtime.Caching": "4.0.0",
-                "frameworkAssemblies": {
-                    "PresentationCore": "4.0.0.0",
-                    "PresentationFramework": "4.0.0.0",
-                    "System.Drawing": "4.0.0.0",
-                    "System.Runtime.Caching": "4.0.0.0",
-                    "System.Xaml": "4.0.0.0",
-                    "WindowsBase": "4.0.0.0"
-                }
+		"net46": {
+			"System.Runtime.Caching": "4.0.0",
+			"frameworkAssemblies": {
+				"PresentationCore": "4.0.0.0",
+				"PresentationFramework": "4.0.0.0",
+				"System.Drawing": "4.0.0.0",
+				"System.Runtime.Caching": "4.0.0.0",
+				"System.Xaml": "4.0.0.0",
+				"WindowsBase": "4.0.0.0"
 			}
+		}
 	},
 	"buildOptions": {
 		"xmlDoc": false,
-		"optimize": true,
-		"embed": [
-			"TestFiles/embedded*.*"
-		],
+		"optimize": false,
+		"embed": {
+			"include": [
+				"TestFiles/embedded*.*",
+				"../Dapplo.Utils.Tests.TestAssembly/bin/Debug/netstandard1.3/TestAssembly.dll"
+			]
+		},
 		"copyToOutput": [ "TestFiles\\dapplo.png" ]
 	},
 	"packOptions": {
@@ -40,5 +44,8 @@
 		"licenseUrl": "http://www.gnu.org/licenses/lgpl-3.0.en.html",
 		"projectUrl": "http://www.dapplo.net/blocks/Dapplo.Utils",
 		"iconUrl": "http://www.dapplo.net/favicon.ico"
+	},
+	"scripts": {
+		"prepublish": [ "" ]
 	}
 }

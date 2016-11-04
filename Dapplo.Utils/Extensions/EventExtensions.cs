@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
 
 #endregion
 
@@ -60,7 +61,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="haveEvents"></param>
 		/// <typeparam name="TEventArgs">Type of the EventArgs, use EventArgs to get most events</typeparam>
 		/// <returns>IEnumerable with IObservable</returns>
-		public static IEnumerable<IObservable<TEventArgs>> EventsIn<TEventArgs>(this IHaveEvents haveEvents)
+		public static IEnumerable<IObservable<EventPattern<TEventArgs>>> EventsIn<TEventArgs>(this IHaveEvents haveEvents)
 			where TEventArgs : class
 		{
 			if (haveEvents == null)
@@ -68,37 +69,6 @@ namespace Dapplo.Utils.Extensions
 				throw new ArgumentNullException(nameof(haveEvents));
 			}
 			return EventObservable.EventsIn<TEventArgs>(haveEvents);
-		}
-
-		/// <summary>
-		///     Test if an IEventObservable is for the specified event args type
-		/// </summary>
-		/// <param name="eventObservable"></param>
-		/// <typeparam name="TWantedEventArgs">Type of the event arguments</typeparam>
-		/// <returns>bool</returns>
-		public static bool Is<TWantedEventArgs>(this IObservable<EventArgs> eventObservable)
-		{
-			if (eventObservable == null)
-			{
-				throw new ArgumentNullException(nameof(eventObservable));
-			}
-			return eventObservable.GetType().GenericTypeArguments[0] == typeof(TWantedEventArgs);
-		}
-
-		/// <summary>
-		///     Filters the elements of an IEnumerable with IEventObservable based on a specified type.
-		/// </summary>
-		/// <param name="eventObservables">IEnumerable with IEventObservable</param>
-		/// <typeparam name="TEventArgs">Type for the event args</typeparam>
-		/// <returns>IEnumerable of typed IEventObservable with TEventArgs</returns>
-		public static IEnumerable<IObservable<TEventArgs>> OfType<TEventArgs>(this IEnumerable<IObservable<EventArgs>> eventObservables)
-			where TEventArgs : class
-		{
-			if (eventObservables == null)
-			{
-				throw new ArgumentNullException(nameof(eventObservables));
-			}
-			return eventObservables.Where(eo => eo.Is<TEventArgs>()).Cast<IObservable<TEventArgs>>();
 		}
 	}
 }

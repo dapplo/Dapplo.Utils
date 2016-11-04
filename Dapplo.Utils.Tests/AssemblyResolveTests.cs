@@ -104,6 +104,7 @@ namespace Dapplo.Utils.Tests
 
 				// Check that the assembly can be found in the embedded resources
 				var assemblyFiles = GetType().FindEmbeddedResources(regex).ToList();
+				var names = GetType().Assembly.GetManifestResourceNames();
 				Assert.True(assemblyFiles.Any());
 				foreach (var assemblyFile in assemblyFiles)
 				{
