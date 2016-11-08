@@ -27,15 +27,36 @@
 			}
 		}
 	},
+	"configurations": {
+		"Release": {
+			"buildOptions": {
+				"optimize": true,
+				"embed": {
+					"include": [
+						"TestFiles/embedded*.*"
+					],
+					"mappings": {
+						"Dapplo.Utils.Tests.TestAssembly.dll": "../Dapplo.Utils.Tests.TestAssembly/bin/Release/netstandard1.3/Dapplo.Utils.Tests.TestAssembly.dll"
+					}
+				}
+			}
+		},
+		"Debug": {
+			"buildOptions": {
+				"optimize": false,
+				"embed": {
+					"include": [
+						"TestFiles/embedded*.*"
+					],
+					"mappings": {
+						"Dapplo.Utils.Tests.TestAssembly.dll": "../Dapplo.Utils.Tests.TestAssembly/bin/Debug/netstandard1.3/Dapplo.Utils.Tests.TestAssembly.dll"
+					}
+				}
+			}
+		}
+	},
 	"buildOptions": {
 		"xmlDoc": false,
-		"optimize": false,
-		"embed": {
-			"include": [
-				"TestFiles/embedded*.*",
-				"../Dapplo.Utils.Tests.TestAssembly/bin/Debug/netstandard1.3/TestAssembly.dll"
-			]
-		},
 		"copyToOutput": [ "TestFiles\\dapplo.png" ]
 	},
 	"packOptions": {
@@ -46,6 +67,6 @@
 		"iconUrl": "http://www.dapplo.net/favicon.ico"
 	},
 	"scripts": {
-		"prepublish": [ "" ]
+		"postbuild": [ "" ]
 	}
 }
