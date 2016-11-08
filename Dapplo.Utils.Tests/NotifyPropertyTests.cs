@@ -36,6 +36,7 @@ using Dapplo.Utils.Extensions;
 using Dapplo.Utils.Tests.TestEntities;
 using Xunit;
 using Xunit.Abstractions;
+using Dapplo.Utils.Notify;
 
 #endregion
 

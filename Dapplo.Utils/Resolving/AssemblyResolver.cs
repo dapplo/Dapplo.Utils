@@ -35,7 +35,6 @@ using System.Reflection;
 using Dapplo.Utils.Embedded;
 using Dapplo.Utils.Extensions;
 using System.IO.Compression;
-using System.Reactive.Disposables;
 using Dapplo.Log;
 
 #endregion
@@ -160,7 +159,7 @@ namespace Dapplo.Utils.Resolving
 					AppDomainRegistrations.Add(appDomain.FriendlyName);
 					appDomain.AssemblyResolve += ResolveEventHandler;
 				}
-				return Disposable.Create(() => UnregisterAssemblyResolve(appDomain));
+				return SimpleDisposable.Create(() => UnregisterAssemblyResolve(appDomain));
 			}
 		}
 

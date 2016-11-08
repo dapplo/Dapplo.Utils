@@ -26,7 +26,6 @@
 #region Usings
 
 using System;
-using System.Reactive.Disposables;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -52,7 +51,7 @@ namespace Dapplo.Utils
 		public async Task<IDisposable> LockAsync()
 		{
 			await _semaphoreSlim.WaitAsync().ConfigureAwait(false);
-			return Disposable.Create(() => { _semaphoreSlim.Release(); });
+			return SimpleDisposable.Create(() => { _semaphoreSlim.Release(); });
 		}
 
 		/// <summary>
@@ -65,7 +64,7 @@ namespace Dapplo.Utils
 		public async Task<IDisposable> LockAsync(CancellationToken cancellationToken)
 		{
 			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
-			return Disposable.Create(() => { _semaphoreSlim.Release(); });
+			return SimpleDisposable.Create(() => { _semaphoreSlim.Release(); });
 		}
 
 		/// <summary>
@@ -79,7 +78,7 @@ namespace Dapplo.Utils
 		{
 			var cancellationTokenSource = new CancellationTokenSource(timeout);
 			await _semaphoreSlim.WaitAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-			return Disposable.Create(() =>
+			return SimpleDisposable.Create(() =>
 			{
 				cancellationTokenSource.Dispose();
 				_semaphoreSlim.Release();

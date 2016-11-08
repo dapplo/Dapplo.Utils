@@ -26,46 +26,46 @@
 #region Usings
 
 using System;
-using System.Linq;
-using Dapplo.Log;
-using Dapplo.Log.XUnit;
-using Dapplo.Utils.Extensions;
-using Dapplo.Utils.Notify;
-using Dapplo.Utils.Tests.TestEntities;
-using Xunit;
-using Xunit.Abstractions;
 
 #endregion
 
-namespace Dapplo.Utils.Tests
+namespace Dapplo.Utils
 {
 	/// <summary>
-	///     Test IEventObservable
+	///     A simple way to return something, which calls an action on Dispose.
 	/// </summary>
-	public class EventObservableTests
+	public class SimpleDisposable : IDisposable
 	{
-		public EventObservableTests(ITestOutputHelper testOutputHelper)
+		private readonly Action _action;
+		// To detect redundant calls, we store a flag
+		private bool _disposed;
+
+		private SimpleDisposable(Action action)
 		{
-			// Make sure logging is enabled.
-			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
+			_action = action;
 		}
 
-
-		[Fact]
-		public void Observable_RemoveEventHandlers()
+		/// <summary>
+		///     Dispose will call the stored action
+		/// </summary>
+		public void Dispose()
 		{
-			var npc = new NotifyPropertyChangedImpl();
-			npc.PropertyChanged += (sender, args) => { };
-			npc.PropertyChanged += (sender, args) => { };
-			Assert.Equal(2, npc.RemoveEventHandlers());
+			if (_disposed)
+			{
+				return;
+			}
+			_disposed = true;
+			_action();
 		}
 
-		[Fact]
-		public void Observable_EventsIn()
+		/// <summary>
+		///     Create an IDisposable which will call the passed action on Dispose.
+		/// </summary>
+		/// <param name="action">Action to call when the object is disposed.</param>
+		/// <returns>IDisposable</returns>
+		public static IDisposable Create(Action action)
 		{
-			var npc = new NotifyPropertyChangedImpl();
-			var events = npc.EventsIn<EventArgs>().ToList();
-			Assert.True(events.Count() == 1);
+			return new SimpleDisposable(action);
 		}
 	}
 }

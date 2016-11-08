@@ -26,9 +26,8 @@
 #region Usings
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reactive;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 #endregion
 
@@ -39,6 +38,8 @@ namespace Dapplo.Utils.Extensions
 	/// </summary>
 	public static class EventExtensions
 	{
+		private const BindingFlags AllBindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
 		/// <summary>
 		///     Removes all the event handlers on a IHaveEvents
 		///     This is usefull to do internally, after a clone is made, to prevent memory leaks
@@ -52,23 +53,50 @@ namespace Dapplo.Utils.Extensions
 			{
 				throw new ArgumentNullException(nameof(haveEvents));
 			}
-			return EventObservable.RemoveEventHandlers(haveEvents, regExPattern);
+			return RemoveEventHandlersFromObject(haveEvents, regExPattern);
 		}
 
 		/// <summary>
-		///     This gives an IEnumerable of IObservable for the specified EventArgs type.
+		///     Removes all the event handlers from the defined events in an object
+		///     This is usefull to do internally, after a MemberwiseClone is made, to prevent memory leaks
 		/// </summary>
-		/// <param name="haveEvents"></param>
-		/// <typeparam name="TEventArgs">Type of the EventArgs, use EventArgs to get most events</typeparam>
-		/// <returns>IEnumerable with IObservable</returns>
-		public static IEnumerable<IObservable<EventPattern<TEventArgs>>> EventsIn<TEventArgs>(this IHaveEvents haveEvents)
-			where TEventArgs : class
+		/// <param name="instance">object instance where events need to be removed</param>
+		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
+		/// <returns>number of removed events</returns>
+		public static int RemoveEventHandlersFromObject(object instance, string regExPattern = null)
 		{
-			if (haveEvents == null)
+			if (instance == null)
 			{
-				throw new ArgumentNullException(nameof(haveEvents));
+				throw new ArgumentNullException(nameof(instance));
 			}
-			return EventObservable.EventsIn<TEventArgs>(haveEvents);
+			var count = 0;
+			Regex regex = null;
+			if (!string.IsNullOrEmpty(regExPattern))
+			{
+				regex = new Regex(regExPattern);
+			}
+			var typeWithEvents = instance.GetType();
+			foreach (var eventInfo in typeWithEvents.GetEvents(AllBindings))
+			{
+				if ((regex != null) && !regex.IsMatch(eventInfo.Name))
+				{
+					continue;
+				}
+				var fieldInfo = typeWithEvents.GetField(eventInfo.Name, AllBindings);
+				if (fieldInfo == null)
+				{
+					continue;
+				}
+				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
+				var removeMethod = eventInfo.GetRemoveMethod(true);
+				if ((eventDelegate == null) || (removeMethod == null))
+				{
+					continue;
+				}
+				count += eventDelegate.GetInvocationList().Length;
+				removeMethod.Invoke(instance, new object[] { eventDelegate });
+			}
+			return count;
 		}
 	}
 }

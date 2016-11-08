@@ -9,6 +9,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils", "Dapplo.Util
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils.Tests.TestAssembly", "Dapplo.Utils.Tests.TestAssembly\Dapplo.Utils.Tests.TestAssembly.xproj", "{4654F340-1F6E-4490-81C3-AAF83E194A9E}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils.Notify", "Dapplo.Utils.Notify\Dapplo.Utils.Notify.xproj", "{DAE5514A-FBFE-44A7-8374-902C6A981EAD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
@@ -27,6 +29,10 @@ Global
 		{4654F340-1F6E-4490-81C3-AAF83E194A9E}.Debug|AnyCPU.Build.0 = Debug|Any CPU
 		{4654F340-1F6E-4490-81C3-AAF83E194A9E}.Release|AnyCPU.ActiveCfg = Release|Any CPU
 		{4654F340-1F6E-4490-81C3-AAF83E194A9E}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{DAE5514A-FBFE-44A7-8374-902C6A981EAD}.Debug|AnyCPU.ActiveCfg = Debug|Any CPU
+		{DAE5514A-FBFE-44A7-8374-902C6A981EAD}.Debug|AnyCPU.Build.0 = Debug|Any CPU
+		{DAE5514A-FBFE-44A7-8374-902C6A981EAD}.Release|AnyCPU.ActiveCfg = Release|Any CPU
+		{DAE5514A-FBFE-44A7-8374-902C6A981EAD}.Release|AnyCPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

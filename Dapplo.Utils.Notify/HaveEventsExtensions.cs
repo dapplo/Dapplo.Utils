@@ -23,64 +23,40 @@
 
 #endregion
 
+#region Usings
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
-namespace Dapplo.Utils
+#endregion
+
+namespace Dapplo.Utils.Notify
 {
 	/// <summary>
-	/// Workaround for Observable.FromEvent not supporting single parameter event handlers
+	///     Extensions for IHaveEvents and IEventObservable
 	/// </summary>
-	public static class EventObservable
+	public static class HaveEventsExtensions
 	{
 		private const BindingFlags AllBindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
 		/// <summary>
-		///     Removes all the event handlers from the defined events in an object
-		///     This is usefull to do internally, after a MemberwiseClone is made, to prevent memory leaks
+		///     This gives an IEnumerable of IObservable for the specified EventArgs type.
 		/// </summary>
-		/// <param name="instance">object instance where events need to be removed</param>
-		/// <param name="regExPattern">Regular expression to match the even names, null for alls</param>
-		/// <returns>number of removed events</returns>
-		public static int RemoveEventHandlers(object instance, string regExPattern = null)
+		/// <param name="haveEvents"></param>
+		/// <typeparam name="TEventArgs">Type of the EventArgs, use EventArgs to get most events</typeparam>
+		/// <returns>IEnumerable with IObservable</returns>
+		public static IEnumerable<IObservable<EventPattern<TEventArgs>>> EventsIn<TEventArgs>(this IHaveEvents haveEvents)
+			where TEventArgs : class
 		{
-			if (instance == null)
+			if (haveEvents == null)
 			{
-				throw new ArgumentNullException(nameof(instance));
+				throw new ArgumentNullException(nameof(haveEvents));
 			}
-			var count = 0;
-			Regex regex = null;
-			if (!string.IsNullOrEmpty(regExPattern))
-			{
-				regex = new Regex(regExPattern);
-			}
-			var typeWithEvents = instance.GetType();
-			foreach (var eventInfo in typeWithEvents.GetEvents(AllBindings))
-			{
-				if ((regex != null) && !regex.IsMatch(eventInfo.Name))
-				{
-					continue;
-				}
-				var fieldInfo = typeWithEvents.GetField(eventInfo.Name, AllBindings);
-				if (fieldInfo == null)
-				{
-					continue;
-				}
-				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
-				var removeMethod = eventInfo.GetRemoveMethod(true);
-				if ((eventDelegate == null) || (removeMethod == null))
-				{
-					continue;
-				}
-				count += eventDelegate.GetInvocationList().Length;
-				removeMethod.Invoke(instance, new object[] { eventDelegate });
-			}
-			return count;
+			return EventsInObject<TEventArgs>(haveEvents);
 		}
 
 		/// <summary>
@@ -88,7 +64,7 @@ namespace Dapplo.Utils
 		/// </summary>
 		/// <param name="targetObject">object</param>
 		/// <returns>IList of IObservable which can be dispose with DisposeAll</returns>
-		public static IEnumerable<IObservable<EventPattern<TEventArgs>>> EventsIn<TEventArgs>(object targetObject) where TEventArgs : class
+		public static IEnumerable<IObservable<EventPattern<TEventArgs>>> EventsInObject<TEventArgs>(object targetObject) where TEventArgs : class
 		{
 			return targetObject.GetType().GetEvents(AllBindings).Select(eventInfo => Observable.FromEventPattern<TEventArgs>(targetObject, eventInfo.Name));
 		}

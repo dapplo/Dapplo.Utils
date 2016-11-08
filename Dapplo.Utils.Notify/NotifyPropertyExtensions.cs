@@ -28,14 +28,13 @@
 using System;
 using System.ComponentModel;
 using System.Reactive;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using Dapplo.Log;
 
 #endregion
 
-namespace Dapplo.Utils.Extensions
+namespace Dapplo.Utils.Notify
 {
 	/// <summary>
 	///     Extensions to simplify the usage of INotifyPropertyChanged and INotifyPropertyChanging
@@ -57,7 +56,7 @@ namespace Dapplo.Utils.Extensions
 			{
 				PropertyChangedEventHandler handler = (s, e) => observer.OnNext(e);
 				source.PropertyChanged += handler;
-				return Disposable.Create(() => source.PropertyChanged -= handler);
+				return SimpleDisposable.Create(() => source.PropertyChanged -= handler);
 			});
 
 			if (source == null)
@@ -151,7 +150,7 @@ namespace Dapplo.Utils.Extensions
 			{
 				PropertyChangingEventHandler handler = (s, e) => observer.OnNext(e);
 				source.PropertyChanging += handler;
-				return Disposable.Create(() => source.PropertyChanging -= handler);
+				return SimpleDisposable.Create(() => source.PropertyChanging -= handler);
 			});
 
 			if (source == null)

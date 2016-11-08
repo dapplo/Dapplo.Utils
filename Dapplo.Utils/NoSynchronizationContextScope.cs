@@ -25,10 +25,13 @@
 
 #region Usings
 
+#if NET45
 using System;
 using System.Threading;
+#endif
 
 #endregion
+
 
 namespace Dapplo.Utils
 {

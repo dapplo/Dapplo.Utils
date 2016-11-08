@@ -1,40 +1,29 @@
-{
+﻿{
 	"version": "1.0.0-*",
-	"title": "Dapplo.Utils",
+	"title": "Dapplo.Utils.Notify",
 	"authors": [ "Robin Krom" ],
 	"copyright": "Copyright © Dapplo 2016",
-	"description": "A library with utilities which are used by various Dapplo libraries.",
+	"description": "A library with utilities for NotifyProperty handling which are used by various Dapplo libraries.",
 	"supports": {},
 	"dependencies": {
-		"Dapplo.Log": "1.0.21"
+		"Dapplo.Log": "1.0.21",
+		"Dapplo.Utils": "1.0.0-*",
+		"System.Reactive.Linq": "3.1.0"
 	},
 	"frameworks": {
 		"netstandard1.3": {
 			"dependencies": {
 				"Microsoft.NETCore.Portable.Compatibility": "1.0.1",
 				"NETStandard.Library": "1.6.0",
-				"System.Collections.Concurrent": "4.0.12",
-				"System.ComponentModel": "4.0.1",
-				"System.ComponentModel.Primitives": "4.1.0",
-				"System.ComponentModel.TypeConverter": "4.1.0",
-				"System.IO.Compression": "4.1.0",
-				"System.ObjectModel": "4.0.12",
-				"System.Reflection": "4.1.0",
-				"System.Reflection.TypeExtensions": "4.1.0",
+				"System.Linq": "4.1.0",
 				"System.Runtime.Extensions": "4.1.0",
-				"System.Runtime.Serialization.Primitives": "4.1.1",
-				"System.Text.RegularExpressions": "4.1.0",
-				"System.ComponentModel.Annotations": "4.1.0"
+				"System.Text.RegularExpressions": "4.1.0"
 			}
 		},
 		"net45": {
 			"dependencies": {
 			},
 			"frameworkAssemblies": {
-				"Microsoft.VisualBasic": "10.0.0.0",
-				"System.ComponentModel.DataAnnotations": "4.0.0.0",
-				"System.Runtime.Caching": "4.0.0.0",
-				"System.Runtime.Serialization": "4.0.0.0"
 			}
 		}
 	},
