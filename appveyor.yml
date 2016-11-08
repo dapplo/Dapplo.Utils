@@ -25,8 +25,8 @@ build:
   verbosity: minimal
 build_script:
 - dotnet build Dapplo.Utils -c %CONFIGURATION% --no-dependencies
-- dotnet build Dapplo.Utils.Tests -c %CONFIGURATION% --no-dependencies
 - dotnet build Dapplo.Utils.Tests.TestAssembly -c %CONFIGURATION% --no-dependencies
+- dotnet build Dapplo.Utils.Tests -c %CONFIGURATION% --no-dependencies
 after_build:
 - dotnet pack  Dapplo.Utils -c %CONFIGURATION% --no-build -o artifacts
 #cache:
