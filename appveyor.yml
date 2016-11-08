@@ -1,4 +1,4 @@
-version: 0.1.{build}
+version: 1.0.{build}
 skip_tags: true
 configuration: Release
 platform: AnyCPU
@@ -6,33 +6,33 @@ clone_depth: 2
 branches:
   only:
   - master
-assembly_info:
-  patch: true
-  file: '**\AssemblyInfo.*'
-  assembly_version: '{version}'
-  assembly_file_version: '{version}'
-  assembly_informational_version: '{version}'
 install:
   - choco install gitlink -y
 before_build:
-  - nuget restore
-  - ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { $env:is_not_pr = "true"; }
+- ps: .\SetVersion.ps1
+- appveyor-retry dotnet restore -v Minimal
+- ps: if(-not $env:APPVEYOR_PULL_REQUEST_NUMBER) { $env:is_not_pr = "true"; }
 before_package:
-  - ps: Remove-Item packages\OpenCover* -include ("*.pdb", "*.sln", "*.csproj") -recurse
-  - GitLink .\
-  - nuget pack -Verbosity detailed "%APPVEYOR_PROJECT_NAME%.nuspec" -MSBuildVersion 14.0 -Properties id=%APPVEYOR_PROJECT_NAME%;version=%APPVEYOR_BUILD_VERSION%;author=Dapplo
+- GitLink .\
 after_test: 
-    - ps: .\CreateCoverage.ps1
+- ps: .\CreateCoverage.ps1
 environment:
   COVERALLS_REPO_TOKEN:
     secure: L60mbCAOvZODwY3jnXtDc+d7fMJhlWhqOaYry0+YAZxsM139e32GZ9mrXiBQboy9
 build:
-  project: Dapplo.Utils.sln
   publish_nuget: true
-  publish_nuget_symbols: false
+  publish_nuget_symbols: true
   verbosity: minimal
+build_script:
+- dotnet build Dapplo.Utils -c %CONFIGURATION% --no-dependencies
+- dotnet build Dapplo.Utils.Tests -c %CONFIGURATION% --no-dependencies
+- dotnet build Dapplo.Utils.Tests.TestAssembly -c %CONFIGURATION% --no-dependencies
+after_build:
+- dotnet pack  Dapplo.Utils -c %CONFIGURATION% --no-build -o artifacts
+#cache:
+#- '%USERPROFILE%\.nuget\packages'
 artifacts:
-- path: '*.nupkg'
+- path: artifacts\**\*.*
   name: NuGet package
 notifications:
 - provider: Email
@@ -42,16 +42,6 @@ notifications:
   on_build_failure: true
   on_build_status_changed: false
 deploy:
-- provider: GitHub
-  release: Dapplo.Utils-v$(appveyor_build_version)
-  auth_token:
-    secure: eBQPtXg53XgcvdcVY3wQAw6kkwNh+QhcsTDwzyQLLh6IOPyiePEaEhJR0D2YBjAj
-  artifact: /.*\.nupkg/
-  draft: false
-  on:
-    branch: master
-    is_not_pr: true
-    appveyor_repo_commit_message_extended: /\[release\]/
 - provider: NuGet
   skip_symbols: true
   api_key:
