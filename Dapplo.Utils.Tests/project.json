@@ -55,6 +55,12 @@
 			}
 		}
 	},
+	"tools": {
+		"coveralls.io": "1.3.4",
+		"OpenCover": "4.6.519",
+		"ReportGenerator": "2.4.5.0",
+		"xunit.runner.console": "2.1.0"
+	},
 	"buildOptions": {
 		"xmlDoc": false,
 		"copyToOutput": [ "TestFiles\\dapplo.png" ]
