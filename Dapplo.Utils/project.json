@@ -6,7 +6,7 @@
 	"description": "A library with utilities which are used by various Dapplo libraries.",
 	"supports": {},
 	"dependencies": {
-		"Dapplo.Log": "1.0.21"
+		"Dapplo.Log": "1.0.22"
 	},
 	"frameworks": {
 		"netstandard1.3": {

@@ -1,4 +1,4 @@
-﻿{
+{
 	"version": "1.0.0-*",
 	"title": "Dapplo.Utils.Notify",
 	"authors": [ "Robin Krom" ],
@@ -6,7 +6,7 @@
 	"description": "A library with utilities for NotifyProperty handling which are used by various Dapplo libraries.",
 	"supports": {},
 	"dependencies": {
-		"Dapplo.Log": "1.0.21",
+		"Dapplo.Log": "1.0.22",
 		"Dapplo.Utils": "1.0.0-*",
 		"System.Reactive.Linq": "3.1.0"
 	},

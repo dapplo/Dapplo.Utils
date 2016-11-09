@@ -5,19 +5,17 @@
 	"copyright": "Copyright © Dapplo 2016",
 	"description": "A library with utilities which are used by various Dapplo libraries.",
 	"supports": {},
-    "dependencies": {
-        "Dapplo.Log": "1.0.21",
-        "Dapplo.Log.XUnit": "1.0.21",
-        "Dapplo.Utils": "1.0.0-*",
-        "Dapplo.Utils.Notify": "1.0.0-*",
-        "Dapplo.Utils.Tests.TestAssembly": "1.0.0-*",
-        "ILBundle": "1.0.0.14",
-        "xunit.runner.visualstudio": "2.1.0",
-        "Xunit.StaFact": "0.1.36-beta"
-    },
+	"dependencies": {
+		"Dapplo.Log": "1.0.22",
+		"Dapplo.Log.XUnit": "1.0.22",
+		"Dapplo.Utils": "1.0.0-*",
+		"Dapplo.Utils.Notify": "1.0.0-*",
+		"Dapplo.Utils.Tests.TestAssembly": "1.0.0-*",
+		"xunit.runner.visualstudio": "2.1.0",
+		"Xunit.StaFact": "0.1.36-beta"
+	},
 	"frameworks": {
-		"net46": {
-			"System.Runtime.Caching": "4.0.0",
+		"net45": {
 			"frameworkAssemblies": {
 				"PresentationCore": "4.0.0.0",
 				"PresentationFramework": "4.0.0.0",
