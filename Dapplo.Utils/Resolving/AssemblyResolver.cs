@@ -119,10 +119,13 @@ namespace Dapplo.Utils.Resolving
 				Log.Verbose().WriteLine("Register was callled with null.");
 				return;
 			}
+			var assemblyName = assembly.GetName().Name;
 			lock (AssembliesByName)
 			{
+
 				if (!AssembliesByName.ContainsKey(assembly.GetName().Name))
 				{
+					Log.Verbose().WriteLine("Registering Assembly {0}", assemblyName);
 					AssembliesByName[assembly.GetName().Name] = assembly;
 				}
 			}
@@ -140,6 +143,7 @@ namespace Dapplo.Utils.Resolving
 					if (!AssembliesByPath.ContainsKey(filepath))
 					{
 						AssembliesByPath[filepath] = assembly;
+						Log.Verbose().WriteLine("Registering Assembly {0} to file {1}", assemblyName, filepath);
 					}
 				}
 			}
@@ -158,6 +162,7 @@ namespace Dapplo.Utils.Resolving
 				{
 					AppDomainRegistrations.Add(appDomain.FriendlyName);
 					appDomain.AssemblyResolve += ResolveEventHandler;
+					Log.Verbose().WriteLine("Registered Assembly-Resolving functionality to AppDomain {0}", appDomain.FriendlyName);
 				}
 				return SimpleDisposable.Create(() => UnregisterAssemblyResolve(appDomain));
 			}
@@ -180,11 +185,13 @@ namespace Dapplo.Utils.Resolving
 		{
 			lock (AppDomainRegistrations)
 			{
-				if (AppDomainRegistrations.Contains(appDomain.FriendlyName))
+				if (!AppDomainRegistrations.Contains(appDomain.FriendlyName))
 				{
-					AppDomainRegistrations.Remove(appDomain.FriendlyName);
-					appDomain.AssemblyResolve -= ResolveEventHandler;
+					return;
 				}
+				AppDomainRegistrations.Remove(appDomain.FriendlyName);
+				appDomain.AssemblyResolve -= ResolveEventHandler;
+				Log.Verbose().WriteLine("Unregistered Assembly-Resolving functionality from AppDomain {0}", appDomain.FriendlyName);
 			}
 		}
 
@@ -240,15 +247,20 @@ namespace Dapplo.Utils.Resolving
 			{
 				Log.Verbose().WriteLine("Using cached assembly {0}.", assembly.FullName);
 			}
-			if (assembly == null)
+			else 
 			{
 				// The assembly was not found in our own cache, find it in the current AppDomain
 				assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => string.Equals(x.GetName().Name, assemblyName, StringComparison.InvariantCultureIgnoreCase));
 				if (assembly != null)
 				{
-					Log.Verbose().WriteLine("Using already loaded assembly {0}.", assembly.FullName);
+					Log.Verbose().WriteLine("Using already loaded assembly {1} for requested {0}.", assemblyName, assembly.FullName);
 					// Register the assembly, so the Dapplo.Addons Bootstrapper knows it too
 					assembly.Register();
+				}
+				else
+				{
+					Log.Verbose().WriteLine("Couldn't find an available assembly called {0}.", assemblyName);
+
 				}
 			}
 			return assembly;
@@ -284,17 +296,18 @@ namespace Dapplo.Utils.Resolving
 				{
 					assembly = AssembliesByPath.Where(x => string.Equals(Path.GetFileNameWithoutExtension(x.Key), Path.GetFileNameWithoutExtension(filepath), StringComparison.InvariantCultureIgnoreCase)).Select(x => x.Value).FirstOrDefault();
 				}
-			}
-			if (assembly == null)
-			{
-				// The assembly wasn't found in our internal cache, now we go through the AppDomain
-				// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
-				assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
 				if (assembly != null)
 				{
-					// found something, cache it for later usage
-					assembly.Register(filepath);
+					return assembly;
 				}
+			}
+			// The assembly wasn't found in our internal cache, now we go through the AppDomain
+			// Dynamic assemblies don't have a location, skip them, it would cause a NotSupportedException
+			assembly = AppDomain.CurrentDomain.GetAssemblies().Where(x => !x.IsDynamic).FirstOrDefault(x => string.Equals(x.Location, filepath, StringComparison.InvariantCultureIgnoreCase));
+			if (assembly != null)
+			{
+				// found something, cache it for later usage
+				assembly.Register(filepath);
 			}
 			return assembly;
 		}
