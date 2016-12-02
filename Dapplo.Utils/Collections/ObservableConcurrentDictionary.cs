@@ -196,7 +196,9 @@ namespace Dapplo.Utils.Collections
 					AddNotifyPropertyChangedForwarding(newValue);
 
 					// 2. Notify
-					CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, newValue));
+					//CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, newValue));
+					// TODO: We use a reset for now, it should be add
+					CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
 					// 3. Return
 					return newValue;
@@ -267,7 +269,9 @@ namespace Dapplo.Utils.Collections
 				AddNotifyPropertyChangedForwarding(newValue);
 
 				// 3. Notify
-				CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, new List<TValue> {newValue}));
+				//CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, new List<TValue> {newValue}));
+				// TODO: We use a reset for now, it should be add 
+				CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
 				// 4. Return
 				return newValue;
@@ -289,7 +293,10 @@ namespace Dapplo.Utils.Collections
 			AddNotifyPropertyChangedForwarding(value);
 
 			// 1. Notify
-			CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value));
+			//CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value));
+			// TODO: We use a reset for now, it should be add
+			CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
 
 			// 2. Return
 			return true;
@@ -321,7 +328,9 @@ namespace Dapplo.Utils.Collections
 			RemoveNotifyPropertyChangedForwarding(value);
 
 			// 2. Notify
-			CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, value));
+			//CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, value));
+			// TODO: We use a reset for now, it should be a remove with the correct index
+			CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 
 			// 3. Return
 			return true;
@@ -348,7 +357,10 @@ namespace Dapplo.Utils.Collections
 			AddNotifyPropertyChangedForwarding(newValue);
 
 			// 3. Notify
-			CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newValue, comparisonValue));
+			//CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newValue, comparisonValue));
+			// TODO: We use a reset for now, it should be a remove with the correct index
+			CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
 
 			// 4. Return
 			return true;
