@@ -58,7 +58,7 @@
 	"tools": {
 		"coveralls.io": "1.3.4",
 		"OpenCover": "4.6.519",
-		"ReportGenerator": "2.5.0.0",
+		"ReportGenerator": "2.5.1",
 		"xunit.runner.console": "2.1.0"
 	},
 	"buildOptions": {

@@ -43,6 +43,7 @@ namespace Dapplo.Utils.Tests
 	/// </summary>
 	public class ObservableConcurrentDictionaryTests
 	{
+		private static readonly LogSource Log = new LogSource();
 		public ObservableConcurrentDictionaryTests(ITestOutputHelper testOutputHelper)
 		{
 			LogSettings.RegisterDefaultLogger<XUnitLogger>(LogLevels.Verbose, testOutputHelper);
@@ -57,6 +58,12 @@ namespace Dapplo.Utils.Tests
 
 			var ocd = new ObservableConcurrentDictionary<string, NotifyPropertyChangedImpl>();
 			ocd.AddOrUpdate(testKey, npc, (s, impl) => { throw new ArgumentException(); });
+
+			// Register without doing, just to make sure we also test the event generation for now
+			ocd.CollectionChanged += (sender, args) =>
+			{
+				Log.Info().WriteLine($"Old location: {args.OldStartingIndex}");
+			};
 
 			var isNpcTriggered = false;
 			// Subscribe to the PropertyChanged
