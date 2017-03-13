@@ -23,7 +23,7 @@
 
 #endregion
 
-#if NET45
+#if !NETSTANDARD1_3
 #region Usings
 
 using System;
