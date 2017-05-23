@@ -29,7 +29,7 @@ var isPullRequest = !string.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQ
 var isRelease = (EnvironmentVariable("APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED")?? "").Contains("[release]");
 
 // Used to store the version, which is needed during the build and the packaging
-var version = EnvironmentVariable("APPVEYOR_BUILD_VERSION");
+var version = Argument("version", EnvironmentVariable("APPVEYOR_BUILD_VERSION")?? "0.0.9.9");
 
 Task("Default")
     .IsDependentOn("Publish");
@@ -120,7 +120,7 @@ Task("Coverage")
         ReturnTargetCodeOffset = 0
     };
 
-    var projectFiles = GetFiles("./**/*.csproj");
+    var projectFiles = GetFiles("./**/*.xproj");
     foreach(var projectFile in projectFiles)
     {
         var projectName = projectFile.GetDirectory().GetDirectoryName();
@@ -148,7 +148,7 @@ Task("Coverage")
                     ShadowCopy = false,
 					XmlReport = true,
 					HtmlReport = true,
-					ReportName = "Dapplo.Jira",
+					ReportName = "Dapplo.Utils",
 					OutputDirectory = "./artifacts",
 					WorkingDirectory = "./src"
                 });
@@ -189,6 +189,16 @@ Task("RestoreNuGetPackages")
 Task("AssemblyVersion")
 	.Does(() =>
 {
+	var projects = GetFiles(string.Format("./{0}*/project.json", solutionName));
+	foreach(var project in projects)
+	{
+		Information("Fixing version in {0} to {1}", project.FullPath, version);
+		TransformConfig(project.FullPath, 
+			new TransformationCollection {
+				{ "Version", version }
+			});
+	}
+	
 	foreach(var assemblyInfoFile in  GetFiles("./**/AssemblyInfo.cs")) {
 		var assemblyInfo = ParseAssemblyInfo(assemblyInfoFile.FullPath);
 		CreateAssemblyInfo(assemblyInfoFile.FullPath, new AssemblyInfoSettings {
@@ -196,18 +206,16 @@ Task("AssemblyVersion")
 			InformationalVersion = version,
 			FileVersion = version,
 
-			CLSCompliant = assemblyInfo.CLSCompliant,
 			Company = assemblyInfo.Company,
 			ComVisible = assemblyInfo.ComVisible,
 			Configuration = assemblyInfo.Configuration,
-			Copyright = assemblyInfo.Copyright
-			CustomAttributes = assemblyInfo.CustomAttributes,
+			Copyright = assemblyInfo.Copyright,
 			Description = assemblyInfo.Description,
 			Guid = assemblyInfo.Guid,
 			InternalsVisibleTo = assemblyInfo.InternalsVisibleTo,
 			Product = assemblyInfo.Product,
 			Title = assemblyInfo.Title,
-			Trademark = assemblyInfo.Trademark,
+			Trademark = assemblyInfo.Trademark
 		});
 	}
 });
