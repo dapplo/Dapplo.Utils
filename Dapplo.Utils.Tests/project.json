@@ -6,9 +6,9 @@
 	"description": "A library with utilities which are used by various Dapplo libraries.",
 	"supports": {},
     "dependencies": {
-        "Costura.Fody": "1.3.3",
-        "Dapplo.Log": "1.0.23",
-        "Dapplo.Log.XUnit": "1.0.23",
+        "Costura.Fody": "1.5.0",
+        "Dapplo.Log": "1.0.29",
+        "Dapplo.Log.XUnit": "1.0.29",
         "Dapplo.Utils": "1.0.0-*",
         "Dapplo.Utils.Notify": "1.0.0-*",
         "Dapplo.Utils.Tests.TestAssembly": "1.0.0-*",
