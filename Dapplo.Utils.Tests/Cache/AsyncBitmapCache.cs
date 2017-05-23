@@ -26,6 +26,7 @@
 #region Usings
 
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -34,19 +35,34 @@ using System.Windows.Media.Imaging;
 
 namespace Dapplo.Utils.Tests.Cache
 {
-	/// <summary>
-	///     Test AsyncMemoryCache which retrieves a bitmap from the file system via the supplied filename
-	/// </summary>
-	public class AsyncBitmapCache : AsyncMemoryCache<string, BitmapSource>
-	{
-		/// <inheritdoc />
-		protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
-		{
-			using (var stream = new FileStream(Path.Combine("TestFiles", filename), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-			{
-				// ReSharper disable once AccessToDisposedClosure
-				return await Task.Run(() => stream.BitmapImageFromStream(), cancellationToken).ConfigureAwait(false);
-			}
-		}
-	}
+    /// <summary>
+    ///     Test AsyncMemoryCache which retrieves a bitmap from the file system via the supplied filename
+    /// </summary>
+    public class AsyncBitmapCache : AsyncMemoryCache<string, BitmapSource>
+    {
+        /// <inheritdoc />
+        protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
+        {
+            string path = Path.Combine("TestFiles", filename); 
+            if (!File.Exists(path))
+            {
+                string location = Assembly.GetExecutingAssembly().Location;
+                if (location != null)
+                {
+                    path = Path.Combine(location, "TestFiles", filename);
+                }
+            }
+            if (!File.Exists(path))
+            {
+                // What is the default here?
+                return new BitmapImage();
+            }
+
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                // ReSharper disable once AccessToDisposedClosure
+                return await Task.Run(() => stream.BitmapImageFromStream(), cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
 }
