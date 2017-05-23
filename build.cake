@@ -21,6 +21,7 @@ var coverallsRepoToken = Argument("nugetApiKey", EnvironmentVariable("COVERALLS_
 
 // where is our solution located?
 var solutionFilePath = GetFiles("./**/*.sln").First();
+var solutionName = solutionFilePath.GetDirectory().GetDirectoryName();
 
 // Check if we are in a pull request, publishing of packages and coverage should be skipped
 var isPullRequest = !string.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQUEST_NUMBER"));
@@ -101,7 +102,8 @@ Task("Documentation")
     .Does(() =>
 {
 	// Run DocFX
-	DocFx("./doc/docfx.json");
+	DocFxMetadata("./doc/docfx.json");
+    DocFxBuild("./doc/docfx.json");
 	
 	CreateDirectory("artifacts");
 	// Archive the generated site
