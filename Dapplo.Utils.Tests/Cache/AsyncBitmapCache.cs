@@ -30,6 +30,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using Dapplo.Log;
 
 #endregion
 
@@ -40,6 +41,7 @@ namespace Dapplo.Utils.Tests.Cache
     /// </summary>
     public class AsyncBitmapCache : AsyncMemoryCache<string, BitmapSource>
     {
+        private static readonly LogSource Log = new LogSource();
         /// <inheritdoc />
         protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
         {
@@ -49,13 +51,14 @@ namespace Dapplo.Utils.Tests.Cache
                 string location = Assembly.GetExecutingAssembly().Location;
                 if (location != null)
                 {
-                    path = Path.Combine(location, "TestFiles", filename);
+                    path = Path.Combine(Path.GetDirectoryName(location), "TestFiles", filename);
                 }
             }
             if (!File.Exists(path))
             {
+                Log.Error().WriteLine("Couldn't find location {0}", path);
                 // What is the default here?
-                return new BitmapImage();
+                return null;
             }
 
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
