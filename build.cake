@@ -30,7 +30,7 @@ var isPullRequest = !string.IsNullOrEmpty(EnvironmentVariable("APPVEYOR_PULL_REQ
 var isRelease = (EnvironmentVariable("APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED")?? "").Contains("[release]");
 
 // Used to store the version, which is needed during the build and the packaging
-var version = Argument("version", EnvironmentVariable("APPVEYOR_BUILD_VERSION")?? "0.0.9.9");
+var version = Argument("version", EnvironmentVariable("APPVEYOR_BUILD_VERSION") ?? "0.0.9.9");
 
 Task("Default")
     .IsDependentOn("Publish");
@@ -192,7 +192,7 @@ Task("RestoreNuGetPackages")
 Task("AssemblyVersion")
 	.Does(() =>
 {
-	var projects = GetFiles(string.Format("./{0}*/project.json", solutionName));
+	var projects = GetFiles("./**/project.json");
 	foreach(var project in projects)
 	{
 		Information("Fixing version in {0} to {1}", project.FullPath, version);
