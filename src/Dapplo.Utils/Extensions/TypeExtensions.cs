@@ -142,13 +142,9 @@ namespace Dapplo.Utils.Extensions
                 return targetType.CreateInstance();
             }
 
-            if (typeConverter != null)
+            if (typeConverter != null && TryConvert(value, targetType, typeConverter, typeDescriptorContext, convertFrom, out var convertedValueViaSuppliedConverter))
             {
-                object returnValue;
-                if (TryConvert(value, targetType, typeConverter, typeDescriptorContext, convertFrom, out returnValue))
-                {
-                    return returnValue;
-                }
+                return convertedValueViaSuppliedConverter;
             }
 
             var valueType = value.GetType();
@@ -227,13 +223,9 @@ namespace Dapplo.Utils.Extensions
             if (typeConverter == null)
             {
                 typeConverter = GetConverter(convertFrom ? targetType : valueType);
-                if (typeConverter != null)
+                if (typeConverter != null && TryConvert(value, targetType, typeConverter, typeDescriptorContext, convertFrom, out var convertedValue))
                 {
-                    object returnValue;
-                    if (TryConvert(value, targetType, typeConverter, typeDescriptorContext, convertFrom, out returnValue))
-                    {
-                        return returnValue;
-                    }
+                    return convertedValue;
                 }
             }
 
@@ -304,8 +296,7 @@ namespace Dapplo.Utils.Extensions
         public static TypeConverter GetConverter(this Type valueType)
         {
             TypeConverter converter;
-            Type converterType;
-            if (Converters.TryGetValue(valueType, out converterType))
+            if (Converters.TryGetValue(valueType, out var converterType))
             {
                 converter = (TypeConverter) Activator.CreateInstance(converterType);
             }
@@ -355,18 +346,20 @@ namespace Dapplo.Utils.Extensions
                 else
                 {
                     var canConverFrom = typeConverter?.CanConvertFrom(valueType);
-                    if (canConverFrom != null && (bool) canConverFrom)
+                    if (canConverFrom == null || !(bool) canConverFrom)
                     {
-                        try
-                        {
-                            outValue = typeConverter.ConvertFrom(typeDescriptorContext, CultureInfo.CurrentCulture, value);
-                            return true;
-                        }
-                        catch (Exception ex)
-                        {
-                            // Ignore, can't convert the value, this should actually not happen much
-                            Log.Warn().WriteLine(ex.Message);
-                        }
+                        return false;
+                    }
+
+                    try
+                    {
+                        outValue = typeConverter.ConvertFrom(typeDescriptorContext, CultureInfo.CurrentCulture, value);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ignore, can't convert the value, this should actually not happen much
+                        Log.Warn().WriteLine(ex.Message);
                     }
                 }
             }
@@ -393,18 +386,20 @@ namespace Dapplo.Utils.Extensions
                 else
                 {
                     var convertTo = typeConverter?.CanConvertTo(targetType);
-                    if (convertTo != null && (bool) convertTo)
+                    if (convertTo == null || !(bool) convertTo)
                     {
-                        try
-                        {
-                            outValue = typeConverter.ConvertTo(typeDescriptorContext, CultureInfo.CurrentCulture, value, targetType);
-                            return true;
-                        }
-                        catch (Exception ex)
-                        {
-                            // Ignore, can't convert the value, this should actually not happen much
-                            Log.Warn().WriteLine(ex.Message);
-                        }
+                        return false;
+                    }
+
+                    try
+                    {
+                        outValue = typeConverter.ConvertTo(typeDescriptorContext, CultureInfo.CurrentCulture, value, targetType);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Ignore, can't convert the value, this should actually not happen much
+                        Log.Warn().WriteLine(ex.Message);
                     }
                 }
             }
@@ -418,8 +413,7 @@ namespace Dapplo.Utils.Extensions
         /// <returns>string</returns>
         public static string FriendlyName(this Type type)
         {
-            string friendlyName;
-            if (TypeToFriendlyName.TryGetValue(type, out friendlyName))
+            if (TypeToFriendlyName.TryGetValue(type, out var friendlyName))
             {
                 return friendlyName;
             }
@@ -462,11 +456,7 @@ namespace Dapplo.Utils.Extensions
         /// <returns>Default for type</returns>
         public static object Default(this Type type)
         {
-            if (type.GetTypeInfo().IsValueType)
-            {
-                return Activator.CreateInstance(type);
-            }
-            return null;
+            return type.GetTypeInfo().IsValueType ? Activator.CreateInstance(type) : null;
         }
     }
 }

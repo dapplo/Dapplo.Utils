@@ -146,8 +146,7 @@ namespace Dapplo.Utils.Extensions
 					taskCompletionSource.TrySetCanceled();
 					break;
 				case TaskStatus.RanToCompletion:
-					var castedSource = source as Task<TResult>;
-					taskCompletionSource.TrySetResult(castedSource == null
+					taskCompletionSource.TrySetResult(!(source is Task<TResult> castedSource)
 						?
 						// source is a Task
 						default(TResult)

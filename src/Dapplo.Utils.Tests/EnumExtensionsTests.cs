@@ -47,7 +47,7 @@ namespace Dapplo.Utils.Tests
 			Assert.Equal("Value2", TestEnum.Value2.EnumValueOf());
 			Enum enumValue = null;
 			// ReSharper disable once ExpressionIsAlwaysNull
-			Assert.Equal(null, enumValue.EnumValueOf());
+			Assert.Null(enumValue.EnumValueOf());
 		}
 	}
 }

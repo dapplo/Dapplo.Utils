@@ -37,7 +37,7 @@ namespace Dapplo.Utils.Tests
 	/// <summary>
 	/// Test the UiContext
 	/// </summary>
-	public class UiContextTests : IDisposable
+	public sealed class UiContextTests : IDisposable
 	{
 		private static readonly LogSource Log = new LogSource();
 

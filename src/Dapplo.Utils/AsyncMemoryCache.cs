@@ -177,7 +177,7 @@ namespace Dapplo.Utils
 
 			var result = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
 			// Test if we got an existing object or our own
-			if ((result != null) && !completionSource.Task.Equals(result))
+			if (result != null && !completionSource.Task.Equals(result))
 			{
 				return await result.ConfigureAwait(false);
 			}
@@ -186,7 +186,7 @@ namespace Dapplo.Utils
 			try
 			{
 				result = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
-				if ((result != null) && !completionSource.Task.Equals(result))
+				if (result != null && !completionSource.Task.Equals(result))
 				{
 					return await result.ConfigureAwait(false);
 				}

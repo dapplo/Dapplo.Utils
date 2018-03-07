@@ -1,5 +1,5 @@
 version: 1.0.{build}
-image: Visual Studio 2015
+image: Visual Studio 2017
 skip_tags: true
 configuration: Release
 platform: AnyCPU
@@ -13,10 +13,10 @@ environment:
     secure: L60mbCAOvZODwY3jnXtDc+d7fMJhlWhqOaYry0+YAZxsM139e32GZ9mrXiBQboy9
   NuGetApiKey:
     secure: xkDQ385+smLqdzhESsXBJvnUjK4FZ4Djjrqi9tFR29dwESIvPYOrQAqgri5Nf/fA
-build:
-  verbosity: minimal
 build_script:
-- ps: .\build.ps1
+- ps: .\build.ps1 --settings_skipverification=true
+cache:
+  - tools -> tools/packages.config
 artifacts:
 - path: artifacts\**\*.nupkg
 - path: artifacts\**\site.zip

@@ -57,7 +57,7 @@ namespace Dapplo.Utils.Tests
 			const string testKey = "One";
 
 			var ocd = new ObservableConcurrentDictionary<string, NotifyPropertyChangedImpl>();
-			ocd.AddOrUpdate(testKey, npc, (s, impl) => { throw new ArgumentException(); });
+			ocd.AddOrUpdate(testKey, npc, (s, impl) => throw new InvalidOperationException());
 
 			// Register without doing, just to make sure we also test the event generation for now
 			ocd.CollectionChanged += (sender, args) =>
@@ -78,8 +78,7 @@ namespace Dapplo.Utils.Tests
 				isNpcTriggered = false;
 
 				// Remove the item, this should remove the event registration
-				NotifyPropertyChangedImpl npcImpl;
-				Assert.True(ocd.TryRemove(testKey, out npcImpl));
+				Assert.True(ocd.TryRemove(testKey, out _));
 
 				// change a value, a NPC is triggered
 				npc.Name = "Robin2";

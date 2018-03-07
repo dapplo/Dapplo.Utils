@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net452</TargetFrameworks>
+    <AssemblyName>Dapplo.Utils.Tests</AssemblyName>
+    <PackageId>Dapplo.Utils.Tests</PackageId>
+	<LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="TestFiles\embedded-dapplo.png" />
+    <None Remove="TestFiles\embedded-dapplo.png.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="TestFiles\embedded-dapplo.png" />
+    <EmbeddedResource Include="TestFiles\embedded-dapplo.png.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapplo.Log.XUnit" Version="1.1.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <PackageReference Include="Xunit.StaFact" Version="0.2.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dapplo.Utils.Notify\Dapplo.Utils.Notify.csproj" />
+    <ProjectReference Include="..\Dapplo.Utils\Dapplo.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Windows" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="TestFiles\dapplo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

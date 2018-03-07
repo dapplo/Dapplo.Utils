@@ -65,7 +65,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var npc = new NotifyPropertyChangedImpl();
 			var events = npc.EventsIn<EventArgs>().ToList();
-			Assert.True(events.Count() == 1);
+			Assert.True(events.Count == 1);
 		}
 	}
 }

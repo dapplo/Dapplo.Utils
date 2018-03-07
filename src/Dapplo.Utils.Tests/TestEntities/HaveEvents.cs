@@ -34,17 +34,13 @@ namespace Dapplo.Utils.Tests.TestEntities
 
 		public HaveEvents()
 		{
-			_blub += (s, e) => {
-				throw new Exception();
-			};
-			Blub += (s, e) => {
-				throw new Exception();
-			};
+			_blub += (s, e) => throw new Exception();
+			Blub += (s, e) => throw new Exception();
 		}
 		public void Invoke()
 		{
-			_blub?.Invoke(null, null);
-			Blub?.Invoke(null, null);
+			_blub?.Invoke(this, EventArgs.Empty);
+			Blub?.Invoke(this, EventArgs.Empty);
 		}
 	}
 }

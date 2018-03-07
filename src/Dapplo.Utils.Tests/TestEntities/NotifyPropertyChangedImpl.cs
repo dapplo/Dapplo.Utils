@@ -37,14 +37,16 @@ namespace Dapplo.Utils.Tests.TestEntities
 
 		public string Name
 		{
-			get { return _name; }
+			get => _name;
 			set
 			{
-				if (_name != value)
+				if (_name == value)
 				{
-					_name = value;
-					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+					return;
 				}
+
+				_name = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
 			}
 		}
 
@@ -52,14 +54,16 @@ namespace Dapplo.Utils.Tests.TestEntities
 
 		public string Name2
 		{
-			get { return _name2; }
+			get => _name2;
 			set
 			{
-				if (_name2 != value)
+				if (_name2 == value)
 				{
-					_name2 = value;
-					PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name2)));
+					return;
 				}
+
+				_name2 = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name2)));
 			}
 		}
 

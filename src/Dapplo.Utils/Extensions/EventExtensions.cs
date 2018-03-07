@@ -78,7 +78,7 @@ namespace Dapplo.Utils.Extensions
 			var typeWithEvents = instance.GetType();
 			foreach (var eventInfo in typeWithEvents.GetEvents(AllBindings))
 			{
-				if ((regex != null) && !regex.IsMatch(eventInfo.Name))
+				if (regex != null && !regex.IsMatch(eventInfo.Name))
 				{
 					continue;
 				}
@@ -89,7 +89,7 @@ namespace Dapplo.Utils.Extensions
 				}
 				var eventDelegate = fieldInfo.GetValue(instance) as Delegate;
 				var removeMethod = eventInfo.GetRemoveMethod(true);
-				if ((eventDelegate == null) || (removeMethod == null))
+				if (eventDelegate == null || removeMethod == null)
 				{
 					continue;
 				}

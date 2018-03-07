@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils.Tests", "Dapplo.Utils.Tests\Dapplo.Utils.Tests.xproj", "{00BE0197-B28A-4BFB-AE73-10ADF605B29F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Utils.Tests", "Dapplo.Utils.Tests\Dapplo.Utils.Tests.csproj", "{00BE0197-B28A-4BFB-AE73-10ADF605B29F}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils", "Dapplo.Utils\Dapplo.Utils.xproj", "{34C1972E-4B09-43F8-8A8A-1AACF09218C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Utils", "Dapplo.Utils\Dapplo.Utils.csproj", "{34C1972E-4B09-43F8-8A8A-1AACF09218C9}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils.Tests.TestAssembly", "Dapplo.Utils.Tests.TestAssembly\Dapplo.Utils.Tests.TestAssembly.xproj", "{4654F340-1F6E-4490-81C3-AAF83E194A9E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Utils.Tests.TestAssembly", "Dapplo.Utils.Tests.TestAssembly\Dapplo.Utils.Tests.TestAssembly.csproj", "{4654F340-1F6E-4490-81C3-AAF83E194A9E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Dapplo.Utils.Notify", "Dapplo.Utils.Notify\Dapplo.Utils.Notify.xproj", "{DAE5514A-FBFE-44A7-8374-902C6A981EAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapplo.Utils.Notify", "Dapplo.Utils.Notify\Dapplo.Utils.Notify.csproj", "{DAE5514A-FBFE-44A7-8374-902C6A981EAD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +36,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {30EE8690-5EFB-4E91-BC0C-8CD5CA441183}
 	EndGlobalSection
 EndGlobal

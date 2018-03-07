@@ -70,7 +70,7 @@ namespace Dapplo.Utils.Extensions
 			}
 
 			var dictionaryType = dictionary.GetType().GetTypeInfo();
-			if (!dictionaryType.IsGenericType || (dictionaryType.GenericTypeArguments[0] != typeof(TKey)))
+			if (!dictionaryType.IsGenericType || dictionaryType.GenericTypeArguments[0] != typeof(TKey))
 			{
 				return true;
 			}

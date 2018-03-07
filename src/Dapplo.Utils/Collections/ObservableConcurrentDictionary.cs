@@ -145,8 +145,8 @@ namespace Dapplo.Utils.Collections
 			{
 				return;
 			}
-			var npcValue = value as INotifyPropertyChanged;
-			if (npcValue != null)
+
+			if (value is INotifyPropertyChanged npcValue)
 			{
 				npcValue.PropertyChanged += ForwardPropertyChanged;
 			}
@@ -162,8 +162,8 @@ namespace Dapplo.Utils.Collections
 			{
 				return;
 			}
-			var npcValue = value as INotifyPropertyChanged;
-			if (npcValue != null)
+
+			if (value is INotifyPropertyChanged npcValue)
 			{
 				npcValue.PropertyChanged -= ForwardPropertyChanged;
 			}
@@ -308,8 +308,7 @@ namespace Dapplo.Utils.Collections
 		/// <param name="key">TKey</param>
 		public void Remove(TKey key)
 		{
-			TValue ignore;
-			TryRemove(key, out ignore);
+			TryRemove(key, out _);
 		}
 
 		/// <summary>

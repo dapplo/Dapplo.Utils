@@ -112,11 +112,9 @@ namespace Dapplo.Utils.Extensions
 				var formatGroup = m.Groups["format"];
 				var endGroup = m.Groups["end"];
 
-				object value;
-				if (properties.TryGetValue(propertyGroup.Value, out value))
+				if (properties.TryGetValue(propertyGroup.Value, out var value))
 				{
-					var enumValue = value as Enum;
-					values.Add(enumValue != null ? enumValue.EnumValueOf() : value);
+					values.Add(value is Enum enumValue ? enumValue.EnumValueOf() : value);
 				}
 				else
 				{
@@ -142,7 +140,7 @@ namespace Dapplo.Utils.Extensions
 				return;
 			}
 			var sourceType = source.GetType();
-			if (sourceType.GetTypeInfo().IsPrimitive || (sourceType == typeof(string)))
+			if (sourceType.GetTypeInfo().IsPrimitive || sourceType == typeof(string))
 			{
 				properties.AddWhenNew(index.ToString(), source);
 				return;

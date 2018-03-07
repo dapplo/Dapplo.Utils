@@ -84,7 +84,7 @@ namespace Dapplo.Utils.Tests
 		{
 			var npc = new NotifyPropertyChangedImpl();
 
-			var task = npc.OnPropertyChanged().FirstAsync(e => e.PropertyName.Contains("2")).Select<PropertyChangedEventArgs, bool>(e => { throw new Exception("blub"); }).FirstAsync().ToTask();
+			var task = npc.OnPropertyChanged().FirstAsync(e => e.PropertyName.Contains("2")).Select<PropertyChangedEventArgs, bool>(e => throw new Exception("blub")).FirstAsync().ToTask();
 			npc.Name = "Dapplo";
 			await Task.Delay(100);
 			Assert.False(task.IsCanceled || task.IsCompleted || task.IsFaulted);

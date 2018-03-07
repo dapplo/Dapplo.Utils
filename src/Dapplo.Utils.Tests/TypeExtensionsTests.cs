@@ -89,7 +89,7 @@ namespace Dapplo.Utils.Tests
             var listOfStrings = listOfStringsObject as IList<string>;
             Assert.NotNull(listOfStrings);
 
-            Assert.NotNull(listOfStrings.Count == 3);
+            Assert.Equal(3, listOfStrings.Count);
         }
 
         [Fact]
@@ -102,7 +102,7 @@ namespace Dapplo.Utils.Tests
             var listOfInts = listOfIntssObject as IList<int>;
             Assert.NotNull(listOfInts);
 
-            Assert.NotNull(listOfInts.Count == 3);
+            Assert.Equal(3, listOfInts.Count);
         }
 
         [Fact]
@@ -115,20 +115,20 @@ namespace Dapplo.Utils.Tests
             var listOfInts = listOfIntssObject as IList<int>;
             Assert.NotNull(listOfInts);
 
-            Assert.NotNull(listOfInts.Count == 3);
+            Assert.Equal(3, listOfInts.Count);
         }
 
         [Fact]
         public void TestDefault()
         {
             var defaultBool = typeof(bool).Default();
-            Assert.Equal(false, defaultBool);
+            Assert.False((bool)defaultBool);
             var defaultInt = typeof(int).Default();
             Assert.Equal(0, defaultInt);
             var defaultString = typeof(string).Default();
-            Assert.Equal(null, defaultString);
+            Assert.Null(defaultString);
             var defaultListOfString = typeof(List<string>).Default();
-            Assert.Equal(null, defaultListOfString);
+            Assert.Null(defaultListOfString);
         }
 
         [Fact]

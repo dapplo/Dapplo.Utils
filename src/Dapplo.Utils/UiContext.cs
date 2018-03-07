@@ -49,7 +49,7 @@ namespace Dapplo.Utils
 		/// <summary>
 		///     Checks if there is UI access possible
 		/// </summary>
-		public static bool HasUiAccess => HasScheduler && (TaskScheduler.Current == UiTaskScheduler);
+		public static bool HasUiAccess => HasScheduler && TaskScheduler.Current == UiTaskScheduler;
 
 		/// <summary>
 		///     Checks if there is UI scheduler

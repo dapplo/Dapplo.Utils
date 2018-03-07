@@ -174,14 +174,12 @@ namespace Dapplo.Utils.Extensions
 				throw new ArgumentNullException(nameof(property));
 			}
 
-			var body = property.Body as MemberExpression;
-			if (body == null)
+			if (!(property.Body is MemberExpression body))
 			{
 				throw new ArgumentException("Expression is not a property", nameof(property));
 			}
 
-			var propertyInfo = body.Member as PropertyInfo;
-			if (propertyInfo == null)
+			if (!(body.Member is PropertyInfo propertyInfo))
 			{
 				throw new ArgumentException("Expression is not a property", nameof(property));
 			}

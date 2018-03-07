@@ -55,12 +55,7 @@ namespace Dapplo.Utils
 				return 1;
 			}
 
-			if (x == null)
-			{
-				return 0;
-			}
-
-			return string.Compare(x.RemoveNonAlphaDigitsToLower(), y.RemoveNonAlphaDigitsToLower(), StringComparison.Ordinal);
+			return x == null ? 0 : string.Compare(x.RemoveNonAlphaDigitsToLower(), y.RemoveNonAlphaDigitsToLower(), StringComparison.Ordinal);
 		}
 
 		/// <summary>
@@ -81,13 +76,7 @@ namespace Dapplo.Utils
 				return false;
 			}
 
-			if (x == null)
-			{
-				return true;
-			}
-
-
-			return x.RemoveNonAlphaDigitsToLower().Equals(y.RemoveNonAlphaDigitsToLower());
+			return x == null || x.RemoveNonAlphaDigitsToLower().Equals(y.RemoveNonAlphaDigitsToLower());
 		}
 
 		/// <summary>

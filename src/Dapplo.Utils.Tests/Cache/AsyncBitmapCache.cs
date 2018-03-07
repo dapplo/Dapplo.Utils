@@ -43,15 +43,15 @@ namespace Dapplo.Utils.Tests.Cache
     {
         private static readonly LogSource Log = new LogSource();
         /// <inheritdoc />
-        protected override async Task<BitmapSource> CreateAsync(string filename, CancellationToken cancellationToken = new CancellationToken())
+        protected override async Task<BitmapSource> CreateAsync(string key, CancellationToken cancellationToken = new CancellationToken())
         {
-            string path = Path.Combine("TestFiles", filename); 
+            string path = Path.Combine("TestFiles", key); 
             if (!File.Exists(path))
             {
                 string location = Assembly.GetExecutingAssembly().Location;
                 if (location != null)
                 {
-                    path = Path.Combine(Path.GetDirectoryName(location), "TestFiles", filename);
+                    path = Path.Combine(Path.GetDirectoryName(location), "TestFiles", key);
                 }
             }
             if (!File.Exists(path))
