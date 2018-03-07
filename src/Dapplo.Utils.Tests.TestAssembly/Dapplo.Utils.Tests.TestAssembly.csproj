@@ -5,9 +5,6 @@
     <AssemblyName>Dapplo.Utils.Tests.TestAssembly</AssemblyName>
     <PackageId>Dapplo.Utils.Tests.TestAssembly</PackageId>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
-    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
 	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
