@@ -176,8 +176,8 @@ Task("Coverage")
 
 // This starts the actual MSBuild
 Task("Build")
-    .IsDependentOn("RestoreNuGetPackages")
     .IsDependentOn("Clean")
+    .IsDependentOn("RestoreNuGetPackages")
     .IsDependentOn("AssemblyVersion")
     .Does(() =>
 {
