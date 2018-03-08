@@ -1,10 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Description>A library with utilities for NotifyProperty handling which are used by various Dapplo libraries.</Description>
-    <Copyright>Copyright © Dapplo 2016</Copyright>
+    <Copyright>Copyright © Dapplo 2016-2018</Copyright>
     <AssemblyTitle>Dapplo.Utils.Notify</AssemblyTitle>
-    <Authors>Robin Krom</Authors>
+    <Authors>Dapplo</Authors>
     <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>Dapplo.Utils.Notify</AssemblyName>
@@ -13,9 +12,14 @@
     <PackageProjectUrl>http://www.dapplo.net/blocks/Dapplo.Utils</PackageProjectUrl>
     <PackageLicenseUrl>http://www.gnu.org/licenses/lgpl-3.0.en.html</PackageLicenseUrl>
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
+	<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
 	<LangVersion>latest</LangVersion>
 	<DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
+	<IsPackable>true</IsPackable>
+	<Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
