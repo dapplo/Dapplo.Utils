@@ -59,6 +59,7 @@ Task("PublishCoverage")
 // Publish the Artifacts of the Package Task to NuGet
 Task("PublishPackages")
     .IsDependentOn("Package")
+    .IsDependentOn("Coverage")
     .WithCriteria(() => !BuildSystem.IsLocalBuild)
     .WithCriteria(() => !string.IsNullOrEmpty(nugetApiKey))
     .WithCriteria(() => !isPullRequest)
@@ -125,7 +126,7 @@ Task("Coverage")
         // Forces error in build when tests fail
         ReturnTargetCodeOffset = 0
     };
-
+	
     var projectFilePaths = GetFiles("./**/*.csproj")
 		.Where(p => !p.FullPath.ToLower().Contains("demo"))
 		.Where(p => !p.FullPath.ToLower().Contains("packages"))
@@ -141,28 +142,27 @@ Task("Coverage")
            openCoverSettings.WithFilter("+["+projectName+"]*");
         }
     }
+	
+	var xunit2Settings = new XUnit2Settings {
+		// Add AppVeyor output, this "should" take care of a report inside AppVeyor
+		ArgumentCustomization = args => {
+			if (!BuildSystem.IsLocalBuild) {
+				args.Append("-appveyor");
+			}
+			return args;
+		},
+		ShadowCopy = false,
+		XmlReport = true,
+		HtmlReport = true,
+		ReportName = solutionName,
+		OutputDirectory = "./artifacts",
+		WorkingDirectory = "./src"
+	};
 
     // Make XUnit 2 run via the OpenCover process
     OpenCover(
         // The test tool Lamdba
-        tool => {
-            tool.XUnit2("./**/*.Tests.dll",
-                new XUnit2Settings {
-                    // Add AppVeyor output, this "should" take care of a report inside AppVeyor
-                    ArgumentCustomization = args => {
-                        if (!BuildSystem.IsLocalBuild) {
-                            args.Append("-appveyor");
-                        }
-                        return args;
-                    },
-                    ShadowCopy = false,
-                    XmlReport = true,
-                    HtmlReport = true,
-                    ReportName = solutionName,
-                    OutputDirectory = "./artifacts",
-                    WorkingDirectory = "./src"
-                });
-            },
+        tool => tool.XUnit2("./**/bin/**/*.Tests.dll", xunit2Settings),
         // The output path
         new FilePath("./artifacts/coverage.xml"),
         // Settings
@@ -207,11 +207,11 @@ Task("GitLink")
 Task("RestoreNuGetPackages")
     .Does(() =>
 {
-	NuGetRestore(solutionFilePath.FullPath);
+    NuGetRestore(solutionFilePath.FullPath);
 });
 
 Task("Versioning")
-	.Does(() =>
+    .Does(() =>
 {
 	Information("Version of this build: " + version);
 	
