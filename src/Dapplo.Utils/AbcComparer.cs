@@ -33,17 +33,22 @@ namespace Dapplo.Utils
 	/// </summary>
 	public class AbcComparer : StringComparer
 	{
-		/// <summary>
-		/// Implement the StringComparer.Compare
-		/// </summary>
-		/// <param name="x">string</param>
-		/// <param name="y">string</param>
-		/// <returns>
-		/// A signed integer that indicates the relative values of x and y, as shown in the following table.
-		/// Less than zero: x precedes y in the sort order -or-x is null and y is not null.
-		/// Zero: x is equal to y -or-x and y are both null.
-		/// Greater than zero: x follows y in the sort order -or- y is null and x is not null.</returns>
-		public override int Compare(string x, string y)
+	    /// <summary>
+	    /// A already provided AbcComparer instance
+	    /// </summary>
+	    public static AbcComparer Instance { get; } = new AbcComparer();
+
+        /// <summary>
+        /// Implement the StringComparer.Compare
+        /// </summary>
+        /// <param name="x">string</param>
+        /// <param name="y">string</param>
+        /// <returns>
+        /// A signed integer that indicates the relative values of x and y, as shown in the following table.
+        /// Less than zero: x precedes y in the sort order -or-x is null and y is not null.
+        /// Zero: x is equal to y -or-x and y are both null.
+        /// Greater than zero: x follows y in the sort order -or- y is null and x is not null.</returns>
+        public override int Compare(string x, string y)
 		{
 			if (x == null && y != null)
 			{

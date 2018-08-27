@@ -55,7 +55,7 @@ namespace Dapplo.Utils.Tests
 		[Fact]
 		public void TestAbcComparerEquals()
 		{
-			var abcComparer = new AbcComparer();
+			var abcComparer = AbcComparer.Instance;
 			Assert.True(abcComparer.Equals("abc123", "__AbC_123!"));
 			Assert.True(abcComparer.Equals(null, null));
 			Assert.False(abcComparer.Equals(null, "bcd123"));
