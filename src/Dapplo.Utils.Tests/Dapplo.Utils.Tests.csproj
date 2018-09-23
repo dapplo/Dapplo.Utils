@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
     <AssemblyName>Dapplo.Utils.Tests</AssemblyName>
     <PackageId>Dapplo.Utils.Tests</PackageId>
 	<LangVersion>latest</LangVersion>
