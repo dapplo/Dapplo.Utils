@@ -26,10 +26,6 @@
     <ProjectReference Include="..\Dapplo.Utils\Dapplo.Utils.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Reactive.Linq" Version="3.1.1" />
-  </ItemGroup>
-
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
     <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
     <PackageReference Include="System.Linq" Version="4.3.0" />
