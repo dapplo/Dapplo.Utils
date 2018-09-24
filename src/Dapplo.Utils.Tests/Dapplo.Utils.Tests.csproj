@@ -4,7 +4,6 @@
     <TargetFrameworks>net461</TargetFrameworks>
     <AssemblyName>Dapplo.Utils.Tests</AssemblyName>
     <PackageId>Dapplo.Utils.Tests</PackageId>
-	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">

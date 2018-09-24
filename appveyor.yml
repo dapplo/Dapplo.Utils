@@ -1,9 +1,8 @@
-version: 1.0.{build}
+version: 1.1.{build}
 image: Visual Studio 2017
 skip_tags: true
 configuration: Release
 platform: AnyCPU
-clone_depth: 2
 test: off
 branches:
   only:
@@ -18,7 +17,7 @@ build_script:
 cache:
   - tools -> tools/packages.config
 artifacts:
-- path: artifacts\**\*.nupkg
+- path: src\**\*.nupkg
 - path: artifacts\**\site.zip
 - path: artifacts\*.xml
 - path: artifacts\*.html
