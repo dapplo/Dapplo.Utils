@@ -44,10 +44,9 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Category</returns>
 		public static string GetCategory(this PropertyInfo propertyInfo)
 		{
-			var categoryAttribute = propertyInfo.GetCustomAttribute<CategoryAttribute>(true);
+			var categoryAttribute = propertyInfo.GetAttribute<CategoryAttribute>();
 			return categoryAttribute?.Category;
 		}
-
 
 		/// <summary>
 		///     Retrieve the Name from the DataMemberAttribute for the supplied PropertyInfo
@@ -56,7 +55,7 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Name</returns>
 		public static string GetDataMemberName(this PropertyInfo propertyInfo)
 		{
-			var dataMemberAttribute = propertyInfo.GetCustomAttribute<DataMemberAttribute>(true);
+			var dataMemberAttribute = propertyInfo.GetAttribute<DataMemberAttribute>();
 			if (!string.IsNullOrEmpty(dataMemberAttribute?.Name))
 			{
 				return dataMemberAttribute.Name;
@@ -65,20 +64,58 @@ namespace Dapplo.Utils.Extensions
 		}
 
 		/// <summary>
-		///     Create a default for the property.
-		///     This can come from the DefaultValueFor from the DefaultValueAttribute
-		///     Or it can be something like an empty collection
+		/// Retrieve an attribute from a property
 		/// </summary>
-		/// <param name="propertyInfo">PropertyInfo</param>
-		/// <returns>object with a default value</returns>
-		public static object GetDefaultValue(this PropertyInfo propertyInfo)
+		/// <typeparam name="TAttribute">Type of the attribute</typeparam>
+		/// <param name="memberInfo">PropertyInfo</param>
+		/// <param name="inherit">bool default true to also check inherit class attributes</param>
+		/// <param name="includeInterfaces">bool default true if the interfaces of the declaring type also need to be checked</param>
+		/// <returns>TAttribute or null</returns>
+		public static TAttribute GetAttribute<TAttribute>(this MemberInfo memberInfo, bool inherit = true, bool includeInterfaces = true) where TAttribute : Attribute
+
+        {
+			var attribute = memberInfo.GetCustomAttribute<TAttribute>(inherit);
+			if (attribute != null)
+			{
+				return attribute;
+			}
+
+			// If we didn't find the DefaultValueAttribute on the property, we check for the same property on the implementing interfaces
+	        if (!includeInterfaces || memberInfo.DeclaringType == null)
+	        {
+		        return null;
+	        }
+
+	        foreach (var interfaceType in memberInfo.DeclaringType.GetInterfaces())
+	        {
+		        var interfacePropertyInfo = interfaceType.GetProperty(memberInfo.Name);
+		        var attributeOnInterface = interfacePropertyInfo?.GetCustomAttribute<TAttribute>(false);
+		        if (attributeOnInterface != null)
+		        {
+			        return attributeOnInterface;
+		        }
+	        }
+
+	        return null;
+        }
+
+        /// <summary>
+        ///     Create a default for the property.
+        ///     This can come from the DefaultValueFor from the DefaultValueAttribute
+        ///     Or it can be something like an empty collection
+        /// </summary>
+        /// <param name="propertyInfo">PropertyInfo</param>
+        /// <param name="includeInterfaces">bool default true if the interfaces of the declaring type also need to be checked</param>
+        /// <returns>object with a default value</returns>
+        public static object GetDefaultValue(this PropertyInfo propertyInfo, bool includeInterfaces = true)
 		{
-			var defaultValueAttribute = propertyInfo.GetCustomAttribute<DefaultValueAttribute>(true);
+			var defaultValueAttribute = propertyInfo.GetAttribute<DefaultValueAttribute>(true, includeInterfaces);
 			if (defaultValueAttribute != null)
 			{
 				return defaultValueAttribute.Value;
 			}
-			if (propertyInfo.PropertyType.GetTypeInfo().IsValueType)
+
+            if (propertyInfo.PropertyType.GetTypeInfo().IsValueType)
 			{
 				// msdn information: If this PropertyInfo object is a value type and value is null, then the property will be set to the default value for that type.
 				return null;
@@ -103,12 +140,12 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>Description</returns>
 		public static string GetDescription(this PropertyInfo propertyInfo)
 		{
-			var descriptionAttribute = propertyInfo.GetCustomAttribute<DescriptionAttribute>(true);
+			var descriptionAttribute = propertyInfo.GetAttribute<DescriptionAttribute>();
 			if (descriptionAttribute != null)
 			{
 				return descriptionAttribute.Description;
 			}
-			var displayAttribute = propertyInfo.GetCustomAttribute<DisplayAttribute>(true);
+			var displayAttribute = propertyInfo.GetAttribute<DisplayAttribute>();
 			return displayAttribute?.Description;
 		}
 
@@ -119,7 +156,7 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>EmitDefaultValue</returns>
 		public static bool GetEmitDefaultValue(this PropertyInfo propertyInfo)
 		{
-			var dataMemberAttribute = propertyInfo.GetCustomAttribute<DataMemberAttribute>(true);
+			var dataMemberAttribute = propertyInfo.GetAttribute<DataMemberAttribute>();
 			if (dataMemberAttribute != null)
 			{
 				return dataMemberAttribute.EmitDefaultValue;
@@ -134,7 +171,7 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>IsReadOnly</returns>
 		public static bool GetReadOnly(this PropertyInfo propertyInfo)
 		{
-			var readOnlyAttribute = propertyInfo.GetCustomAttribute<ReadOnlyAttribute>(true);
+			var readOnlyAttribute = propertyInfo.GetAttribute<ReadOnlyAttribute>();
 			return readOnlyAttribute != null && readOnlyAttribute.IsReadOnly;
 		}
 
@@ -146,7 +183,7 @@ namespace Dapplo.Utils.Extensions
 		/// <returns>TypeConverter</returns>
 		public static TypeConverter GetTypeConverter(this PropertyInfo propertyInfo, bool createIfNothingSpecified = false)
 		{
-			var typeConverterAttribute = propertyInfo.GetCustomAttribute<TypeConverterAttribute>(true);
+			var typeConverterAttribute = propertyInfo.GetAttribute<TypeConverterAttribute>();
 			if (!string.IsNullOrEmpty(typeConverterAttribute?.ConverterTypeName))
 			{
 				var typeConverterType = Type.GetType(typeConverterAttribute.ConverterTypeName);

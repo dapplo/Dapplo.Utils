@@ -29,6 +29,7 @@ using Xunit.Abstractions;
 using System;
 using System.ComponentModel;
 using Dapplo.Log.XUnit;
+using Dapplo.Utils.Tests.TestEntities;
 
 #endregion
 
@@ -142,6 +143,14 @@ namespace Dapplo.Utils.Tests
             Assert.Equal("Tuple<KeyValuePair<object, long>, string>", typeof(Tuple<KeyValuePair<object, long>, string>).FriendlyName());
             Assert.Equal("List<Tuple<int, string>>", typeof(List<Tuple<int, string>>).FriendlyName());
             Assert.Equal("Tuple<short[], string>", typeof(Tuple<short[], string>).FriendlyName());
+        }
+
+        [Fact]
+        public void TestDefaultValue()
+        {
+            var classWithDefaultValue = new HaveDefaultValue();
+            var defaultValue = classWithDefaultValue.GetType().GetProperty(nameof(classWithDefaultValue.MyValue)).GetDefaultValue();
+            Assert.Equal("CorrectValue", defaultValue);
         }
     }
 }
