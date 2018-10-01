@@ -50,8 +50,10 @@ namespace Dapplo.Utils.Extensions
 			{
 				return null;
 			}
-			var attributes = (EnumMemberAttribute[]) enumerationItem.GetType().GetRuntimeField(enumerationItem.ToString()).GetCustomAttributes(typeof(EnumMemberAttribute), false);
-			return attributes.Length > 0 ? attributes[0].Value : enumerationItem.ToString();
+
+			var enumString = enumerationItem.ToString();
+			var attribute = enumerationItem.GetType().GetRuntimeField(enumString)?.GetAttribute<EnumMemberAttribute>(false);
+			return attribute != null ? attribute.Value : enumString;
 		}
 	}
 }

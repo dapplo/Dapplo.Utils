@@ -4,7 +4,7 @@ namespace Dapplo.Utils.Tests.TestEntities
 {
     public interface IHaveDefaultValue
     {
-        [DefaultValue("CorrectValue")]
+        [DefaultValue("InterfaceValue")]
         string MyValue { get; }
     }
 }

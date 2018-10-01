@@ -28,6 +28,7 @@ using Xunit;
 using Xunit.Abstractions;
 using System;
 using System.ComponentModel;
+using System.Linq;
 using Dapplo.Log.XUnit;
 using Dapplo.Utils.Tests.TestEntities;
 
@@ -149,8 +150,13 @@ namespace Dapplo.Utils.Tests
         public void TestDefaultValue()
         {
             var classWithDefaultValue = new HaveDefaultValue();
-            var defaultValue = classWithDefaultValue.GetType().GetProperty(nameof(classWithDefaultValue.MyValue)).GetDefaultValue();
-            Assert.Equal("CorrectValue", defaultValue);
+            var property = classWithDefaultValue.GetType().GetProperty(nameof(classWithDefaultValue.MyValue));
+            Assert.Equal("ClassValue", property.GetDefaultValue());
+
+            var defaultValueAttributes = property.GetAttributes<DefaultValueAttribute>().ToList();
+            Assert.Equal(2, defaultValueAttributes.Count);
+            Assert.Equal("ClassValue", defaultValueAttributes.First().Value);
+            Assert.Equal("InterfaceValue", defaultValueAttributes.Last().Value);
         }
     }
 }
