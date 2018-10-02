@@ -156,7 +156,7 @@ namespace Dapplo.Utils
 			CancellationToken cancellationToken = default(CancellationToken))
 		{
 			var key = CreateKey(keyObject);
-			var completionSource = new TaskCompletionSource<TResult>();
+			var completionSource = new TaskCompletionSource<TResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			if (cacheItemPolicy == null)
 			{

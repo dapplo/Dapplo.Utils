@@ -81,7 +81,7 @@ namespace Dapplo.Utils.Extensions
 			}
 
 			// tcs.Task will be returned as a proxy to the caller
-			var taskCompletionSource = new TaskCompletionSource<TResult>();
+			var taskCompletionSource = new TaskCompletionSource<TResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			// Short-circuit #2: zero timeout
 			if ((long) timeout.Value.TotalMilliseconds == 0)
