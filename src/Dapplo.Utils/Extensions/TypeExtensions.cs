@@ -82,6 +82,70 @@ namespace Dapplo.Utils.Extensions
         #endregion
 
         /// <summary>
+        /// Retrieve an attribute from a type
+        /// </summary>
+        /// <typeparam name="TAttribute">Type of the attribute</typeparam>
+        /// <param name="type">Type</param>
+        /// <param name="inherit">bool default true to also check inherit class attributes</param>
+        /// <param name="includeInterfaces">bool default true if the interfaces of the declaring type also need to be checked</param>
+        /// <returns>TAttribute or null</returns>
+        public static TAttribute GetAttribute<TAttribute>(this Type type, bool inherit = true, bool includeInterfaces = true) where TAttribute : Attribute
+        {
+            var attribute = type.GetTypeInfo().GetCustomAttribute<TAttribute>(inherit);
+            if (attribute != null)
+            {
+                return attribute;
+            }
+
+            // If we didn't find the DefaultValueAttribute on the property, we check for the same property on the implementing interfaces
+            if (!includeInterfaces)
+            {
+                return null;
+            }
+
+            foreach (var interfaceType in type.GetInterfaces())
+            {
+                var attributeOnInterface = interfaceType.GetTypeInfo().GetCustomAttribute<TAttribute>(false);
+                if (attributeOnInterface != null)
+                {
+                    return attributeOnInterface;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Retrieve attributes from a Type
+        /// </summary>
+        /// <typeparam name="TAttribute">Type of the attribute</typeparam>
+        /// <param name="type">Type</param>
+        /// <param name="inherit">bool default true to also check inherit class attributes</param>
+        /// <param name="includeInterfaces">bool default true if the interfaces of the declaring type also need to be checked</param>
+        /// <returns>IEnumerable of TAttribute</returns>
+        public static IEnumerable<TAttribute> GetAttributes<TAttribute>(this Type type, bool inherit = true, bool includeInterfaces = true) where TAttribute : Attribute
+        {
+            var attributes = type.GetTypeInfo().GetCustomAttributes<TAttribute>(inherit);
+
+            // If we didn't find the DefaultValueAttribute on the property, we check for the same property on the implementing interfaces
+            if (!includeInterfaces)
+            {
+                return attributes;
+            }
+
+            foreach (var interfaceType in type.GetInterfaces())
+            {
+                var attributesOnInterface = interfaceType.GetTypeInfo().GetCustomAttributes<TAttribute>(false);
+                if (attributesOnInterface != null)
+                {
+                    attributes = attributes.Concat(attributesOnInterface);
+                }
+            }
+
+            return attributes;
+        }
+
+        /// <summary>
         ///     Add the default converter for the specified type
         /// </summary>
         /// <param name="type"></param>

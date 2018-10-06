@@ -158,5 +158,22 @@ namespace Dapplo.Utils.Tests
             Assert.Equal("ClassValue", defaultValueAttributes.First().Value);
             Assert.Equal("InterfaceValue", defaultValueAttributes.Last().Value);
         }
+
+        [Fact]
+        public void TestAttribute()
+        {
+            var classWithDefaultValue = new HaveDefaultValue();
+            var description = classWithDefaultValue.GetType().GetAttribute<DescriptionAttribute>();
+
+            Assert.Equal("Testing 1 2 3", description.Description);
+
+            var descriptions = classWithDefaultValue.GetType().GetAttributes<DescriptionAttribute>().ToList();
+            Assert.Equal(2, descriptions.Count());
+            Assert.Contains("Testing 1 2 3", descriptions.Select(d => d.Description));
+            Assert.Contains("Testing 3 2 1", descriptions.Select(d => d.Description));
+
+            Assert.Equal("Testing 1 2 3", descriptions[0].Description);
+            Assert.Equal("Testing 3 2 1", descriptions[1].Description);
+        }
     }
 }

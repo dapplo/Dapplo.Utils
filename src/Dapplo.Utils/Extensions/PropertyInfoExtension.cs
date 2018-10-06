@@ -74,7 +74,6 @@ namespace Dapplo.Utils.Extensions
         /// <param name="includeInterfaces">bool default true if the interfaces of the declaring type also need to be checked</param>
         /// <returns>TAttribute or null</returns>
         public static TAttribute GetAttribute<TAttribute>(this MemberInfo memberInfo, bool inherit = true, bool includeInterfaces = true) where TAttribute : Attribute
-
         {
 			var attribute = memberInfo.GetCustomAttribute<TAttribute>(inherit);
 			if (attribute != null)

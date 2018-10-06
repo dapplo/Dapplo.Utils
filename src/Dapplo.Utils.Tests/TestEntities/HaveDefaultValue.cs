@@ -2,6 +2,7 @@
 
 namespace Dapplo.Utils.Tests.TestEntities
 {
+    [Description("Testing 1 2 3")]
     public class HaveDefaultValue : IHaveDefaultValue
 
     {
