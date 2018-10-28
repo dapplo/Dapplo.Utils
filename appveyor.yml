@@ -11,7 +11,7 @@ environment:
   CoverallsRepoToken:
     secure: L60mbCAOvZODwY3jnXtDc+d7fMJhlWhqOaYry0+YAZxsM139e32GZ9mrXiBQboy9
   NuGetApiKey:
-    secure: FkbOZI29wVSKdzHuFOq9tY8cq05Sy6vFKwvqYnUhDVamagkTUrjNJElPPoACP8Ov
+    secure: Fu7vXeOuWmvDK7WGNsEbTIV2vhDV4P6PiK5k1+UZOmwldhCfvUvkA4HOkml+ZE/n
 build_script:
 - ps: .\build.ps1 --settings_skipverification=true
 cache:
