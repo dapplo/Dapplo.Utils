@@ -82,7 +82,7 @@ namespace Dapplo.Utils
 		/// <param name="function">Action to run</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task of TResult</returns>
-		public static Task<TResult> RunOn<TResult>(Func<TResult> function, CancellationToken cancellationToken = default(CancellationToken))
+		public static Task<TResult> RunOn<TResult>(Func<TResult> function, CancellationToken cancellationToken = default)
 		{
 			if (HasScheduler && !HasUiAccess)
 			{
@@ -98,7 +98,7 @@ namespace Dapplo.Utils
 		/// <param name="function">Function to run</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task of TResult</returns>
-		public static Task<TResult> RunOn<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default(CancellationToken))
+		public static Task<TResult> RunOn<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default)
 		{
 			if (HasScheduler && !HasUiAccess)
 			{
@@ -114,7 +114,7 @@ namespace Dapplo.Utils
 		/// <param name="action">Action to run</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task</returns>
-		public static Task RunOn(Action action, CancellationToken cancellationToken = default(CancellationToken))
+		public static Task RunOn(Action action, CancellationToken cancellationToken = default)
 		{
 			if (HasScheduler && !HasUiAccess)
 			{

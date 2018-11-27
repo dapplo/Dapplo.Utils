@@ -48,7 +48,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="cancellationToken">optional CancellationToken</param>
 		/// <typeparam name="TResult">The type for the result</typeparam>
 		/// <returns>Task with an IEnumerable of type TResult</returns>
-		public static async Task<IList<TResult>> ToListAsync<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task<IList<TResult>> ToListAsync<TResult>(this IEnumerable<TResult> source, CancellationToken cancellationToken = default)
 		{
 			// Do not pass the CancellationToken, as this would case an OperationCanceledException
 			// ReSharper disable once MethodSupportsCancellation
@@ -73,7 +73,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="predicate">Predicate func</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task to await for</returns>
-		public static async Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> action, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> action, Func<T, bool> predicate = null, CancellationToken cancellationToken = default)
 		{
 			if (source == null)
 			{
@@ -100,7 +100,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="action">Action to call for each item</param>
 		/// <param name="predicate">Predicate func</param>
 		/// <param name="cancellationToken">CancellationToken, which breaks the enumeration</param>
-		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		public static void ForEach<T>(this IEnumerable<T> source, Action<T> action, Func<T, bool> predicate = null, CancellationToken cancellationToken = default)
 		{
 			if (source == null)
 			{
@@ -137,7 +137,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="predicate">Func which takes a T and returns a bool, can be null</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>true if there was a value, false if not</returns>
-		public static async Task<bool> AnyAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task<bool> AnyAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default)
 		{
 			if (source == null)
 			{
@@ -176,7 +176,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="predicate">Func which takes a T and returns a bool</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>first T in the IEnumerable</returns>
-		public static async Task<T> FirstAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task<T> FirstAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default)
 		{
 			if (source == null)
 			{
@@ -206,7 +206,7 @@ namespace Dapplo.Utils.Extensions
 		/// <param name="predicate">Func which takes a T and returns a bool</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>first T in the IEnumerable</returns>
-		public static async Task<int> CountAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default(CancellationToken))
+		public static async Task<int> CountAsync<T>(this IEnumerable<T> source, Func<T, bool> predicate = null, CancellationToken cancellationToken = default)
 		{
 			if (source == null)
 			{

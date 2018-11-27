@@ -149,7 +149,7 @@ namespace Dapplo.Utils.Extensions
 					taskCompletionSource.TrySetResult(!(source is Task<TResult> castedSource)
 						?
 						// source is a Task
-						default(TResult)
+						default
 						:
 						// source is a Task<TResult>
 						castedSource.Result);

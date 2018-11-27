@@ -23,14 +23,17 @@
 
 #endregion
 
-#if !NETSTANDARD1_3
 #region Usings
 
 using System;
-using System.Runtime.Caching;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapplo.Log;
+#if NETSTANDARD2_0
+using Microsoft.Extensions.Caching.Memory;
+#else
+using System.Runtime.Caching;
+#endif
 
 #endregion
 
@@ -44,14 +47,30 @@ namespace Dapplo.Utils
 	public abstract class AsyncMemoryCache<TKey, TResult> where TResult : class
 	{
 		private static readonly Task<TResult> EmptyValueTask = Task.FromResult<TResult>(null);
-		private readonly MemoryCache _cache = new MemoryCache(Guid.NewGuid().ToString());
 		private readonly LogSource _log = new LogSource();
+		private readonly ReaderWriterLockSlim _readerWriterLock = new ReaderWriterLockSlim();
 		private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
-		/// <summary>
-		///     Set the timespan for items to expire.
-		/// </summary>
-		public TimeSpan? ExpireTimeSpan { get; set; }
+#if NETSTANDARD2_0
+        private readonly IMemoryCache _cache;
+
+        /// <summary>
+        /// Supply your own IMemoryCache
+        /// </summary>
+        /// <param name="memoryCache">IMemoryCache</param>
+        public AsyncMemoryCache(IMemoryCache memoryCache)
+		{
+			_cache = memoryCache ?? new MemoryCache(new MemoryCacheOptions());
+		}
+#else
+        private readonly MemoryCache _cache = new MemoryCache(Guid.NewGuid().ToString());
+#endif
+
+
+        /// <summary>
+        ///     Set the timespan for items to expire.
+        /// </summary>
+        public TimeSpan? ExpireTimeSpan { get; set; }
 
 		/// <summary>
 		///     Set the timespan for items to slide.
@@ -76,7 +95,7 @@ namespace Dapplo.Utils
 		/// <param name="key">TKey</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>TResult</returns>
-		protected abstract Task<TResult> CreateAsync(TKey key, CancellationToken cancellationToken = default(CancellationToken));
+		protected abstract Task<TResult> CreateAsync(TKey key, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		///     Creates a key under which the object is stored or retrieved, default is a toString on the object.
@@ -94,10 +113,10 @@ namespace Dapplo.Utils
 		/// <param name="keyObject">object for the key</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>TResult</returns>
-		public async Task DeleteAsync(TKey keyObject, CancellationToken cancellationToken = default(CancellationToken))
+		public async Task DeleteAsync(TKey keyObject, CancellationToken cancellationToken = default)
 		{
 			var key = CreateKey(keyObject);
-			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
+            await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
 			try
 			{
 				_cache.Remove(key);
@@ -126,7 +145,7 @@ namespace Dapplo.Utils
 		/// <param name="keyObject">object for the key</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task with TResult</returns>
-		public Task<TResult> GetOrCreateAsync(TKey keyObject, CancellationToken cancellationToken = default(CancellationToken))
+		public Task<TResult> GetOrCreateAsync(TKey keyObject, CancellationToken cancellationToken = default)
 		{
 			var key = CreateKey(keyObject);
 			return _cache.Get(key) as Task<TResult> ?? GetOrCreateInternalAsync(keyObject, null, cancellationToken);
@@ -139,7 +158,7 @@ namespace Dapplo.Utils
 		/// <param name="cacheItemPolicy">CacheItemPolicy for when you want more control over the item</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>Task with TResult</returns>
-		public Task<TResult> GetOrCreateAsync(TKey keyObject, CacheItemPolicy cacheItemPolicy, CancellationToken cancellationToken = default(CancellationToken))
+		public Task<TResult> GetOrCreateAsync(TKey keyObject, CacheItemPolicy cacheItemPolicy, CancellationToken cancellationToken = default)
 		{
 			var key = CreateKey(keyObject);
 			return _cache.Get(key) as Task<TResult> ?? GetOrCreateInternalAsync(keyObject, cacheItemPolicy, cancellationToken);
@@ -152,8 +171,7 @@ namespace Dapplo.Utils
 		/// <param name="cacheItemPolicy">CacheItemPolicy for when you want more control over the item</param>
 		/// <param name="cancellationToken">CancellationToken</param>
 		/// <returns>TResult</returns>
-		private async Task<TResult> GetOrCreateInternalAsync(TKey keyObject, CacheItemPolicy cacheItemPolicy = null,
-			CancellationToken cancellationToken = default(CancellationToken))
+		private async Task<TResult> GetOrCreateInternalAsync(TKey keyObject, CacheItemPolicy cacheItemPolicy = null, CancellationToken cancellationToken = default)
 		{
 			var key = CreateKey(keyObject);
 			var completionSource = new TaskCompletionSource<TResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -175,20 +193,21 @@ namespace Dapplo.Utils
 				}
 			}
 
-			var result = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
 			// Test if we got an existing object or our own
-			if (result != null && !completionSource.Task.Equals(result))
+			if (_cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) is Task<TResult> resultTask && !completionSource.Task.Equals(resultTask))
 			{
-				return await result.ConfigureAwait(false);
+                var result = await resultTask.ConfigureAwait(false);
+				return result;
 			}
 
 			await _semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
 			try
 			{
-				result = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
-				if (result != null && !completionSource.Task.Equals(result))
+				resultTask = _cache.AddOrGetExisting(key, completionSource.Task, cacheItemPolicy) as Task<TResult>;
+				if (resultTask != null && !completionSource.Task.Equals(resultTask))
 				{
-					return await result.ConfigureAwait(false);
+					var result = await resultTask.ConfigureAwait(false);
+					return result;
 				}
 
 				// Now, start the background task, which will set the completionSource with the correct response
@@ -239,4 +258,3 @@ namespace Dapplo.Utils
 		}
 	}
 }
-#endif
