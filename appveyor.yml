@@ -1,5 +1,5 @@
 version: 1.1.{build}
-os: Visual Studio 2019 preview
+os: Visual Studio 2019
 skip_tags: true
 configuration: Release
 platform: Any CPU
@@ -18,7 +18,7 @@ install:
 - ps: Start-Process .\dotnet-sdk-latest-win-x64.exe "/install /norestart /quiet /log sdkinstall.log" -NoNewWindow -Wait
 - ps: dotnet --info
 build_script:
-- ps: .\build.ps1 --settings_skipverification=true
+- ps: .\build.ps1 --settings_skipverification=true --settings_skippackageversioncheck=true
 cache:
   - tools -> tools/packages.config
 artifacts:

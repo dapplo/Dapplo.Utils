@@ -5,21 +5,11 @@
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <AssemblyName>Dapplo.Utils.Notify</AssemblyName>
     <PackageId>Dapplo.Utils.Notify</PackageId>
-	<Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
   </PropertyGroup>
 
   
   <ItemGroup>
     <ProjectReference Include="..\Dapplo.Utils\Dapplo.Utils.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
-    <PackageReference Include="System.Linq" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
@@ -29,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Reactive">
-      <Version>4.1.0</Version>
+      <Version>4.1.5</Version>
     </PackageReference>
   </ItemGroup>
 
